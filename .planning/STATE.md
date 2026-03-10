@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 1 — Package Scaffolding (Plan 03: Build execution)
-**Last completed:** Phase 1, Plan 02 — Validation infrastructure (2026-03-10)
+**Current focus:** Phase 2 — Firebase Layer (Plan 01: next up)
+**Last completed:** Phase 1, Plan 03 — Build execution (2026-03-10)
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Package Scaffolding | ◑ In Progress | 2/3 complete |
+| 1 | Package Scaffolding | ● Complete | 3/3 complete |
 | 2 | Firebase Layer | ○ Pending | — |
 | 3 | Front-End Block System | ○ Pending | — |
 | 4 | Admin Auth | ○ Pending | — |
@@ -34,6 +34,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Peer deps for Firebase + Framer Motion | 1 | Avoids double-bundling |
 | verify-exports.js uses Node built-ins only | 1 | No npm install needed before running verification |
 | check() accumulates failures before exit | 1 | Shows all failures in one run, not just first |
+| Post-build banner injection for use-client | 1 | Rollup 4 strips "use client" directives — must prepend after tsup runs via build script |
+| typescript added as devDependency | 1 | tsup requires typescript at runtime even for plain JS source files |
 | Firestore doc-per-page | 2 | Simple; 1MB limit acceptable |
 | CSS custom properties | 8 | Theme-agnostic theming |
 | JavaScript (not TypeScript) | — | Faster v1 iteration |
