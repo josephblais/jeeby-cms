@@ -11,6 +11,13 @@
 
 **Requirements:** PKG-01, PKG-02, PKG-03, PKG-04
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Package foundation (package.json, tsup.config.js, source stubs, CSS stub)
+- [ ] 01-02-PLAN.md — Validation infrastructure (scripts/verify-exports.js)
+- [ ] 01-03-PLAN.md — Build execution and full verification
+
 **Success Criteria:**
 1. `npm run build` produces `dist/index.mjs`, `dist/index.js`, `dist/admin.mjs`, `dist/admin.js`, and `dist/styles.css`
 2. Consumer can `import { CMSProvider } from 'jeebycms'` and `import { AdminPanel } from 'jeebycms/admin'` without errors
@@ -170,3 +177,4 @@
 
 ---
 *Roadmap created: 2026-03-10*
+*Phase 1 plans added: 2026-03-10*
