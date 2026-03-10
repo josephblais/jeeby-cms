@@ -1,0 +1,39 @@
+{
+  "name": "jeeby-cms",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Block-based CMS for Next.js — Firebase, drag-and-drop, draft/publish",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./admin": {
+      "import": "./dist/admin.mjs",
+      "require": "./dist/admin.js"
+    },
+    "./server": {
+      "import": "./dist/server.mjs",
+      "require": "./dist/server.js"
+    },
+    "./dist/styles.css": "./dist/styles.css"
+  },
+  "files": ["dist"],
+  "sideEffects": ["dist/styles.css"],
+  "scripts": {
+    "build": "tsup && cp styles/cms.css dist/styles.css",
+    "build:watch": "tsup --watch"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18",
+    "next": ">=14",
+    "firebase": ">=10",
+    "framer-motion": ">=11"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1"
+  }
+}
