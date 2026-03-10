@@ -20,20 +20,25 @@
     },
     "./dist/styles.css": "./dist/styles.css"
   },
-  "files": ["dist"],
-  "sideEffects": ["dist/styles.css"],
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "dist/styles.css"
+  ],
   "scripts": {
     "build": "tsup && cp styles/cms.css dist/styles.css",
     "build:watch": "tsup --watch"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18",
-    "next": ">=14",
     "firebase": ">=10",
-    "framer-motion": ">=11"
+    "framer-motion": ">=11",
+    "next": ">=14",
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   }
 }
