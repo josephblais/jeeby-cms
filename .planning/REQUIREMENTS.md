@@ -7,10 +7,10 @@
 
 ### Package Setup
 
-- [ ] **PKG-01**: Package is installable via `npm install jeebycms` and exports `jeebycms` and `jeebycms/admin` entry points
-- [ ] **PKG-02**: TSUP builds ESM and CJS outputs for both entry points with tree-shaking
-- [ ] **PKG-03**: `dist/styles.css` is exported and importable by consumers
-- [ ] **PKG-04**: Firebase, React, Next.js, and Framer Motion are peer dependencies (not bundled)
+- [x] **PKG-01**: Package is installable via `npm install jeebycms` and exports `jeebycms` and `jeebycms/admin` entry points
+- [x] **PKG-02**: TSUP builds ESM and CJS outputs for both entry points with tree-shaking
+- [x] **PKG-03**: `dist/styles.css` is exported and importable by consumers
+- [x] **PKG-04**: Firebase, React, Next.js, and Framer Motion are peer dependencies (not bundled)
 
 ### Firebase Layer
 
@@ -112,10 +112,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01 | Phase 1 | Pending |
-| PKG-02 | Phase 1 | Pending |
-| PKG-03 | Phase 1 | Pending |
-| PKG-04 | Phase 1 | Pending |
+| PKG-01 | Phase 1 | Complete |
+| PKG-02 | Phase 1 | Complete |
+| PKG-03 | Phase 1 | Complete |
+| PKG-04 | Phase 1 | Complete |
 | FIRE-01 | Phase 2 | Pending |
 | FIRE-02 | Phase 2 | Pending |
 | FIRE-03 | Phase 2 | Pending |

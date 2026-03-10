@@ -14,7 +14,7 @@
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Package foundation (package.json, tsup.config.js, source stubs, CSS stub)
+- [x] 01-01-PLAN.md — Package foundation (package.json, tsup.config.js, source stubs, CSS stub)
 - [ ] 01-02-PLAN.md — Validation infrastructure (scripts/verify-exports.js)
 - [ ] 01-03-PLAN.md — Build execution and full verification
 
