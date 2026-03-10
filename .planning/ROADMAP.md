@@ -1,4 +1,4 @@
-# Roadmap: JeebyCMS
+# Roadmap: jeeby-cms
 
 **Milestone:** v1.0 — Publishable npm package
 **Requirements:** 43 v1 requirements across 10 phases
@@ -20,9 +20,9 @@ Plans:
 
 **Success Criteria:**
 1. `npm run build` produces `dist/index.mjs`, `dist/index.js`, `dist/admin.mjs`, `dist/admin.js`, and `dist/styles.css`
-2. Consumer can `import { CMSProvider } from 'jeebycms'` and `import { AdminPanel } from 'jeebycms/admin'` without errors
+2. Consumer can `import { CMSProvider } from 'jeeby-cms'` and `import { AdminPanel } from 'jeeby-cms/admin'` without errors
 3. Firebase, React, Next.js, and Framer Motion are listed as peerDependencies (not in dependencies)
-4. Tree-shaking: importing from `jeebycms` does not pull in admin bundle, and vice versa
+4. Tree-shaking: importing from `jeeby-cms` does not pull in admin bundle, and vice versa
 
 ---
 
@@ -121,10 +121,10 @@ Plans:
 **Requirements:** CSS-01, CSS-02, CSS-03, CSS-04
 
 **Success Criteria:**
-1. `dist/styles.css` is produced by the build and importable via `jeebycms/dist/styles.css`
-2. All admin panel UI elements are visually styled and scoped under `.jeebycms-admin` (no style leaks to consumer pages)
+1. `dist/styles.css` is produced by the build and importable via `jeeby-cms/dist/styles.css`
+2. All admin panel UI elements are visually styled and scoped under `.jeeby-cms-admin` (no style leaks to consumer pages)
 3. Content blocks have no hardcoded colors, fonts, or visual styles — they inherit from the consumer's site
-4. Changing `--jeebycms-max-width` or `--jeebycms-block-spacing` in the consumer's CSS visibly affects block layout
+4. Changing `--jeeby-cms-max-width` or `--jeeby-cms-block-spacing` in the consumer's CSS visibly affects block layout
 5. Block components accept and apply a `className` prop from the consumer
 
 ---

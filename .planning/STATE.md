@@ -11,7 +11,7 @@ progress:
   completed_plans: 3
 ---
 
-# Project State: JeebyCMS
+# Project State: jeeby-cms
 
 ## Project Reference
 

@@ -72,7 +72,7 @@ re_verification: false
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
-| PKG-01 | 01-01, 01-02, 01-03 | Package exports jeebycms and jeebycms/admin (and jeebycms/server) entry points | SATISFIED | dist/index.js exports CMSProvider/Blocks/Block/useCMSContent; dist/admin.js exports AdminPanel/withCMSAuth; exports map in package.json covers all three subpaths |
+| PKG-01 | 01-01, 01-02, 01-03 | Package exports jeeby-cms and jeeby-cms/admin (and jeeby-cms/server) entry points | SATISFIED | dist/index.js exports CMSProvider/Blocks/Block/useCMSContent; dist/admin.js exports AdminPanel/withCMSAuth; exports map in package.json covers all three subpaths |
 | PKG-02 | 01-01, 01-02, 01-03 | TSUP builds ESM and CJS outputs for both entry points with tree-shaking | SATISFIED | All six JS dist files exist (.mjs + .js for each of index/admin/server); treeshake: true on all three config blocks; admin bundle absent from index bundle and vice versa |
 | PKG-03 | 01-01, 01-02, 01-03 | dist/styles.css exported and importable | SATISFIED | dist/styles.css exists; package.json exports field maps "./dist/styles.css" to "./dist/styles.css"; sideEffects: ["dist/styles.css"] prevents CSS tree-shaking |
 | PKG-04 | 01-01, 01-02, 01-03 | Firebase, React, Next.js, Framer Motion are peer dependencies | SATISFIED | All five packages in peerDependencies; external arrays in tsup.config.js exclude them from bundling; verify-exports.js confirms firebase/app and framer-motion/dist absent from dist/index.mjs |
@@ -105,9 +105,9 @@ None. All phase goal success criteria are verifiable programmatically:
 ### Success Criteria Cross-Check (ROADMAP.md Phase 1)
 
 1. `npm run build` produces dist/index.mjs, dist/index.js, dist/admin.mjs, dist/admin.js, and dist/styles.css — **CONFIRMED** (plus dist/server.mjs, dist/server.js also present)
-2. Consumer can `import { CMSProvider } from 'jeebycms'` and `import { AdminPanel } from 'jeebycms/admin'` without errors — **CONFIRMED** (exports map and named exports both verified)
+2. Consumer can `import { CMSProvider } from 'jeeby-cms'` and `import { AdminPanel } from 'jeeby-cms/admin'` without errors — **CONFIRMED** (exports map and named exports both verified)
 3. Firebase, React, Next.js, and Framer Motion are listed as peerDependencies — **CONFIRMED** (all five present in peerDependencies, absent from dependencies)
-4. Tree-shaking: importing from `jeebycms` does not pull in admin bundle, and vice versa — **CONFIRMED** (dist/index.mjs contains zero admin references; dist/admin.mjs contains zero CMSProvider/Blocks/Block/useCMSContent references; splitting is isolated per entry)
+4. Tree-shaking: importing from `jeeby-cms` does not pull in admin bundle, and vice versa — **CONFIRMED** (dist/index.mjs contains zero admin references; dist/admin.mjs contains zero CMSProvider/Blocks/Block/useCMSContent references; splitting is isolated per entry)
 
 All four ROADMAP.md success criteria satisfied.
 

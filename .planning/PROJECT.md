@@ -1,8 +1,8 @@
-# JeebyCMS
+# jeeby-cms
 
 ## What This Is
 
-A publishable npm package (`jeebycms`) that provides a block-based content rendering system for the front-end and a full `/admin` CMS panel for Next.js App Router projects. It uses Firebase (Auth, Firestore, Storage), supports drag-and-drop block reordering, draft/publish workflow, and multi-page support with nested sub-routes.
+A publishable npm package (`jeeby-cms`) that provides a block-based content rendering system for the front-end and a full `/admin` CMS panel for Next.js App Router projects. It uses Firebase (Auth, Firestore, Storage), supports drag-and-drop block reordering, draft/publish workflow, and multi-page support with nested sub-routes.
 
 ## Core Value
 
@@ -16,7 +16,7 @@ Developers can drop a fully functional CMS into any Next.js project in minutes, 
 
 ### Active
 
-- [ ] Package published to npm as `jeebycms` with two entry points (`jeebycms` and `jeebycms/admin`)
+- [ ] Package published to npm as `jeeby-cms` with two entry points (`jeeby-cms` and `jeeby-cms/admin`)
 - [ ] Front-end: CMSProvider, Blocks, Block, getCMSContent, useCMSContent exports
 - [ ] Admin panel: AdminPanel, withCMSAuth exports
 - [ ] Block types: Title, Paragraph, RichText, Image, Video, Gallery
@@ -45,10 +45,10 @@ Developers can drop a fully functional CMS into any Next.js project in minutes, 
 ## Context
 
 - **Stack:** Next.js (App Router, JavaScript), Firebase (Auth + Firestore + Storage), Framer Motion, Tailwind (consumer-applied), TSUP (bundler)
-- **Two entry points:** `jeebycms` (frontend) and `jeebycms/admin` (admin panel) — tree-shaken via named exports
+- **Two entry points:** `jeeby-cms` (frontend) and `jeeby-cms/admin` (admin panel) — tree-shaken via named exports
 - **Firestore data model:** `/cms/pages/{pageId}` with `draft.blocks` and `published.blocks` arrays; 1MB document limit is acceptable for typical use
 - **"use client" strategy:** Hooks and context components marked explicitly; `getCMSContent` is server-safe; Firebase SDK is a peer dependency (not bundled)
-- **CSS:** Admin styles scoped under `.jeebycms-admin`; CSS custom properties (`--jeebycms-max-width`, `--jeebycms-block-spacing`) for consumer override; no visual opinions on content styles
+- **CSS:** Admin styles scoped under `.jeeby-cms-admin`; CSS custom properties (`--jeeby-cms-max-width`, `--jeeby-cms-block-spacing`) for consumer override; no visual opinions on content styles
 
 ## Constraints
 

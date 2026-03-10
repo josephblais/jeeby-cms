@@ -43,7 +43,7 @@
 
 | ID | Description | Research Support |
 |----|-------------|-----------------|
-| PKG-01 | Package is installable via `npm install jeebycms` and exports `jeebycms` and `jeebycms/admin` entry points | TSUP multi-entry config + package.json `exports` subpath map documented below; third `./server` entry also required per CONTEXT.md |
+| PKG-01 | Package is installable via `npm install jeeby-cms` and exports `jeeby-cms` and `jeeby-cms/admin` entry points | TSUP multi-entry config + package.json `exports` subpath map documented below; third `./server` entry also required per CONTEXT.md |
 | PKG-02 | TSUP builds ESM and CJS outputs for both entry points with tree-shaking | `format: ['esm', 'cjs']` + `treeshake: true` + `splitting: true` per verified TSUP 8.5.1 docs |
 | PKG-03 | `dist/styles.css` is exported and importable by consumers | CSS must be produced via PostCSS + tsup or cp build step; exposed via `exports` field |
 | PKG-04 | Firebase, React, Next.js, and Framer Motion are peer dependencies (not bundled) | `external` array in TSUP config + `peerDependencies` field in package.json |

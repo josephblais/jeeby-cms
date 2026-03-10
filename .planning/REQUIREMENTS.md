@@ -1,4 +1,4 @@
-# Requirements: JeebyCMS
+# Requirements: jeeby-cms
 
 **Defined:** 2026-03-10
 **Core Value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
@@ -7,7 +7,7 @@
 
 ### Package Setup
 
-- [x] **PKG-01**: Package is installable via `npm install jeebycms` and exports `jeebycms` and `jeebycms/admin` entry points
+- [x] **PKG-01**: Package is installable via `npm install jeeby-cms` and exports `jeeby-cms` and `jeeby-cms/admin` entry points
 - [x] **PKG-02**: TSUP builds ESM and CJS outputs for both entry points with tree-shaking
 - [x] **PKG-03**: `dist/styles.css` is exported and importable by consumers
 - [x] **PKG-04**: Firebase, React, Next.js, and Framer Motion are peer dependencies (not bundled)
@@ -71,8 +71,8 @@
 
 ### CSS & Theming
 
-- [ ] **CSS-01**: Admin panel UI styles are scoped under `.jeebycms-admin`
-- [ ] **CSS-02**: CSS custom properties `--jeebycms-max-width` and `--jeebycms-block-spacing` are exposed for consumer override
+- [ ] **CSS-01**: Admin panel UI styles are scoped under `.jeeby-cms-admin`
+- [ ] **CSS-02**: CSS custom properties `--jeeby-cms-max-width` and `--jeeby-cms-block-spacing` are exposed for consumer override
 - [ ] **CSS-03**: Block components accept `className` prop for consumer-applied styles
 - [ ] **CSS-04**: No color, typography, or visual opinions are applied to content blocks
 
