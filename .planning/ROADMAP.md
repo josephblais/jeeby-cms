@@ -11,7 +11,7 @@
 
 **Requirements:** PKG-01, PKG-02, PKG-03, PKG-04
 
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Package foundation (package.json, tsup.config.js, source stubs, CSS stub)
@@ -163,8 +163,7 @@ Plans:
 
 | Phase | Requirements | Count |
 |-------|-------------|-------|
-| 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 |
-| 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
+| 1 | 2/3 | In Progress|  | 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
 | 3 | FRONT-01–10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
 | 5 | PAGE-01–06 | 6 |
