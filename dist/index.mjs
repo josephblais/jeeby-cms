@@ -1,3 +1,4 @@
+"use client";
 // src/index.js
 function CMSProvider({ children }) {
   return children ?? null;

@@ -27,7 +27,7 @@
     "dist/styles.css"
   ],
   "scripts": {
-    "build": "tsup && cp styles/cms.css dist/styles.css",
+    "build": "tsup && cp styles/cms.css dist/styles.css && node -e \"const fs=require('fs'); ['dist/index.mjs','dist/index.js'].forEach(f=>{ const c=fs.readFileSync(f,'utf8'); if(!c.startsWith('\\\"use client\\\"')) fs.writeFileSync(f,'\\\"use client\\\";\\n'+c); })\"",
     "build:watch": "tsup --watch"
   },
   "peerDependencies": {

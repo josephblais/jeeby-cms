@@ -6,7 +6,7 @@ export default defineConfig([
   {
     entry: { index: 'src/index.js' },
     format: ['esm', 'cjs'],
-    splitting: true,
+    splitting: false,
     treeshake: true,
     clean: true,
     external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion'],
