@@ -19,7 +19,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
 **Current focus:** Phase 2 — Firebase Layer (Plan 03: next up)
-**Last completed:** Phase 2, Plan 02 — Firebase init + CMSProvider (2026-03-11)
+**Last completed:** Phase 2, Plan 01 — Wave 0 Firebase test stubs (2026-03-11)
 
 ## Phase Status
 

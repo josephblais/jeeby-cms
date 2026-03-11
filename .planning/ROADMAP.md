@@ -35,8 +35,8 @@ Plans:
 **Plans:** 2/5 plans executed
 
 Plans:
-- [ ] 02-01-PLAN.md — Wave 0: Test stubs for all Firebase helper modules
-- [ ] 02-02-PLAN.md — Firebase init (src/firebase/init.js) + CMSProvider upgrade with React context
+- [x] 02-01-PLAN.md — Wave 0: Test stubs for all Firebase helper modules
+- [x] 02-02-PLAN.md — Firebase init (src/firebase/init.js) + CMSProvider upgrade with React context
 - [ ] 02-03-PLAN.md — Firestore CRUD helpers (src/firebase/firestore.js)
 - [ ] 02-04-PLAN.md — Auth helpers (src/firebase/auth.js) + useAuth hook in src/index.js
 - [ ] 02-05-PLAN.md — Storage helpers (src/firebase/storage.js) + withCMSAuth middleware + firebase-admin wiring
