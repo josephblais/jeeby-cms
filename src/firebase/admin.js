@@ -5,6 +5,7 @@
 // firebase-admin uses Node.js built-ins (fs, net, tls) that are not available in the browser.
 import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
 
 function getAdminApp() {
   if (getApps().length > 0) return getApp()
@@ -20,4 +21,8 @@ function getAdminApp() {
 
 export function getAdminAuth() {
   return getAuth(getAdminApp())
+}
+
+export function getAdminFirestore() {
+  return getFirestore(getAdminApp())
 }
