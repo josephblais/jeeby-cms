@@ -55,6 +55,15 @@ Plans:
 
 **Requirements:** FRONT-01, FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10
 
+**Plans:** 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Wave 1: JSX transform + all test stubs (build infra + Nyquist scaffolding)
+- [ ] 03-02-PLAN.md — Wave 2: getCMSContent (Admin SDK) + useCMSContent hook + CMSProvider JSX conversion
+- [ ] 03-03-PLAN.md — Wave 2: Title, Paragraph, RichText block components (text blocks + sanitization)
+- [ ] 03-04-PLAN.md — Wave 2: Image, Video, Gallery block components (media blocks + URL parsing)
+- [ ] 03-05-PLAN.md — Wave 3: Block system assembly (Blocks + Block + BLOCK_REGISTRY + export wiring)
+
 **Success Criteria:**
 1. `getCMSContent('about')` returns published blocks for a page with slug "about" from Firestore
 2. `<Blocks data={content} />` renders each block type without errors given valid block data
@@ -173,7 +182,8 @@ Plans:
 | Phase | Requirements | Count |
 |-------|-------------|-------|
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 |
-| 2 | 5/5 | Complete   | 2026-03-11 | 3 | FRONT-01–10 | 10 |
+| 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
+| 3 | FRONT-01–10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
 | 5 | PAGE-01–06 | 6 |
 | 6 | EDIT-01–06 | 6 |
@@ -187,3 +197,4 @@ Plans:
 *Roadmap created: 2026-03-10*
 *Phase 1 plans added: 2026-03-10*
 *Phase 2 plans added: 2026-03-10*
+*Phase 3 plans added: 2026-03-11*
