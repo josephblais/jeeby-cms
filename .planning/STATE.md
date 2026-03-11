@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-11T06:10:28.698Z"
+last_updated: "2026-03-11T06:24:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 3 — Front-End Block System (Plan 03: next up)
-**Last completed:** Phase 3, Plan 02 — getCMSContent + useCMSContent + JSX CMSProvider (2026-03-11)
+**Current focus:** Phase 3 — Front-End Block System (Plan 05: next up)
+**Last completed:** Phase 3, Plan 04 — Image, Video, Gallery media blocks with WCAG accessibility (2026-03-11)
 
 ## Phase Status
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 |-------|------|--------|-------|
 | 1 | Package Scaffolding | ● Complete | 3/3 complete |
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
-| 3 | Front-End Block System | ◑ In Progress | 2/? complete |
+| 3 | Front-End Block System | ◑ In Progress | 4/5 complete |
 | 4 | Admin Auth | ○ Pending | — |
 | 5 | Page Manager | ○ Pending | — |
 | 6 | Block Editor | ○ Pending | — |
@@ -62,6 +62,10 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | isomorphic-dompurify and video.js as optional peer deps | 3 | Consumers who don't use RichText or Video blocks don't need them |
 | CSS custom properties | 8 | Theme-agnostic theming |
 | JavaScript (not TypeScript) | — | Faster v1 iteration |
+| React.createElement in block files (not JSX) | 3 | Node.js test runner cannot parse JSX — try/catch import silently fails, tests skip; createElement avoids transform requirement |
+| alt="" empty string (never omit alt) | 3 | WCAG 1.1.1: omitting alt causes screen readers to announce filename; empty string signals decorative |
+| aria-label="Gallery" on ul (no heading precedes) | 3 | WCAG 1.3.1: no visible heading in Phase 3 static rendering; aria-label provides accessible context |
+| toEmbedUrl exported from Video.js | 3 | Enables independent unit testing of URL parsing logic and consumer reuse |
 
 ---
 *Initialized: 2026-03-10*

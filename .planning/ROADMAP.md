@@ -55,13 +55,13 @@ Plans:
 
 **Requirements:** FRONT-01, FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10
 
-**Plans:** 2/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
-- [ ] 03-01-PLAN.md — Wave 1: JSX transform + all test stubs (build infra + Nyquist scaffolding)
+- [x] 03-01-PLAN.md — Wave 1: JSX transform + all test stubs (build infra + Nyquist scaffolding)
 - [ ] 03-02-PLAN.md — Wave 2: getCMSContent (Admin SDK) + useCMSContent hook + CMSProvider JSX conversion
 - [ ] 03-03-PLAN.md — Wave 2: Title, Paragraph, RichText block components (text blocks + sanitization)
-- [ ] 03-04-PLAN.md — Wave 2: Image, Video, Gallery block components (media blocks + URL parsing)
+- [x] 03-04-PLAN.md — Wave 2: Image, Video, Gallery block components (media blocks + URL parsing)
 - [ ] 03-05-PLAN.md — Wave 3: Block system assembly (Blocks + Block + BLOCK_REGISTRY + export wiring)
 
 **Success Criteria:**
