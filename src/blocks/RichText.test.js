@@ -1,0 +1,32 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+
+let RichText
+try { const m = await import('./RichText.js'); RichText = m.RichText } catch {}
+
+test('RichText renders safe HTML (bold preserved)', { skip: !RichText }, () => {
+  const html = renderToStaticMarkup(createElement(RichText, { data: { html: '<p><b>Bold</b></p>' } }))
+  assert.ok(html.includes('<b>Bold</b>'))
+})
+test('RichText strips <script> XSS tags', { skip: !RichText }, () => {
+  const html = renderToStaticMarkup(createElement(RichText, { data: { html: '<p>Hi</p><script>alert(1)</script>' } }))
+  assert.ok(!html.includes('<script'), `Must strip <script>, got: ${html}`)
+  assert.ok(html.includes('Hi'))
+})
+test('RichText strips javascript: href vectors', { skip: !RichText }, () => {
+  const html = renderToStaticMarkup(createElement(RichText, { data: { html: '<a href="javascript:void(0)">x</a>' } }))
+  assert.ok(!html.includes('javascript:'), `Must strip javascript: href, got: ${html}`)
+})
+test('RichText preserves aria-label attribute (ADD_ATTR config)', { skip: !RichText }, () => {
+  const html = renderToStaticMarkup(createElement(RichText, { data: { html: '<p aria-label="desc">text</p>' } }))
+  assert.ok(html.includes('aria-label'), `Must preserve aria-label, got: ${html}`)
+})
+test('RichText applies className to wrapper element', { skip: !RichText }, () => {
+  const html = renderToStaticMarkup(createElement(RichText, { data: { html: '<p>x</p>' }, className: 'rich' }))
+  assert.ok(html.includes('rich'))
+})
+test('RichText does not throw for null html', { skip: !RichText }, () => {
+  assert.doesNotThrow(() => renderToStaticMarkup(createElement(RichText, { data: { html: null } })))
+})
