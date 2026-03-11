@@ -14,7 +14,7 @@
 
 ### Firebase Layer
 
-- [ ] **FIRE-01**: `CMSProvider` initializes Firebase client SDK safely (handles multi-init via `getApps()` check)
+- [x] **FIRE-01**: `CMSProvider` initializes Firebase client SDK safely (handles multi-init via `getApps()` check)
 - [ ] **FIRE-02**: Firestore CRUD helpers support reading and writing pages with draft/published blocks
 - [ ] **FIRE-03**: Firebase Auth supports email/password sign-in and sign-out
 - [ ] **FIRE-04**: Firebase Storage upload helper supports file upload with progress tracking
@@ -116,7 +116,7 @@
 | PKG-02 | Phase 1 | Complete |
 | PKG-03 | Phase 1 | Complete |
 | PKG-04 | Phase 1 | Complete |
-| FIRE-01 | Phase 2 | Pending |
+| FIRE-01 | Phase 2 | Complete |
 | FIRE-02 | Phase 2 | Pending |
 | FIRE-03 | Phase 2 | Pending |
 | FIRE-04 | Phase 2 | Pending |

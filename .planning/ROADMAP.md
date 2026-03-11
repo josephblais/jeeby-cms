@@ -32,7 +32,7 @@ Plans:
 
 **Requirements:** FIRE-01, FIRE-02, FIRE-03, FIRE-04
 
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — Wave 0: Test stubs for all Firebase helper modules
@@ -173,8 +173,7 @@ Plans:
 | Phase | Requirements | Count |
 |-------|-------------|-------|
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 |
-| 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
-| 3 | FRONT-01–10 | 10 |
+| 2 | 2/5 | In Progress|  | 3 | FRONT-01–10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
 | 5 | PAGE-01–06 | 6 |
 | 6 | EDIT-01–06 | 6 |
