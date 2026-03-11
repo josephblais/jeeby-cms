@@ -2,8 +2,9 @@
 // NOTE: No "use client" directive here. TSUP's banner option injects it at the top of
 // dist/index.mjs and dist/index.js. Adding it here AND the banner would duplicate it.
 
-import React, { createContext, useContext, useMemo } from 'react'
+import React, { createContext, useContext, useMemo, useState, useEffect } from 'react'
 import { initFirebase } from './firebase/init.js'
+import { signIn as _signIn, signOut as _signOut, subscribeToAuthState } from './firebase/auth.js'
 
 const CMSContext = createContext(null)
 
@@ -23,6 +24,30 @@ export function useCMSFirebase() {
   const ctx = useContext(CMSContext)
   if (!ctx) throw new Error('useCMSFirebase must be used inside <CMSProvider>')
   return ctx
+}
+
+export function useAuth() {
+  const { auth } = useCMSFirebase()
+  const [user, setUser] = useState(undefined) // undefined = loading; null = signed out; User = signed in
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // subscribeToAuthState returns an unsubscribe function — return it for cleanup.
+    // This prevents the onAuthStateChanged listener from leaking on unmount or
+    // during React Strict Mode double-invoke cycles.
+    const unsubscribe = subscribeToAuthState(auth, (u) => {
+      setUser(u)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [auth])
+
+  return {
+    user,
+    loading,
+    signIn: (email, password) => _signIn(auth, email, password),
+    signOut: () => _signOut(auth),
+  }
 }
 
 // Phase 3 will implement these stubs:
