@@ -21,7 +21,7 @@ export default defineConfig([
     format: ['esm', 'cjs'],
     splitting: true,
     treeshake: true,
-    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion'],
+    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', /^firebase-admin/],
     outExtension({ format }) {
       return { js: format === 'esm' ? '.mjs' : '.js' }
     },

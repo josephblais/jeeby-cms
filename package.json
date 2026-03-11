@@ -33,12 +33,19 @@
   },
   "peerDependencies": {
     "firebase": ">=10",
+    "firebase-admin": ">=12",
     "framer-motion": ">=11",
     "next": ">=14",
     "react": ">=18",
     "react-dom": ">=18"
   },
+  "peerDependenciesMeta": {
+    "firebase-admin": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "firebase-admin": ">=12",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }
