@@ -78,11 +78,5 @@ export function useCMSContent(slug) {
   return { data, loading, error }
 }
 
-// Phase 5 will replace these stubs with real implementations from src/blocks/index.js.
-export function Blocks() {
-  return null
-}
-
-export function Block() {
-  return null
-}
+// Block components — implemented in src/blocks/
+export { Blocks, Block } from './blocks/index.js'
