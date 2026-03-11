@@ -1,7 +1,17 @@
-import { test } from 'node:test'
+import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+
+// Mock isomorphic-dompurify before importing index.js.
+// index.js statically imports RichText.js → isomorphic-dompurify, which has a
+// transitive CJS/ESM conflict (html-encoding-sniffer + @exodus/bytes) in Node 22.
+// This mock matches the same contract used in RichText.test.js.
+mock.module('isomorphic-dompurify', {
+  defaultExport: {
+    sanitize(html) { return html ?? '' },
+  },
+})
 
 let Blocks, Block
 try {

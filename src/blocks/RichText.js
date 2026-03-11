@@ -10,6 +10,11 @@
 //   ADD_ATTR includes aria-* attributes so accessible authored HTML is preserved.
 //   DOMPurify preserves alt attributes on <img> by default.
 
+// NOTE: Written with React.createElement (not JSX) so this file can be imported directly by
+// the Node.js test runner without a JSX transform. TSUP compiles it with JSX enabled anyway,
+// so the dist output is correct.
+
+import { createElement } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 
 const DOMPURIFY_CONFIG = {
@@ -22,5 +27,5 @@ export function RichText({ data, className }) {
   const clean = DOMPurify.sanitize(data?.html ?? '', DOMPURIFY_CONFIG)
   // Use a div wrapper because rich text can contain block-level elements (p, ul, h2, etc.).
   // A <p> wrapper would be invalid HTML if the sanitized content includes block elements.
-  return <div className={className} dangerouslySetInnerHTML={{ __html: clean }} />
+  return createElement('div', { className, dangerouslySetInnerHTML: { __html: clean } })
 }
