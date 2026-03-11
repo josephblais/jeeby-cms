@@ -35,17 +35,28 @@
     "firebase": ">=10",
     "firebase-admin": ">=12",
     "framer-motion": ">=11",
+    "isomorphic-dompurify": "^3.1.0",
     "next": ">=14",
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "video.js": "^8.23.7"
   },
   "peerDependenciesMeta": {
     "firebase-admin": {
+      "optional": true
+    },
+    "isomorphic-dompurify": {
+      "optional": true
+    },
+    "video.js": {
       "optional": true
     }
   },
   "devDependencies": {
     "firebase-admin": ">=12",
+    "isomorphic-dompurify": "^3.1.0",
+    "react": ">=18",
+    "react-dom": ">=18",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }

@@ -9,8 +9,13 @@ export default defineConfig([
     splitting: false,
     treeshake: true,
     clean: true,
-    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion'],
+    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', 'isomorphic-dompurify', 'video.js'],
     banner: { js: '"use client";' },
+    loader: { '.js': 'jsx' },
+    esbuildOptions(options) {
+      options.jsx = 'automatic'
+      options.jsxImportSource = 'react'
+    },
     outExtension({ format }) {
       return { js: format === 'esm' ? '.mjs' : '.js' }
     },
@@ -22,6 +27,11 @@ export default defineConfig([
     splitting: true,
     treeshake: true,
     external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', /^firebase-admin/],
+    loader: { '.js': 'jsx' },
+    esbuildOptions(options) {
+      options.jsx = 'automatic'
+      options.jsxImportSource = 'react'
+    },
     outExtension({ format }) {
       return { js: format === 'esm' ? '.mjs' : '.js' }
     },
@@ -32,7 +42,7 @@ export default defineConfig([
     format: ['esm', 'cjs'],
     splitting: false,
     treeshake: true,
-    external: ['firebase'],
+    external: ['firebase', /^firebase-admin/],
     outExtension({ format }) {
       return { js: format === 'esm' ? '.mjs' : '.js' }
     },
