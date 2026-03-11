@@ -21,16 +21,16 @@
 
 ### Front-End Block System
 
-- [ ] **FRONT-01**: `getCMSContent(slug)` fetches published page content for use in Server Components
-- [ ] **FRONT-02**: `useCMSContent(slug)` provides real-time Firestore listener for Client Components
-- [ ] **FRONT-03**: `<Blocks>` component renders an array of block objects into the correct block components
-- [ ] **FRONT-04**: `<Block>` wrapper applies max-width, vertical spacing, and optional anchor id via CSS custom properties
-- [ ] **FRONT-05**: `<Title>` block renders text with configurable heading level (h1–h6)
-- [ ] **FRONT-06**: `<Paragraph>` block renders plain text
-- [ ] **FRONT-07**: `<RichText>` block renders sanitized HTML
-- [ ] **FRONT-08**: `<Image>` block renders an image from Firebase Storage URL or external URL with alt and caption
-- [ ] **FRONT-09**: `<Video>` block renders an embedded iframe (YouTube, Vimeo, Loom) or a Firebase Storage video
-- [ ] **FRONT-10**: `<Gallery>` block renders a collection of images in grid or masonry layout
+- [x] **FRONT-01**: `getCMSContent(slug)` fetches published page content for use in Server Components
+- [x] **FRONT-02**: `useCMSContent(slug)` provides real-time Firestore listener for Client Components
+- [x] **FRONT-03**: `<Blocks>` component renders an array of block objects into the correct block components
+- [x] **FRONT-04**: `<Block>` wrapper applies max-width, vertical spacing, and optional anchor id via CSS custom properties
+- [x] **FRONT-05**: `<Title>` block renders text with configurable heading level (h1–h6)
+- [x] **FRONT-06**: `<Paragraph>` block renders plain text
+- [x] **FRONT-07**: `<RichText>` block renders sanitized HTML
+- [x] **FRONT-08**: `<Image>` block renders an image from Firebase Storage URL or external URL with alt and caption
+- [x] **FRONT-09**: `<Video>` block renders an embedded iframe (YouTube, Vimeo, Loom) or a Firebase Storage video
+- [x] **FRONT-10**: `<Gallery>` block renders a collection of images in grid or masonry layout
 
 ### Admin Auth
 
@@ -120,16 +120,16 @@
 | FIRE-02 | Phase 2 | Pending |
 | FIRE-03 | Phase 2 | Pending |
 | FIRE-04 | Phase 2 | Pending |
-| FRONT-01 | Phase 3 | Pending |
-| FRONT-02 | Phase 3 | Pending |
-| FRONT-03 | Phase 3 | Pending |
-| FRONT-04 | Phase 3 | Pending |
-| FRONT-05 | Phase 3 | Pending |
-| FRONT-06 | Phase 3 | Pending |
-| FRONT-07 | Phase 3 | Pending |
-| FRONT-08 | Phase 3 | Pending |
-| FRONT-09 | Phase 3 | Pending |
-| FRONT-10 | Phase 3 | Pending |
+| FRONT-01 | Phase 3 | Complete |
+| FRONT-02 | Phase 3 | Complete |
+| FRONT-03 | Phase 3 | Complete |
+| FRONT-04 | Phase 3 | Complete |
+| FRONT-05 | Phase 3 | Complete |
+| FRONT-06 | Phase 3 | Complete |
+| FRONT-07 | Phase 3 | Complete |
+| FRONT-08 | Phase 3 | Complete |
+| FRONT-09 | Phase 3 | Complete |
+| FRONT-10 | Phase 3 | Complete |
 | AUTH-01 | Phase 4 | Pending |
 | AUTH-02 | Phase 4 | Pending |
 | AUTH-03 | Phase 4 | Pending |

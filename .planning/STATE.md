@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-11T01:28:35.515Z"
+last_updated: "2026-03-11T06:06:27.756Z"
 progress:
   total_phases: 10
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 13
+  completed_plans: 9
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 2 — Firebase Layer (Plan 03: next up)
-**Last completed:** Phase 2, Plan 01 — Wave 0 Firebase test stubs (2026-03-11)
+**Current focus:** Phase 3 — Front-End Block System (Plan 02: next up)
+**Last completed:** Phase 3, Plan 01 — JSX transform + 9 test stubs (2026-03-11)
 
 ## Phase Status
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 |-------|------|--------|-------|
 | 1 | Package Scaffolding | ● Complete | 3/3 complete |
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
-| 3 | Front-End Block System | ○ Pending | — |
+| 3 | Front-End Block System | ◑ In Progress | 1/? complete |
 | 4 | Admin Auth | ○ Pending | — |
 | 5 | Page Manager | ○ Pending | — |
 | 6 | Block Editor | ○ Pending | — |
@@ -54,6 +54,9 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | React.createElement in src/index.js | 2 | No JSX transform configured in TSUP for plain JS |
 | useCMSFirebase is internal hook | 2 | useCMSContent (Phase 3) is the public API; Firebase instances not re-exported |
 | mock.module needs --experimental flag | 2 | Node 22 requires --experimental-test-module-mocks for mock.module API |
+| loader: { '.js': 'jsx' } in tsup required | 3 | Without it esbuild treats .js as plain JS and rejects JSX syntax |
+| Server test stub runtime probe | 3 | Phase 2 getCMSContent placeholder exports function name but always returns null — probe detects real vs stub |
+| isomorphic-dompurify and video.js as optional peer deps | 3 | Consumers who don't use RichText or Video blocks don't need them |
 | CSS custom properties | 8 | Theme-agnostic theming |
 | JavaScript (not TypeScript) | — | Faster v1 iteration |
 
