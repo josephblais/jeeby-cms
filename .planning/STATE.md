@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-11T06:24:00.000Z"
+last_updated: "2026-03-11T06:25:53.647Z"
 progress:
   total_phases: 10
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 13
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 3 — Front-End Block System (Plan 05: next up)
-**Last completed:** Phase 3, Plan 04 — Image, Video, Gallery media blocks with WCAG accessibility (2026-03-11)
+**Current focus:** Phase 4 — Admin Auth (next up)
+**Last completed:** Phase 3, Plan 05 — Block system assembled: BLOCK_REGISTRY, Blocks/Block renderer, src/index.js wired (2026-03-11)
 
 ## Phase Status
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 |-------|------|--------|-------|
 | 1 | Package Scaffolding | ● Complete | 3/3 complete |
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
-| 3 | Front-End Block System | ◑ In Progress | 4/5 complete |
+| 3 | Front-End Block System | ● Complete | 5/5 complete |
 | 4 | Admin Auth | ○ Pending | — |
 | 5 | Page Manager | ○ Pending | — |
 | 6 | Block Editor | ○ Pending | — |
@@ -66,6 +66,10 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | alt="" empty string (never omit alt) | 3 | WCAG 1.1.1: omitting alt causes screen readers to announce filename; empty string signals decorative |
 | aria-label="Gallery" on ul (no heading precedes) | 3 | WCAG 1.3.1: no visible heading in Phase 3 static rendering; aria-label provides accessible context |
 | toEmbedUrl exported from Video.js | 3 | Enables independent unit testing of URL parsing logic and consumer reuse |
+| BLOCK_REGISTRY type strings are lowercase | 3 | Phase 6 must use exact strings: 'title', 'paragraph', 'richtext', 'image', 'video', 'gallery' |
+| jeeby-cms-block class structure only in Phase 3 | 3 | CSS custom property values deferred to Phase 8 — Phase 3 delivers class hook + id passthrough only |
+| mock.module for isomorphic-dompurify in index.test.js | 3 | Transitive CJS/ESM conflict (html-encoding-sniffer + @exodus/bytes) causes ERR_REQUIRE_ESM in Node 22; mock resolves it |
+| components prop on Blocks merges custom registry | 3 | { ...BLOCK_REGISTRY, ...components } enables v1 extensibility without breaking API change in v2 |
 
 ---
 *Initialized: 2026-03-10*
