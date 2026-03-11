@@ -2,7 +2,8 @@
 // NOTE: No "use client" directive here. TSUP's banner option injects it at the top of
 // dist/index.mjs and dist/index.js. Adding it here AND the banner would duplicate it.
 
-import React, { createContext, useContext, useMemo, useState, useEffect } from 'react'
+import { createContext, useContext, useMemo, useState, useEffect } from 'react'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { initFirebase } from './firebase/init.js'
 import { signIn as _signIn, signOut as _signOut, subscribeToAuthState } from './firebase/auth.js'
 
@@ -13,11 +14,7 @@ export function CMSProvider({ firebaseConfig, children }) {
   // initFirebase itself is idempotent via getApps() guard, but useMemo avoids
   // the overhead of calling getFirestore/getAuth/getStorage on every render.
   const firebase = useMemo(() => initFirebase(firebaseConfig), [firebaseConfig])
-  return React.createElement(
-    CMSContext.Provider,
-    { value: firebase },
-    children
-  )
+  return <CMSContext.Provider value={firebase}>{children}</CMSContext.Provider>
 }
 
 export function useCMSFirebase() {
@@ -50,15 +47,42 @@ export function useAuth() {
   }
 }
 
-// Phase 3 will implement these stubs:
+export function useCMSContent(slug) {
+  const { db } = useCMSFirebase()
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!slug || !db) return
+    setLoading(true)
+    const ref = doc(db, 'cms', 'pages', slug)
+    // onSnapshot returns the unsubscribe function directly.
+    // Return it from useEffect for automatic cleanup on unmount or slug change.
+    // Client SDK: snap.exists() is a METHOD (with parentheses) — opposite of Admin SDK.
+    const unsubscribe = onSnapshot(
+      ref,
+      (snap) => {
+        setLoading(false)
+        // Only expose published data — never draft. null if page missing.
+        setData(snap.exists() ? (snap.data()?.published ?? null) : null)
+      },
+      (err) => {
+        setError(err)
+        setLoading(false)
+      }
+    )
+    return unsubscribe  // React useEffect cleanup: calls unsubscribe() on unmount
+  }, [db, slug])
+
+  return { data, loading, error }
+}
+
+// Phase 5 will replace these stubs with real implementations from src/blocks/index.js.
 export function Blocks() {
   return null
 }
 
 export function Block() {
-  return null
-}
-
-export function useCMSContent() {
   return null
 }
