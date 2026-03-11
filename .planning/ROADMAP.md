@@ -32,6 +32,15 @@ Plans:
 
 **Requirements:** FIRE-01, FIRE-02, FIRE-03, FIRE-04
 
+**Plans:** 5 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Wave 0: Test stubs for all Firebase helper modules
+- [ ] 02-02-PLAN.md — Firebase init (src/firebase/init.js) + CMSProvider upgrade with React context
+- [ ] 02-03-PLAN.md — Firestore CRUD helpers (src/firebase/firestore.js)
+- [ ] 02-04-PLAN.md — Auth helpers (src/firebase/auth.js) + useAuth hook in src/index.js
+- [ ] 02-05-PLAN.md — Storage helpers (src/firebase/storage.js) + withCMSAuth middleware + firebase-admin wiring
+
 **Success Criteria:**
 1. `CMSProvider` can initialize Firebase without errors when passed a valid config, and does not double-initialize if Firebase is already running
 2. Firestore helpers can create, read, update, and delete a page document with draft/published structure
@@ -163,7 +172,8 @@ Plans:
 
 | Phase | Requirements | Count |
 |-------|-------------|-------|
-| 1 | 2/3 | In Progress|  | 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
+| 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 |
+| 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
 | 3 | FRONT-01–10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
 | 5 | PAGE-01–06 | 6 |
@@ -177,3 +187,4 @@ Plans:
 ---
 *Roadmap created: 2026-03-10*
 *Phase 1 plans added: 2026-03-10*
+*Phase 2 plans added: 2026-03-10*
