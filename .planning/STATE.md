@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-11T06:06:27.756Z"
+last_updated: "2026-03-11T06:10:28.698Z"
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 13
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 3 — Front-End Block System (Plan 02: next up)
-**Last completed:** Phase 3, Plan 01 — JSX transform + 9 test stubs (2026-03-11)
+**Current focus:** Phase 3 — Front-End Block System (Plan 03: next up)
+**Last completed:** Phase 3, Plan 02 — getCMSContent + useCMSContent + JSX CMSProvider (2026-03-11)
 
 ## Phase Status
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 |-------|------|--------|-------|
 | 1 | Package Scaffolding | ● Complete | 3/3 complete |
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
-| 3 | Front-End Block System | ◑ In Progress | 1/? complete |
+| 3 | Front-End Block System | ◑ In Progress | 2/? complete |
 | 4 | Admin Auth | ○ Pending | — |
 | 5 | Page Manager | ○ Pending | — |
 | 6 | Block Editor | ○ Pending | — |
@@ -52,6 +52,9 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Firestore doc-per-page | 2 | Simple; 1MB limit acceptable |
 | No setPersistence() call | 2 | Firebase defaults to LOCAL persistence; calling it can wipe state (sdk#9319) |
 | React.createElement in src/index.js | 2 | No JSX transform configured in TSUP for plain JS |
+| Admin SDK snap.exists is boolean property | 3 | snap.exists() returns truthy function ref (always true) — must use if (!snap.exists) |
+| Published-only data exposure | 3 | getCMSContent and useCMSContent both return published sub-object only — draft never sent to front end |
+| CMSProvider converted to JSX | 3 | React.createElement removed after TSUP JSX loader configured in Plan 01 |
 | useCMSFirebase is internal hook | 2 | useCMSContent (Phase 3) is the public API; Firebase instances not re-exported |
 | mock.module needs --experimental flag | 2 | Node 22 requires --experimental-test-module-mocks for mock.module API |
 | loader: { '.js': 'jsx' } in tsup required | 3 | Without it esbuild treats .js as plain JS and rejects JSX syntax |

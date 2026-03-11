@@ -55,7 +55,7 @@ Plans:
 
 **Requirements:** FRONT-01, FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10
 
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 
 Plans:
 - [ ] 03-01-PLAN.md — Wave 1: JSX transform + all test stubs (build infra + Nyquist scaffolding)
@@ -183,7 +183,7 @@ Plans:
 |-------|-------------|-------|
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 |
 | 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
-| 3 | 1/5 | In Progress|  | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
+| 3 | 2/5 | In Progress|  | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
 | 5 | PAGE-01–06 | 6 |
 | 6 | EDIT-01–06 | 6 |
 | 7 | PUB-01, PUB-02, PUB-03 | 3 |
