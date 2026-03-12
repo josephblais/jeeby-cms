@@ -6,7 +6,7 @@ import { getAdminFirestore } from '../firebase/admin.js'
 
 export async function getCMSContent(slug) {
   const db = getAdminFirestore()
-  const snap = await db.doc('cms/pages/' + slug).get()
+  const snap = await db.doc('content/pages/' + slug).get()
   // CRITICAL: Admin SDK snap.exists is a boolean PROPERTY, not a method.
   // snap.exists() would return a truthy function ref (always true) — do not add ().
   if (!snap.exists) return null
