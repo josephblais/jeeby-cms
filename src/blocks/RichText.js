@@ -16,7 +16,8 @@
 // so the dist output is correct.
 
 import { createElement } from 'react'
-import DOMPurify from 'dompurify'
+import * as DOMPurifyModule from 'dompurify'
+const DOMPurify = DOMPurifyModule.default ?? DOMPurifyModule
 
 const DOMPURIFY_CONFIG = {
   // Preserve ARIA attributes so admin-authored HTML stays accessible.
