@@ -29,11 +29,15 @@ const DOMPURIFY_CONFIG = {
 
 // Server-side sanitization fallback used during SSR when DOMPurify is unavailable.
 // Strips the highest-risk vectors: script blocks, inline event handlers, javascript: hrefs.
-// Not as thorough as DOMPurify but prevents execution of injected scripts in SSR HTML.
+// Not as thorough as DOMPurify but prevents script execution in SSR HTML before hydration.
+//
+// TODO: The right fix is sanitizing RichText HTML on admin input before writing to Firestore,
+// so untrusted HTML never reaches the renderer at all. This fallback is a defense-in-depth
+// measure, not a substitute for input sanitization in the admin.
 function stripDangerous(html) {
   if (!html) return ''
   return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
     .replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href=""')
 }
