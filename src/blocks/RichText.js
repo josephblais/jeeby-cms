@@ -44,7 +44,10 @@ function stripDangerous(html) {
 
 export function RichText({ data, className }) {
   const raw = data?.html ?? ''
-  const clean = typeof DOMPurify?.sanitize === 'function'
+  // typeof window is the correct SSR guard — dompurify partially initializes on the server
+  // and exports a sanitize stub that returns input unchanged (no DOM = no sanitization).
+  // Checking for the function alone returns true on the server, bypassing stripDangerous.
+  const clean = typeof window !== 'undefined' && typeof DOMPurify?.sanitize === 'function'
     ? DOMPurify.sanitize(raw, DOMPURIFY_CONFIG)
     : stripDangerous(raw)
   // Use a div wrapper because rich text can contain block-level elements (p, ul, h2, etc.).
