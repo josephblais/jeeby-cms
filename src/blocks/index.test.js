@@ -45,3 +45,14 @@ test('Block merges custom className with jeeby-cms-block', { skip: !Block }, () 
   assert.ok(html.includes('jeeby-cms-block'))
   assert.ok(html.includes('custom'))
 })
+test('Blocks applies className to outer container div', { skip: !Blocks }, () => {
+  const data = { blocks: [{ type: 'paragraph', data: { text: 'hi' } }] }
+  const html = renderToStaticMarkup(createElement(Blocks, { data, className: 'my-container' }))
+  assert.ok(html.includes('my-container'), `Got: ${html}`)
+})
+test('Blocks applies blockClassName to each block wrapper', { skip: !Blocks }, () => {
+  const data = { blocks: [{ type: 'paragraph', data: { text: 'hi' } }] }
+  const html = renderToStaticMarkup(createElement(Blocks, { data, blockClassName: 'my-block' }))
+  assert.ok(html.includes('jeeby-cms-block'), `Got: ${html}`)
+  assert.ok(html.includes('my-block'), `Got: ${html}`)
+})

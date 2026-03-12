@@ -9,7 +9,7 @@
 // This is the v1 extensibility hook for CBLK-01 (custom block registration) in v2 —
 // designed so custom blocks don't require a breaking API change.
 
-import { createElement, Fragment } from 'react'
+import { createElement } from 'react'
 import { Title } from './Title.js'
 import { Paragraph } from './Paragraph.js'
 import { RichText } from './RichText.js'
@@ -44,14 +44,16 @@ export function Block({ id, className, children }) {
 // Blocks renderer — maps an array of block objects to their components.
 // data: the full page document { blocks: [...], ... } returned by getCMSContent or useCMSContent.
 // components: optional object { customType: CustomComponent } merged with BLOCK_REGISTRY.
-export function Blocks({ data, components, className }) {
+// className: applied to the outer container div (for layout/spacing control).
+// blockClassName: applied to each individual Block wrapper div alongside jeeby-cms-block.
+export function Blocks({ data, components, className, blockClassName }) {
   if (!data?.blocks?.length) return null
 
   const registry = components ? { ...BLOCK_REGISTRY, ...components } : BLOCK_REGISTRY
 
   return createElement(
-    Fragment,
-    null,
+    'div',
+    { className },
     ...data.blocks.map((block, i) => {
       const Component = registry[block.type]
       // Silently skip unknown block types — do not throw, do not render anything.
@@ -59,7 +61,7 @@ export function Blocks({ data, components, className }) {
       if (!Component) return null
       return createElement(
         Block,
-        { key: block.id ?? i, id: block.id, className },
+        { key: block.id ?? i, id: block.id, className: blockClassName },
         createElement(Component, { data: block.data })
       )
     })

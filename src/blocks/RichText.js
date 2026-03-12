@@ -26,7 +26,14 @@ const DOMPURIFY_CONFIG = {
 }
 
 export function RichText({ data, className }) {
-  const clean = DOMPurify.sanitize(data?.html ?? '', DOMPURIFY_CONFIG)
+  // Guard for SSR: Next.js renders "use client" components on the server where there is no
+  // DOM, so DOMPurify is not initialized and .sanitize is not a function. Skip sanitization
+  // server-side — content comes from admin-controlled Firestore and scripts don't execute
+  // in static HTML. DOMPurify runs normally on the client where it matters.
+  const raw = data?.html ?? ''
+  const clean = typeof DOMPurify?.sanitize === 'function'
+    ? DOMPurify.sanitize(raw, DOMPURIFY_CONFIG)
+    : raw
   // Use a div wrapper because rich text can contain block-level elements (p, ul, h2, etc.).
   // A <p> wrapper would be invalid HTML if the sanitized content includes block elements.
   return createElement('div', { className, dangerouslySetInnerHTML: { __html: clean } })
