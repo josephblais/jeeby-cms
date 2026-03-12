@@ -56,7 +56,7 @@ export function useCMSContent(slug) {
   useEffect(() => {
     if (!slug || !db) return
     setLoading(true)
-    const ref = doc(db, 'content', 'pages', slug)
+    const ref = doc(db, 'pages', slug)
     // onSnapshot returns the unsubscribe function directly.
     // Return it from useEffect for automatic cleanup on unmount or slug change.
     // Client SDK: snap.exists() is a METHOD (with parentheses) — opposite of Admin SDK.
