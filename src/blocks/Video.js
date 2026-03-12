@@ -93,7 +93,7 @@ function VideoJSPlayer({ url, title }) {
 // --- Main Video Component ---
 
 export function Video({ data, className }) {
-  const src = data?.src
+  const src = data?.url ?? data?.src
   const titleText = data?.title || 'Embedded video'
 
   if (!src) return null
