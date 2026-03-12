@@ -2,10 +2,12 @@
 // ACCESSIBILITY: WCAG 1.1.1 (preserve alt on images), 1.3.1 (preserve semantic structure),
 // 4.1.1 (valid HTML after sanitization)
 //
-// dompurify is a peer dependency (browser-only).
-// This package is "use client" — RichText never runs on the server, so the browser-only
-// dompurify package is correct. isomorphic-dompurify was replaced because its jsdom
-// dependency has an ESM/CJS conflict in Node 22 that breaks Next.js server-side imports.
+// Sanitization strategy:
+//   Browser (client): DOMPurify (peer dep) — full, spec-compliant sanitization.
+//   Server (SSR): stripDangerous() — regex strip of <script>, event handlers, javascript: hrefs.
+//     SSR fallback is needed because Next.js SSR renders "use client" components on the server
+//     where there is no DOM and DOMPurify cannot initialize. We cannot skip SSR sanitization —
+//     script tags in SSR HTML execute in the browser before React hydrates.
 //
 // DOMPurify configuration:
 //   ADD_ATTR includes aria-* attributes so accessible authored HTML is preserved.
@@ -25,15 +27,22 @@ const DOMPURIFY_CONFIG = {
   ADD_ATTR: ['aria-label', 'aria-describedby', 'aria-labelledby', 'role', 'tabindex'],
 }
 
+// Server-side sanitization fallback used during SSR when DOMPurify is unavailable.
+// Strips the highest-risk vectors: script blocks, inline event handlers, javascript: hrefs.
+// Not as thorough as DOMPurify but prevents execution of injected scripts in SSR HTML.
+function stripDangerous(html) {
+  if (!html) return ''
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+    .replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href=""')
+}
+
 export function RichText({ data, className }) {
-  // Guard for SSR: Next.js renders "use client" components on the server where there is no
-  // DOM, so DOMPurify is not initialized and .sanitize is not a function. Skip sanitization
-  // server-side — content comes from admin-controlled Firestore and scripts don't execute
-  // in static HTML. DOMPurify runs normally on the client where it matters.
   const raw = data?.html ?? ''
   const clean = typeof DOMPurify?.sanitize === 'function'
     ? DOMPurify.sanitize(raw, DOMPURIFY_CONFIG)
-    : raw
+    : stripDangerous(raw)
   // Use a div wrapper because rich text can contain block-level elements (p, ul, h2, etc.).
   // A <p> wrapper would be invalid HTML if the sanitized content includes block elements.
   return createElement('div', { className, dangerouslySetInnerHTML: { __html: clean } })
