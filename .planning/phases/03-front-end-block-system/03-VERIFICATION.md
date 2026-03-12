@@ -1,106 +1,116 @@
 ---
 phase: 03-front-end-block-system
-verified: 2026-03-11T07:30:00Z
+verified: 2026-03-11T08:00:00Z
 status: passed
-score: 5/5 must-haves verified
-re_verification: false
+score: 3/3 gap-closure must-haves verified
+re_verification:
+  previous_status: passed
+  previous_score: 5/5
+  gaps_closed:
+    - "DOMPurify.sanitize() works without error in Next.js App Router (browser environment)"
+    - "className prop passed to <Blocks> is appended to the jeeby-cms-block wrapper div on every block"
+    - "Video block renders iframe or video element when callers pass data.url"
+  gaps_remaining: []
+  regressions: []
 ---
 
-# Phase 3: Front-End Block System Verification Report
+# Phase 3: Front-End Block System Verification Report (Re-verification)
 
 **Phase Goal:** A consumer can fetch published CMS content and render all supported block types on a Next.js page using server or client rendering.
-**Verified:** 2026-03-11T07:30:00Z
+**Verified:** 2026-03-11T08:00:00Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after gap closure plan 03-06
 
 ---
 
-## Goal Achievement
+## Re-verification Scope
 
-### Observable Truths
-
-| #  | Truth | Status | Evidence |
-|----|-------|--------|----------|
-| 1 | `getCMSContent('about')` returns published blocks for a page from Firestore | VERIFIED | `src/server/index.js` queries `db.doc('cms/pages/' + slug).get()`, returns `pageData?.published ?? null`; 3 tests pass including null-return and published-return cases |
-| 2 | `<Blocks data={content} />` renders each block type without errors given valid block data | VERIFIED | `src/blocks/index.js` BLOCK_REGISTRY maps all 6 types; `Blocks` maps block array to `Block`-wrapped components; 6 index tests pass |
-| 3 | `<Block>` applies `jeeby-cms-block` class; accepts `id` and `className` props | VERIFIED | `src/blocks/index.js` Block function: `className: ['jeeby-cms-block', className].filter(Boolean).join(' ')` and `id` passed through; 3 Block tests pass |
-| 4 | All 6 block types (Title, Paragraph, RichText, Image, Video, Gallery) render their content | VERIFIED | All 6 component files exist with full implementations; 64 tests pass (0 skips, 0 failures) covering heading levels, p-tag, HTML sanitization, alt text, iframe title, ul/li gallery |
-| 5 | `useCMSContent(slug)` sets up real-time Firestore listener returning `{ data, loading, error }` | VERIFIED | `src/index.js` exports `useCMSContent` using `onSnapshot`, reading `published` sub-object only; hook shape verified by index.test.js |
-
-**Score:** 5/5 truths verified
+This is a targeted re-verification after plan 03-06 closed three UAT-diagnosed bugs. The initial
+verification (pre-gap-closure) passed all 5 original must-haves. This report focuses on the three
+new must-haves from the 03-06-PLAN.md frontmatter, plus a regression check on the full test suite.
 
 ---
 
-### Required Artifacts
+## Gap Closure Verification
+
+### Observable Truths (03-06 must-haves)
+
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 1 | DOMPurify.sanitize() works without error in Next.js App Router (browser environment) | VERIFIED | `src/blocks/RichText.js` line 19: `import * as DOMPurifyModule from 'dompurify'`; line 20: `const DOMPurify = DOMPurifyModule.default ?? DOMPurifyModule` — namespace import with defensive resolution bypasses TSUP double-.default CJS interop chain |
+| 2 | className prop passed to `<Blocks>` is appended to the jeeby-cms-block wrapper div on every block | VERIFIED | `src/blocks/index.js` line 47: `export function Blocks({ data, components, className })`; line 62: `{ key: block.id ?? i, id: block.id, className }` passed to Block — Block's existing join logic `['jeeby-cms-block', className].filter(Boolean).join(' ')` receives the value |
+| 3 | Video block renders iframe or video element when callers pass data.url | VERIFIED | `src/blocks/Video.js` line 96: `const src = data?.url ?? data?.src` — `data.url` is now read first; `data.src` fallback preserves backwards compat; guard `if (!src) return null` on line 99 no longer triggers on `data.url` callers |
+
+**Score:** 3/3 gap-closure truths verified
+
+---
+
+### Required Artifacts (03-06)
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/server/index.js` | `getCMSContent(slug)` — async fn returning published data or null | VERIFIED | Full implementation; uses `getAdminFirestore()`; snap.exists (property, not method) |
-| `src/firebase/admin.js` | Exports `getAdminFirestore()` alongside `getAdminAuth()` | VERIFIED | Both exports present; `getFirestore(getAdminApp())` pattern |
-| `src/index.js` | `useCMSContent` hook + re-exports `Blocks` and `Block` | VERIFIED | `onSnapshot` implementation present; `export { Blocks, Block } from './blocks/index.js'` |
-| `src/blocks/Title.js` | Named export `Title` — h2-h6 with h1 clamped to h2 | VERIFIED | `VALID_LEVELS`, `normalizeLevel`, `createElement` — 6 tests pass |
-| `src/blocks/Paragraph.js` | Named export `Paragraph` — wraps text in `<p>` | VERIFIED | `createElement('p', ...)` — 3 tests pass |
-| `src/blocks/RichText.js` | Named export `RichText` — sanitized HTML via isomorphic-dompurify | VERIFIED | `DOMPurify.sanitize` with `ADD_ATTR` for aria-* attributes — 6 tests pass |
-| `src/blocks/Image.js` | Named export `Image` — alt fallback, figure/figcaption | VERIFIED | `alt: data?.alt ?? ''`, caption triggers figure/figcaption — 5 tests pass |
-| `src/blocks/Video.js` | Named exports `Video` and `toEmbedUrl` — iframe with title, URL parsing | VERIFIED | YouTube/Vimeo/Loom regex parsing; `title={data?.title \|\| 'Embedded video'}` — 7 tests pass |
-| `src/blocks/Gallery.js` | Named export `Gallery` — `<ul>` with `aria-label="Gallery"`, per-item alt | VERIFIED | `aria-label="Gallery"`, `alt: item.alt ?? ''`, figcaption on caption — 6 tests pass |
-| `src/blocks/index.js` | Exports `Blocks`, `Block`, `BLOCK_REGISTRY` | VERIFIED | All 3 exported; BLOCK_REGISTRY maps all 6 type strings — 6 tests pass |
-| `tsup.config.js` | JSX transform on entries 1 and 2 | VERIFIED | `loader: { '.js': 'jsx' }` and `esbuildOptions({ jsx: 'automatic' })` on entries 1 and 2 |
+| `src/blocks/RichText.js` | Namespace import of dompurify with defensive .default resolution | VERIFIED | Lines 19-20 contain `import * as DOMPurifyModule` and `DOMPurifyModule.default ??` exactly as specified |
+| `src/blocks/index.js` | className in Blocks signature, forwarded to Block createElement call | VERIFIED | Line 47 destructures `className`; line 62 forwards it in the Block props object |
+| `src/blocks/Video.js` | Reads data?.url (with data?.src fallback for backwards compat) | VERIFIED | Line 96: `const src = data?.url ?? data?.src` |
 
 ---
 
-### Key Link Verification
+### Key Link Verification (03-06)
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `src/server/index.js getCMSContent` | `firebase-admin/firestore` | `getAdminFirestore() → db.doc(...).get()` | WIRED | Line 9: `db.doc('cms/pages/' + slug).get()` |
-| `getCMSContent` | `published` sub-object only | `pageData?.published ?? null` | WIRED | Line 15 returns published only, never draft |
-| `src/index.js useCMSContent` | `firebase/firestore onSnapshot` | `doc(db, 'cms', 'pages', slug) → onSnapshot` | WIRED | Line 63: `onSnapshot(ref, ...)` |
-| `useCMSContent snap callback` | `published` sub-object only | `snap.data()?.published ?? null` | WIRED | Line 68: `setData(snap.exists() ? snap.data()?.published ?? null : null)` |
-| `src/index.js Blocks/Block` | `src/blocks/index.js` | `export { Blocks, Block } from './blocks/index.js'` | WIRED | Line 82: exact re-export pattern from plan |
-| `Blocks component` | `BLOCK_REGISTRY` | `const registry = components ? { ...BLOCK_REGISTRY, ...components } : BLOCK_REGISTRY` | WIRED | Line 50 of blocks/index.js |
-| `Blocks map` | `Block wrapper` | `createElement(Block, { key, id }, createElement(Component, ...))` | WIRED | Lines 60-64 of blocks/index.js |
-| `Title component` | `VALID_LEVELS` constant | `l === 'h1' ? 'h2' : (VALID_LEVELS.includes(l) ? l : 'h3')` | WIRED | Line 18: normalizeLevel used in render |
-| `RichText component` | `isomorphic-dompurify` | `DOMPurify.sanitize(data?.html ?? '', DOMPURIFY_CONFIG)` | WIRED | Line 27 |
-| `Video component` | `toEmbedUrl()` | `const embedUrl = toEmbedUrl(src)` | WIRED | Line 134 of Video.js |
-| `Video iframe` | `title` attribute (WCAG 4.1.2) | `title={data?.title \|\| 'Embedded video'}` | WIRED | Line 97: `titleText = data?.title \|\| 'Embedded video'`; used on line 139 |
-| `Gallery ul` | `aria-label` (WCAG 1.3.1) | `'aria-label': 'Gallery'` | WIRED | Line 21 of Gallery.js |
+| `src/blocks/RichText.js` | `DOMPurify.sanitize()` | `const DOMPurify = DOMPurifyModule.default ?? DOMPurifyModule` | WIRED | `DOMPurifyModule.default` present on line 20; `DOMPurify.sanitize(...)` called on line 29 |
+| `src/blocks/index.js Blocks` | `src/blocks/index.js Block` | `className` forwarded in `createElement(Block, { key, id, className })` | WIRED | `className` present in props object on line 62; Block join on line 38 uses it |
+| `src/blocks/Video.js Video` | `toEmbedUrl()` | `const src = data?.url ?? data?.src` | WIRED | Line 96 reads `data?.url` first; `toEmbedUrl(src)` called later in the same function |
 
 ---
 
 ### Requirements Coverage
 
-| Requirement | Source Plan | Description | Status | Evidence |
-|-------------|-------------|-------------|--------|----------|
-| FRONT-01 | 03-01, 03-02 | `getCMSContent(slug)` fetches published page content for Server Components | SATISFIED | `src/server/index.js` implemented; 3 tests pass |
-| FRONT-02 | 03-01, 03-02 | `useCMSContent(slug)` real-time Firestore listener for Client Components | SATISFIED | `src/index.js` onSnapshot hook; exported and tested |
-| FRONT-03 | 03-01, 03-05 | `<Blocks>` renders array of block objects into correct components | SATISFIED | `src/blocks/index.js` Blocks renderer with BLOCK_REGISTRY; 6 tests pass |
-| FRONT-04 | 03-01, 03-05 | `<Block>` wrapper applies max-width/spacing via CSS custom props and optional anchor id | SATISFIED (Phase 3 scope) | `jeeby-cms-block` class + id passthrough delivered; CSS custom property values deferred to Phase 8 per plan |
-| FRONT-05 | 03-01, 03-03 | `<Title>` renders text with configurable heading level (h1–h6) | SATISFIED | Title.js with VALID_LEVELS, h1 clamped to h2; 6 tests pass |
-| FRONT-06 | 03-01, 03-03 | `<Paragraph>` renders plain text | SATISFIED | Paragraph.js wraps in `<p>`; 3 tests pass |
-| FRONT-07 | 03-01, 03-03 | `<RichText>` renders sanitized HTML | SATISFIED | RichText.js uses isomorphic-dompurify with ADD_ATTR; 6 tests pass |
-| FRONT-08 | 03-01, 03-04 | `<Image>` renders from Firebase Storage or external URL with alt and caption | SATISFIED | Image.js with alt fallback, figure/figcaption; 5 tests pass |
-| FRONT-09 | 03-01, 03-04 | `<Video>` renders embedded iframe (YouTube, Vimeo, Loom) or Firebase Storage video | SATISFIED | Video.js with toEmbedUrl regex parsing, iframe title; 7 tests pass |
-| FRONT-10 | 03-01, 03-04 | `<Gallery>` renders collection of images in grid or masonry layout | SATISFIED | Gallery.js with ul/li, aria-label, per-item alt; 6 tests pass |
+All 10 FRONT-* requirements remain satisfied from the initial verification. Plan 03-06 targeted
+FRONT-03, FRONT-04, FRONT-07, FRONT-09 specifically; all four retain their SATISFIED status after
+the bug fixes. No requirements regressed. No orphaned requirements.
 
-All 10 FRONT-* requirements satisfied. No orphaned requirements.
+| Requirement | Description | Status | Evidence |
+|-------------|-------------|--------|----------|
+| FRONT-01 | getCMSContent(slug) for Server Components | SATISFIED | src/server/index.js unchanged — no regression |
+| FRONT-02 | useCMSContent(slug) real-time listener | SATISFIED | src/index.js unchanged — no regression |
+| FRONT-03 | `<Blocks>` renders block array | SATISFIED | className forwarding fixed — now fully wired |
+| FRONT-04 | `<Block>` wrapper with class + id | SATISFIED | className received correctly from Blocks |
+| FRONT-05 | `<Title>` heading levels | SATISFIED | Title.js unchanged — no regression |
+| FRONT-06 | `<Paragraph>` plain text | SATISFIED | Paragraph.js unchanged — no regression |
+| FRONT-07 | `<RichText>` sanitized HTML | SATISFIED | Namespace import fixes ESM interop |
+| FRONT-08 | `<Image>` with alt and caption | SATISFIED | Image.js unchanged — no regression |
+| FRONT-09 | `<Video>` iframe or storage video | SATISFIED | data.url field now read correctly |
+| FRONT-10 | `<Gallery>` image collection | SATISFIED | Gallery.js unchanged — no regression |
+
+---
+
+### Regression Check
+
+- **Test suite:** 64 tests, 64 pass, 0 fail, 0 skip — exit code 0
+- All three individually patched files tested before and after full suite run per SUMMARY self-check
+- No test files were modified (per plan constraint)
+- Count matches pre-gap-closure baseline exactly
 
 ---
 
 ### Anti-Patterns Found
 
-No blocking anti-patterns found.
+No new anti-patterns introduced by plan 03-06.
 
-| File | Line | Pattern | Severity | Impact |
-|------|------|---------|----------|--------|
-| `dist/server.mjs` build warning | — | "getFirestore" imported from firebase-admin/firestore unused in dist/admin | Info | Rollup tree-shake warning only; no functional impact. admin.js imports getFirestore for getAdminFirestore() which is used in server/index.js (different entry). Bundler warning is expected cross-entry behavior. |
-| `dist/index.mjs` build warning | — | `"use client"` directive ignored by bundler | Info | Expected behavior — the post-build script re-injects it at file start. `dist/index.mjs` starts with `"use client";` as verified. |
+The three changes are minimal and targeted:
+- RichText.js: two-line import replacement
+- index.js: one prop added to signature, one prop added to createElement call
+- Video.js: one field read changed from `data?.src` to `data?.url ?? data?.src`
 
-All `return null` occurrences in source files are legitimate guard clauses (empty src, missing blocks array, unknown block type) — not stubs.
+No TODOs, FIXMEs, stubs, or empty implementations introduced.
 
 ---
 
 ### Human Verification Required
+
+Three items from the initial verification remain open (unchanged — these require live environment):
 
 #### 1. getCMSContent in real Next.js Server Component
 
@@ -110,7 +120,7 @@ All `return null` occurrences in source files are legitimate guard clauses (empt
 
 #### 2. useCMSContent real-time update
 
-**Test:** In a Next.js Client Component using `<CMSProvider>`, call `useCMSContent('some-slug')`. Update the `published.blocks` field in Firestore.
+**Test:** In a Next.js Client Component, call `useCMSContent('some-slug')`. Update the `published.blocks` field in Firestore.
 **Expected:** The rendered output updates without a page reload.
 **Why human:** Requires live Firebase client SDK with an authenticated Firestore connection.
 
@@ -118,18 +128,24 @@ All `return null` occurrences in source files are legitimate guard clauses (empt
 
 **Test:** Install `video.js` as a dependency in a consuming project. Render a `<Video>` block with a Firebase Storage URL.
 **Expected:** VideoJSPlayer renders with keyboard-accessible controls.
-**Why human:** VideoJSPlayer uses `useRef` and `useEffect` — cannot be verified with `renderToStaticMarkup`.
+**Why human:** VideoJSPlayer uses useRef and useEffect — cannot be verified with renderToStaticMarkup.
 
 ---
 
-### Build and Test Summary
+## Summary
 
-- **Test suite:** 64 tests, 64 pass, 0 fail, 0 skip — exit code 0
-- **Build:** `npm run build` exits 0; all 6 dist files produced (`dist/index.mjs`, `dist/index.js`, `dist/admin.mjs`, `dist/admin.js`, `dist/server.mjs`, `dist/server.js`) plus `dist/styles.css`
-- **"use client" banner:** Confirmed present at line 1 of `dist/index.mjs` and `dist/index.js`
-- **Notable deviation documented in summaries:** Block files use `createElement` (not JSX) so Node.js test runner can import them without a transform. TSUP still compiles with JSX enabled for the dist output.
+All three gaps from plan 03-06 are closed. The source code matches the plan exactly:
+
+1. `src/blocks/RichText.js` — namespace import with defensive `.default` resolution (lines 19-20)
+2. `src/blocks/index.js` — `className` destructured in `Blocks` signature and forwarded to `Block` (lines 47, 62)
+3. `src/blocks/Video.js` — `data?.url ?? data?.src` on line 96
+
+The full test suite passes 64/64. No regressions. All 10 FRONT-* requirements satisfied.
+
+Phase 3 goal is achieved: a consumer can fetch published CMS content and render all supported block
+types on a Next.js page using server or client rendering.
 
 ---
 
-_Verified: 2026-03-11T07:30:00Z_
+_Verified: 2026-03-11T08:00:00Z_
 _Verifier: Claude (gsd-verifier)_
