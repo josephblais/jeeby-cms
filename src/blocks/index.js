@@ -44,7 +44,7 @@ export function Block({ id, className, children }) {
 // Blocks renderer — maps an array of block objects to their components.
 // data: the full page document { blocks: [...], ... } returned by getCMSContent or useCMSContent.
 // components: optional object { customType: CustomComponent } merged with BLOCK_REGISTRY.
-export function Blocks({ data, components }) {
+export function Blocks({ data, components, className }) {
   if (!data?.blocks?.length) return null
 
   const registry = components ? { ...BLOCK_REGISTRY, ...components } : BLOCK_REGISTRY
@@ -59,7 +59,7 @@ export function Blocks({ data, components }) {
       if (!Component) return null
       return createElement(
         Block,
-        { key: block.id ?? i, id: block.id },
+        { key: block.id ?? i, id: block.id, className },
         createElement(Component, { data: block.data })
       )
     })
