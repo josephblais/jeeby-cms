@@ -14,13 +14,13 @@ updated: 2026-03-11T07:00:00Z
 
 ### 1. getCMSContent returns published content
 expected: In a Next.js Server Component, import getCMSContent from 'jeeby-cms/server' and call it with a slug that exists in Firestore. It should return the published blocks array (not draft data). For a slug that doesn't exist or has no published data, it should return null.
-result: skipped
-reason: Package not yet published; no Firestore instance set up
+result: pass
+note: Tested with real Firestore — title, paragraph, image blocks all rendered correctly in a Next.js App Router server component.
 
 ### 2. useCMSContent real-time updates
 expected: In a Next.js Client Component wrapped in CMSProvider, call useCMSContent(slug). It should return { data, loading, error }. When loading, data is null and loading is true. After the first Firestore read, data updates to the published content. When Firestore data changes, the rendered content updates in real-time without a page refresh.
-result: skipped
-reason: Needs Firebase — will test after Firebase setup
+result: pass
+note: Tested with live Firestore — paragraph text updated in Firestore console and rendered in the client component without a page refresh.
 
 ### 3. Blocks renders all 6 block types
 expected: Pass an array containing one block of each type (title, paragraph, richtext, image, video, gallery) to <Blocks data={blocks} />. Each block type renders its content without errors — no "unknown block type" warnings, no blank outputs for valid data.
@@ -73,39 +73,41 @@ skipped: 2
 - truth: "dompurify.sanitize() must work in Next.js App Router (browser environment)"
   status: failed
   reason: "User reported: Error: {imported module ./nodemodules/dompurify/dist/purify.es.mjs}.default.sanitize is not a function"
-  severity: blocker
-  test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
-
-- truth: "Each rendered block is wrapped in a div with class jeeby-cms-block"
-  status: failed
-  reason: "User reported: There doesn't appear to be a wrapper div"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "TSUP CJS interop wraps dompurify with _interopDefault, resulting in DOMPurify__default.default.sanitize being called on a namespace object. In Next.js/turbopack ESM interop .sanitize doesn't exist at that depth. Sanitization still works (non-fatal) but error should be fixed. Fix: use namespace import and resolve defensively: import * as DOMPurifyModule from 'dompurify'; const DOMPurify = DOMPurifyModule.default ?? DOMPurifyModule"
+  artifacts:
+    - path: "src/blocks/RichText.js"
+      issue: "Default import of dompurify produces fragile interop chain under TSUP CJS compilation + turbopack ESM"
+    - path: "dist/index.js"
+      issue: "Line 58: DOMPurify__default.default.sanitize(...) — double .default access"
+  missing:
+    - "Replace default import with namespace import and defensive resolution"
+  debug_session: ".planning/debug/dompurify-sanitize-not-a-function.md"
 
-- truth: "className prop is appended to the wrapper div alongside jeeby-cms-block"
+- truth: "className prop is appended to the jeeby-cms-block wrapper div"
   status: failed
-  reason: "User reported: className prop not appended to jeeby-cms-block"
+  reason: "User reported: className prop not appended to jeeby-cms-block (user confirmed wrapper div IS present)"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Blocks component does not accept or forward className prop. src/blocks/index.js line 47: className missing from Blocks signature; line 61: createElement(Block, ...) never passes className to Block. Block's internal join logic is correct but never receives className."
+  artifacts:
+    - path: "src/blocks/index.js"
+      issue: "Line 47: className not in Blocks props signature. Line 61: className not passed to Block in createElement call."
+  missing:
+    - "Add className to Blocks({ data, components, className }) signature"
+    - "Pass className to Block in createElement call"
+  debug_session: ".planning/debug/block-wrapper-missing.md"
 
 - truth: "Video block renders content (iframe for YouTube, video element for storage URLs)"
   status: failed
   reason: "User reported: The video block is rendering an empty div (confirmed in test 9)"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "src/blocks/Video.js line 96 reads data?.src but callers pass data.url. Guard on line 99 (if (!src) return null) silently exits. toEmbedUrl() and BLOCK_REGISTRY wiring are both correct — never reached."
+  artifacts:
+    - path: "src/blocks/Video.js"
+      issue: "Line 96: reads data?.src instead of data?.url"
+  missing:
+    - "Change data?.src to data?.url (or data?.url ?? data?.src for backwards compat)"
+  debug_session: ".planning/debug/video-block-empty-div.md"
