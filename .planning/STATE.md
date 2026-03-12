@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-11T06:32:19.924Z"
+last_updated: "2026-03-12T03:10:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 3
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 14
+  completed_plans: 14
 ---
 
 # Project State: jeeby-cms
@@ -19,7 +19,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
 **Current focus:** Phase 4 — Admin Auth (next up)
-**Last completed:** Phase 3, Plan 05 — Block system assembled: BLOCK_REGISTRY, Blocks/Block renderer, src/index.js wired (2026-03-11)
+**Last completed:** Phase 3, Plan 06 — Gap closure: DOMPurify namespace import, className forwarding, Video data.url field fix (2026-03-11)
 
 ## Phase Status
 
@@ -70,6 +70,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | jeeby-cms-block class structure only in Phase 3 | 3 | CSS custom property values deferred to Phase 8 — Phase 3 delivers class hook + id passthrough only |
 | mock.module for isomorphic-dompurify in index.test.js | 3 | Transitive CJS/ESM conflict (html-encoding-sniffer + @exodus/bytes) causes ERR_REQUIRE_ESM in Node 22; mock resolves it |
 | components prop on Blocks merges custom registry | 3 | { ...BLOCK_REGISTRY, ...components } enables v1 extensibility without breaking API change in v2 |
+| DOMPurify namespace import with .default fallback | 3 | Bypasses TSUP CJS interop double-.default chain (DOMPurify__default.default) that fails under Next.js/turbopack ESM |
+| Video field: data.url canonical, data.src fallback | 3 | url matches schema and BLOCK_REGISTRY wiring; src fallback preserves backwards compat |
 
 ---
 *Initialized: 2026-03-10*
