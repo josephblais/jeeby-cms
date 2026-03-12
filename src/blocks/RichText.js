@@ -2,9 +2,10 @@
 // ACCESSIBILITY: WCAG 1.1.1 (preserve alt on images), 1.3.1 (preserve semantic structure),
 // 4.1.1 (valid HTML after sanitization)
 //
-// isomorphic-dompurify is a peer dependency.
-// If not installed, the static import below throws "Cannot find module" at module load time —
-// this is acceptable peer dep behavior. Consumer must run: npm install isomorphic-dompurify
+// dompurify is a peer dependency (browser-only).
+// This package is "use client" — RichText never runs on the server, so the browser-only
+// dompurify package is correct. isomorphic-dompurify was replaced because its jsdom
+// dependency has an ESM/CJS conflict in Node 22 that breaks Next.js server-side imports.
 //
 // DOMPurify configuration:
 //   ADD_ATTR includes aria-* attributes so accessible authored HTML is preserved.
@@ -15,7 +16,7 @@
 // so the dist output is correct.
 
 import { createElement } from 'react'
-import DOMPurify from 'isomorphic-dompurify'
+import DOMPurify from 'dompurify'
 
 const DOMPURIFY_CONFIG = {
   // Preserve ARIA attributes so admin-authored HTML stays accessible.

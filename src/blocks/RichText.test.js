@@ -3,19 +3,17 @@ import assert from 'node:assert/strict'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
-// Mock isomorphic-dompurify before importing RichText.
+// Mock dompurify before importing RichText.
 //
-// Rationale: isomorphic-dompurify's Node.js path uses jsdom, which has a transitive
-// CJS/ESM conflict (html-encoding-sniffer@6 uses require() on @exodus/bytes which is
-// pure-ESM). This breaks the import in Node 22 test environments. The mock below
-// implements the same sanitization contract (XSS strip, ARIA preservation) used in
-// production, enabling full test coverage without the broken jsdom dependency.
+// Rationale: dompurify is browser-only (no jsdom dependency). In the Node.js test
+// environment there is no DOM, so we mock it with an equivalent that implements the
+// same sanitization contract (XSS strip, ARIA preservation) used in production.
 //
 // The sanitize mock:
 //   - Strips <script>...</script> blocks (XSS: script injection)
 //   - Strips javascript: href values (XSS: inline script protocol)
 //   - Preserves all other attributes including aria-label (WCAG ADD_ATTR requirement)
-mock.module('isomorphic-dompurify', {
+mock.module('dompurify', {
   defaultExport: {
     sanitize(html, config) {
       if (!html) return ''

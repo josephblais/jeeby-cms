@@ -9,7 +9,7 @@ export default defineConfig([
     splitting: false,
     treeshake: true,
     clean: true,
-    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', 'isomorphic-dompurify', 'video.js'],
+    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', 'dompurify', 'video.js'],
     banner: { js: '"use client";' },
     loader: { '.js': 'jsx' },
     esbuildOptions(options) {
