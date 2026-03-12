@@ -81,7 +81,7 @@ Each task was committed atomically:
 1. **Task 1: Add getAdminFirestore + Implement getCMSContent** - `098dfae` (feat)
 2. **Task 2: Implement useCMSContent Hook + Convert CMSProvider to JSX** - `221badd` (feat)
 
-**Plan metadata:** (docs commit follows)
+**Plan metadata:** `ad565c0` (docs: complete plan)
 
 ## Files Created/Modified
 
