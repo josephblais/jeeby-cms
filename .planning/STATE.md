@@ -91,6 +91,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 ### Block Type Decisions
 - **ParagraphBlock dropped (2026-03-18):** Replaced entirely by RichTextBlock. One text content block type for v1 — simpler admin UX, fewer editor variants to build in Phase 6.
 - **Block types for Phase 6 editor:** title, richtext, image, video, gallery (5 types, not 6)
+- **Display name vs type key:** Internal type key stays `'richtext'` (Firestore docs already use it). Display name in the block picker UI = "Text". Keeps migration-free while being intuitive for non-technical admins.
 - **Stretch goal captured (todo):** Inline formatting (bold/italic) within non-text blocks like Title — deferred post-Phase 6.
 
 ### Roadmap Evolution
