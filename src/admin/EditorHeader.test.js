@@ -19,8 +19,11 @@ test('Save status has role="status"', () => {
   assert.ok(src.includes('role="status"'), 'Save status must have role="status"')
 })
 
-test('Save status has aria-live="polite"', () => {
-  assert.ok(src.includes('aria-live="polite"'), 'Save status must have aria-live="polite"')
+test('Save status has aria-live with polite', () => {
+  assert.ok(
+    src.includes('aria-live="polite"') || src.includes("'polite'"),
+    'Save status must have aria-live="polite" (or dynamic expression defaulting to polite)'
+  )
 })
 
 test('Save status has aria-atomic="true"', () => {

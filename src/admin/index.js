@@ -1,4 +1,5 @@
 "use client"
+export { PageEditor } from './PageEditor.js'
 import { useAuth } from '../index.js'
 import { LoginPage } from './LoginPage.js'
 import { AdminNav } from './AdminNav.js'

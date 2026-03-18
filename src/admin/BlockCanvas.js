@@ -1,45 +1,28 @@
 "use client"
 import { useState } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
+import { TitleEditor } from './editors/TitleEditor.js'
+import { TextEditor } from './editors/TextEditor.js'
+import { ImageEditor } from './editors/ImageEditor.js'
+import { VideoEditor } from './editors/VideoEditor.js'
+import { GalleryEditor } from './editors/GalleryEditor.js'
+import { AddBlockButton } from './AddBlockButton.js'
 
 // Display name helper
 const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery' }
 function displayName(type) { return DISPLAY_NAMES[type] || type }
 
-// Stub editors — replaced when Plan 03 creates real files
-function StubEditor({ data, onChange }) {
-  return <div style={{ padding: '8px', color: '#6B7280', fontSize: '14px' }}>Editor placeholder</div>
-}
-
 // EDITOR_MAP maps block types to editor components.
-// Updated by Plan 03 to import from ./editors/TitleEditor.js etc.
 const EDITOR_MAP = {
-  title: StubEditor,
-  richtext: StubEditor,
-  image: StubEditor,
-  video: StubEditor,
-  gallery: StubEditor,
-}
-
-// Stub add button — Plan 04 wires the real AddBlockButton
-function AddBlockPlaceholder({ onAdd }) {
-  return (
-    <button
-      type="button"
-      aria-label="Add block"
-      onClick={() => {/* Plan 04 wires this */}}
-      style={{
-        width: '28px', height: '28px', borderRadius: '50%', background: '#2563EB',
-        color: '#fff', border: 'none', cursor: 'pointer', fontSize: '16px',
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '44px', minWidth: '44px', padding: 0
-      }}
-    >+</button>
-  )
+  title: TitleEditor,
+  richtext: TextEditor,
+  image: ImageEditor,
+  video: VideoEditor,
+  gallery: GalleryEditor,
 }
 
 // BlockCard: internal component — not exported
-function BlockCard({ block, onChange, onDelete }) {
+function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
   const controls = useDragControls()
   const [hovered, setHovered] = useState(false)
 
@@ -49,7 +32,7 @@ function BlockCard({ block, onChange, onDelete }) {
       dragListener={false}
       dragControls={controls}
       as="li"
-      style={{ marginBottom: '8px', listStyle: 'none' }}
+      style={{ marginBottom: '0', listStyle: 'none' }}
       whileDrag={{ scale: 1.01, boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}
     >
       <article
@@ -98,11 +81,12 @@ function BlockCard({ block, onChange, onDelete }) {
         {/* Editor form */}
         <div style={{ paddingTop: '8px' }}>
           {(() => {
-            const Editor = EDITOR_MAP[block.type] || StubEditor
+            const Editor = EDITOR_MAP[block.type] || EDITOR_MAP.richtext
             return <Editor data={block.data} onChange={(newData) => onChange(block.id, newData)} blockId={block.id} />
           })()}
         </div>
       </article>
+      <AddBlockButton onAdd={(type) => onAddBlock(type, index)} insertIndex={index} />
     </Reorder.Item>
   )
 }
@@ -114,7 +98,7 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
         <div style={{ textAlign: 'center', padding: '48px 0' }}>
           <p style={{ fontSize: '20px', fontWeight: 600, color: '#374151', margin: '0 0 8px' }}>No blocks yet</p>
           <p style={{ fontSize: '14px', color: '#6B7280', margin: '0 0 16px' }}>Click + to add your first block.</p>
-          <AddBlockPlaceholder onAdd={(type) => onAddBlock(type, -1)} />
+          <AddBlockButton onAdd={(type) => onAddBlock(type, -1)} insertIndex={-1} />
         </div>
       </div>
     )
@@ -122,6 +106,7 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
 
   return (
     <div className="jeeby-cms-block-canvas" style={{ maxWidth: '720px', margin: '0 auto' }}>
+      <AddBlockButton onAdd={(type) => onAddBlock(type, -1)} insertIndex={-1} />
       <Reorder.Group
         as="ol"
         axis="y"
@@ -134,8 +119,10 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
           <BlockCard
             key={block.id}
             block={block}
+            index={index}
             onChange={onChange}
             onDelete={onDelete}
+            onAddBlock={onAddBlock}
           />
         ))}
       </Reorder.Group>

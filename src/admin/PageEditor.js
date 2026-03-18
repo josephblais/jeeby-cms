@@ -4,6 +4,8 @@ import { useCMSFirebase } from '../index.js'
 import { getPage, saveDraft } from '../firebase/firestore.js'
 import { EditorHeader } from './EditorHeader.js'
 import { BlockCanvas } from './BlockCanvas.js'
+import { UndoToast } from './UndoToast.js'
+import { UnsavedChangesWarning } from './UnsavedChangesWarning.js'
 
 export function PageEditor({ slug }) {
   const { db } = useCMSFirebase()
@@ -189,6 +191,3 @@ export function PageEditor({ slug }) {
   )
 }
 
-// Stub components — replaced by Plan 04
-function UndoToast({ blockType, onUndo }) { return null }
-function UnsavedChangesWarning({ onLeave, onStay }) { return null }
