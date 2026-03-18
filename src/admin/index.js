@@ -2,6 +2,7 @@
 import { useAuth } from '../index.js'
 import { LoginPage } from './LoginPage.js'
 import { AdminNav } from './AdminNav.js'
+import { PageManager } from './PageManager.js'
 
 export function AdminPanel({ children }) {
   const { user, loading, signOut } = useAuth()
@@ -42,7 +43,7 @@ export function AdminPanel({ children }) {
       }}>Skip to main content</a>
       <AdminNav onSignOut={signOut} />
       <main className="jeeby-cms-shell-content" id="main-content" role="main" tabIndex={-1}>
-        {children}
+        {children ?? <PageManager />}
       </main>
     </div>
   )
