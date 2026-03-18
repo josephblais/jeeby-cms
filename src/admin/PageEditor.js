@@ -1,0 +1,194 @@
+"use client"
+import { useState, useEffect, useRef } from 'react'
+import { useCMSFirebase } from '../index.js'
+import { getPage, saveDraft } from '../firebase/firestore.js'
+import { EditorHeader } from './EditorHeader.js'
+import { BlockCanvas } from './BlockCanvas.js'
+
+export function PageEditor({ slug }) {
+  const { db } = useCMSFirebase()
+
+  const [blocks, setBlocks] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saveStatus, setSaveStatus] = useState(null)
+  const [deletedBlock, setDeletedBlock] = useState(null)
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
+
+  const debounceRef = useRef(null)
+  const deleteTimerRef = useRef(null)
+  const blocksRef = useRef(blocks)
+  const pendingSaveRef = useRef(false)
+
+  // Mirror blocks into ref to avoid stale closures in setTimeout
+  useEffect(() => { blocksRef.current = blocks }, [blocks])
+
+  // Load draft blocks on mount
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const page = await getPage(db, slug)
+        if (!cancelled) {
+          setBlocks(page?.draft?.blocks ?? [])
+          setLoading(false)
+        }
+      } catch {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [db, slug])
+
+  // Cleanup timers on unmount
+  useEffect(() => () => {
+    clearTimeout(debounceRef.current)
+    clearTimeout(deleteTimerRef.current)
+  }, [])
+
+  function scheduleSave(updatedBlocks) {
+    pendingSaveRef.current = true
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setSaveStatus('saving')
+      try {
+        await saveDraft(db, slug, updatedBlocks)
+        setSaveStatus('saved')
+        pendingSaveRef.current = false
+      } catch {
+        setSaveStatus('error')
+        pendingSaveRef.current = false
+      }
+    }, 1000)
+  }
+
+  function handleBlockChange(id, newData) {
+    const updated = blocks.map(b => b.id === id ? { ...b, data: newData } : b)
+    setBlocks(updated)
+    scheduleSave(updated)
+  }
+
+  function handleReorder(newOrder) {
+    setBlocks(newOrder)
+    // Reorder fires once on drop — save immediately, no debounce
+    pendingSaveRef.current = true
+    setSaveStatus('saving')
+    saveDraft(db, slug, newOrder)
+      .then(() => { setSaveStatus('saved'); pendingSaveRef.current = false })
+      .catch(() => { setSaveStatus('error'); pendingSaveRef.current = false })
+  }
+
+  function handleAddBlock(type, insertIndex) {
+    const DEFAULT_DATA = {
+      title:    { level: 'h2', text: '' },
+      richtext: { html: '' },
+      image:    { src: '', alt: '' },
+      video:    { url: '' },
+      gallery:  { items: [] },
+    }
+    const newBlock = {
+      id: crypto.randomUUID(),
+      type,
+      data: { ...DEFAULT_DATA[type] },
+    }
+    const next = [...blocks]
+    next.splice(insertIndex + 1, 0, newBlock)
+    setBlocks(next)
+    scheduleSave(next)
+    // Focus first input in new block after React render
+    requestAnimationFrame(() => {
+      document.getElementById('block-input-' + newBlock.id)?.focus()
+    })
+  }
+
+  function handleDelete(block) {
+    const index = blocks.findIndex(b => b.id === block.id)
+    const afterDelete = blocks.filter(b => b.id !== block.id)
+    setBlocks(afterDelete)
+    setDeletedBlock({ block, index })
+    clearTimeout(deleteTimerRef.current)
+    deleteTimerRef.current = setTimeout(() => {
+      saveDraft(db, slug, blocksRef.current.filter(b => b.id !== block.id))
+        .catch(() => setSaveStatus('error'))
+      setDeletedBlock(null)
+    }, 5000)
+  }
+
+  function handleUndo() {
+    if (!deletedBlock) return
+    clearTimeout(deleteTimerRef.current)
+    setBlocks(prev => {
+      const next = [...prev]
+      next.splice(deletedBlock.index, 0, deletedBlock.block)
+      return next
+    })
+    setDeletedBlock(null)
+  }
+
+  async function handleRetry() {
+    setSaveStatus('saving')
+    try {
+      await saveDraft(db, slug, blocksRef.current)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  function handleBackClick(e) {
+    if (pendingSaveRef.current) {
+      e.preventDefault()
+      setShowUnsavedWarning(true)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="jeeby-cms-page-editor" style={{ padding: '24px' }}>
+        <div role="status" aria-label="Loading editor" style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+          <div aria-hidden="true" style={{
+            width: '32px', height: '32px',
+            border: '3px solid #2563EB', borderTopColor: 'transparent',
+            borderRadius: '50%', animation: 'jeeby-spin 0.75s linear infinite'
+          }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="jeeby-cms-page-editor">
+      <EditorHeader
+        slug={slug}
+        saveStatus={saveStatus}
+        onRetry={handleRetry}
+        onBackClick={handleBackClick}
+      />
+      <div className="jeeby-cms-editor-main" style={{ padding: '24px', background: '#F9FAFB', minHeight: 'calc(100vh - 120px)' }}>
+        <BlockCanvas
+          blocks={blocks}
+          onReorder={handleReorder}
+          onChange={handleBlockChange}
+          onDelete={handleDelete}
+          onAddBlock={handleAddBlock}
+        />
+      </div>
+      {deletedBlock && (
+        <UndoToast
+          blockType={deletedBlock.block.type}
+          onUndo={handleUndo}
+        />
+      )}
+      {showUnsavedWarning && (
+        <UnsavedChangesWarning
+          onLeave={() => { window.location.href = '/admin' }}
+          onStay={() => { setShowUnsavedWarning(false) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Stub components — replaced by Plan 04
+function UndoToast({ blockType, onUndo }) { return null }
+function UnsavedChangesWarning({ onLeave, onStay }) { return null }
