@@ -88,7 +88,7 @@ Accent (#2563EB) is reserved for:
 Accent is NOT used for:
 - Table row text
 - Column headers
-- Cancel buttons (ghost style — no background color)
+- Discard / Keep Page buttons (ghost style — no background color)
 - Inline edit input borders (use #E5E7EB default)
 
 Contrast obligations (WCAG AA):
@@ -170,12 +170,12 @@ Fields (in order, all required):
 Slug validation error: renders below slug field as `<p id="cms-slug-error" role="alert">`. Hidden when no error.
 
 Buttons (right-aligned row, 16px gap):
-- Cancel: `.jeeby-cms-btn-ghost` — background none, border `1px solid #E5E7EB`, minHeight 44px, padding `8px 16px`
+- Discard: `.jeeby-cms-btn-ghost` — background none, border `1px solid #E5E7EB`, minHeight 44px, padding `8px 16px`
 - Create Page: `.jeeby-cms-btn-primary` — accent background, white text, minHeight 44px, padding `8px 24px`; `disabled` + `aria-busy="true"` + `opacity: 0.6` while saving
 
 On success: modal closes, focus returns to "New Page" trigger button, new row appears at top of list. Live region announces: "Page created successfully."
 
-On close (Cancel or Escape): focus returns to "New Page" trigger button.
+On close (Discard or Escape): focus returns to "New Page" trigger button.
 
 ### Delete Confirmation Modal
 
@@ -186,12 +186,12 @@ Modal heading: `<h2 id="delete-modal-heading">Delete page?</h2>`
 Body copy: "Delete [slug]? This cannot be undone." where [slug] is the actual slug value, e.g. "Delete /blog/my-post? This cannot be undone."
 
 Buttons (right-aligned, 16px gap):
-- Cancel: `.jeeby-cms-btn-ghost` — same style as create modal Cancel
-- Delete: `.jeeby-cms-btn-destructive` — background #DC2626, white text, minHeight 44px, padding `8px 24px`; `disabled` + `aria-busy="true"` + `opacity: 0.6` while deleting
+- Keep Page: `.jeeby-cms-btn-ghost` — same style as create modal Discard button
+- Delete Page: `.jeeby-cms-btn-destructive` — background #DC2626, white text, minHeight 44px, padding `8px 24px`; `disabled` + `aria-busy="true"` + `opacity: 0.6` while deleting
 
 On confirm: modal closes, row removed from list, focus returns to the next Delete button in the list (or "New Page" button if the list is now empty). Live region announces: "Page deleted."
 
-On close (Cancel or Escape): focus returns to the Delete button that opened the modal.
+On close (Keep Page or Escape): focus returns to the Delete button that opened the modal.
 
 ### Inline Edit (Name and Slug cells)
 
@@ -237,7 +237,7 @@ These obligations are in addition to CLAUDE.md baseline and must be verified by 
 - Focus is trapped inside: Tab and Shift+Tab cycle only within the dialog's focusable elements
 - Escape key closes the dialog
 - Focus returns to the trigger button on close
-- Backdrop click does NOT close the modal (prevents accidental dismissal — CONTEXT.md specifies explicit Cancel/Escape only)
+- Backdrop click does NOT close the modal (prevents accidental dismissal — CONTEXT.md specifies explicit Discard/Keep Page/Escape only)
 
 Focus trap implementation: use `useRef` to query `'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'` within the dialog ref. Cycle on Tab/Shift+Tab with `onKeyDown`.
 
@@ -286,11 +286,11 @@ Error announcements use `role="alert"` on the inline error elements (already ass
 | Empty state body | Create your first page. |
 | Create modal heading | Create New Page |
 | Create modal submit button | Create Page |
-| Create modal cancel button | Cancel |
+| Create modal cancel button | Discard |
 | Delete modal heading | Delete page? |
 | Delete modal body | Delete [slug]? This cannot be undone. |
-| Delete modal confirm button | Delete |
-| Delete modal cancel button | Cancel |
+| Delete modal confirm button | Delete Page |
+| Delete modal cancel button | Keep Page |
 | Last Published — no date | Never |
 | Slug field hint text | e.g. /about or /blog/my-post |
 | Slug validation error | Slug does not match the [Template Name] pattern. |
