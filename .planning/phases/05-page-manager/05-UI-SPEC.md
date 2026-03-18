@@ -45,7 +45,7 @@ Exceptions:
 - Nav bar height: 56px (not on 8-point scale — established in AdminNav.js, do not change in Phase 5)
 - All interactive elements: minimum touch target 44px height (established pattern: `minHeight: '44px'` on all buttons)
 - Loading spinner: 32px × 32px (established in AdminPanel index.js)
-- Table cell padding: 12px vertical, 16px horizontal (new for Phase 5 — nearest 4-point values)
+- Table cell padding: 16px vertical, 16px horizontal (new for Phase 5 — square cell padding, both values on declared scale)
 
 ---
 
