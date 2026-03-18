@@ -122,7 +122,7 @@ Plans:
 
 **Requirements:** EDIT-01, EDIT-02, EDIT-03, EDIT-04, EDIT-05, EDIT-06
 
-**Plans:** 1/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — Tiptap deps, test scaffolds (Wave 0), PageManager edit navigation links
@@ -214,7 +214,7 @@ Plans:
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 | 2/2 | Complete   | 2026-03-18 | 4 |
 | 3 | FRONT-01 through FRONT-10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
-| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 1/4 | In Progress|  | 7 | PUB-01, PUB-02, PUB-03 | 3 |
+| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete   | 2026-03-18 | 7 | PUB-01, PUB-02, PUB-03 | 3 |
 | 8 | CSS-01–04 | 4 |
 | 9 | MEDIA-01–04 | 4 |
 | 10 | Polish/publish | — |
