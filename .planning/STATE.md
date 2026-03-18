@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T04:37:35.644Z"
+last_updated: "2026-03-18T04:42:39.809Z"
 progress:
   total_phases: 10
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 5 — Page Manager (in progress)
-**Last completed:** Phase 5, Plan 02 — PageManager component (table, inline edit, empty state, live region) wired into AdminPanel (2026-03-18)
+**Current focus:** Phase 5 — Page Manager (complete)
+**Last completed:** Phase 5, Plan 03 — CreatePageModal and DeletePageModal with WCAG dialog pattern, wired into PageManager (2026-03-18)
 
 ## Phase Status
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
 | 3 | Front-End Block System | ● Complete | 5/5 complete |
 | 4 | Admin Auth | ◑ In Progress | 2/? complete |
-| 5 | Page Manager | ◑ In Progress | 2/? complete |
+| 5 | Page Manager | ● Complete | 3/3 complete |
 | 6 | Block Editor | ○ Pending | — |
 | 7 | Draft / Publish | ○ Pending | — |
 | 8 | CSS & Theming | ○ Pending | — |
@@ -83,6 +83,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Fragment named import (not React.Fragment) | 5 | TSUP JSX transform handles React namespace; named import avoids needing React in scope |
 | editTriggerRefs keyed by slug-field string | 5 | Per-row focus management for inline edit without prop drilling or per-row component state |
 | requestAnimationFrame for focus-return in commitEdit | 5 | Ensures focus fires after React finishes clearing editingSlug (ref element may still be mounted otherwise) |
+| deleteBtnRef.current set from e.currentTarget on click | 5 | Captures exact DOM node for per-row focus return without prop drilling |
+| Announcement auto-clear via 3s useEffect | 5 | Prevents stale live region re-announcements if same success message fires twice |
 
 ---
 *Initialized: 2026-03-10*
