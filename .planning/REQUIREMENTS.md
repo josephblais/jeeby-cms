@@ -51,7 +51,7 @@
 
 - [x] **EDIT-01**: Admin can view and edit blocks on a page in a drag-and-drop canvas
 - [x] **EDIT-02**: Admin can add a new block of any supported type via `BlockToolbar`
-- [ ] **EDIT-03**: Admin can reorder blocks via drag-and-drop (Framer Motion)
+- [x] **EDIT-03**: Admin can reorder blocks via drag-and-drop (Framer Motion)
 - [x] **EDIT-04**: Admin can delete a block
 - [x] **EDIT-05**: Block edits auto-save to Firestore `draft.blocks` on change
 - [x] **EDIT-06**: Each block type has its own editor form (Title, Paragraph, RichText, Image, Video, Gallery)
@@ -141,7 +141,7 @@
 | PAGE-06 | Phase 5 | Complete |
 | EDIT-01 | Phase 6 | Complete |
 | EDIT-02 | Phase 6 | Complete |
-| EDIT-03 | Phase 6 | Pending |
+| EDIT-03 | Phase 6 | Complete |
 | EDIT-04 | Phase 6 | Complete |
 | EDIT-05 | Phase 6 | Complete |
 | EDIT-06 | Phase 6 | Complete |
