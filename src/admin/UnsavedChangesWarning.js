@@ -45,44 +45,39 @@ export function UnsavedChangesWarning({ onLeave, onStay }) {
   }, [])
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300
-    }}>
+    <div
+      className="jeeby-cms-modal-backdrop"
+      style={{
+        position: 'fixed', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300,
+        background: 'rgba(0,0,0,0.5)',
+      }}>
       <div
         ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="unsaved-heading"
         aria-describedby="unsaved-body"
-        style={{
-          background: '#FFFFFF', borderRadius: '8px', padding: '32px',
-          maxWidth: '420px', width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
-        }}
+        className="jeeby-cms-modal-card"
+        style={{ maxWidth: '420px', width: '100%', background: '#fff' }}
       >
-        <h2 id="unsaved-heading" style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 8px', color: '#111827' }}>
+        <h2 id="unsaved-heading">
           You have unsaved changes
         </h2>
-        <p id="unsaved-body" style={{ fontSize: '14px', color: '#6B7280', margin: '0 0 24px' }}>
+        <p id="unsaved-body">
           Your recent edits have not been saved yet. Do you want to leave without saving?
         </p>
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
             type="button"
             onClick={onLeave}
-            style={{
-              minHeight: '44px', padding: '8px 24px', background: '#DC2626', color: '#fff',
-              border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px'
-            }}
+            style={{ minHeight: '44px', cursor: 'pointer', background: 'none', border: 'none' }}
           >Leave without saving</button>
           <button
             type="button"
             data-autofocus
             onClick={onStay}
-            style={{
-              minHeight: '44px', padding: '8px 24px', background: '#2563EB', color: '#fff',
-              border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px'
-            }}
+            style={{ minHeight: '44px', cursor: 'pointer', background: 'none', border: 'none' }}
           >Stay and save</button>
         </div>
       </div>

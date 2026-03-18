@@ -27,11 +27,8 @@ const ToolbarButton = ({ label, isActive, onClick }) => (
     aria-pressed={isActive}
     onClick={onClick}
     style={{
-      minHeight: '44px', minWidth: '44px', padding: '4px 8px',
-      background: isActive ? '#EFF6FF' : 'transparent',
-      border: '1px solid ' + (isActive ? '#2563EB' : '#E5E7EB'),
-      borderRadius: '4px', cursor: 'pointer', fontSize: '14px',
-      color: isActive ? '#2563EB' : '#374151', fontWeight: isActive ? 600 : 400,
+      minHeight: '44px', minWidth: '44px',
+      background: 'none', border: 'none', cursor: 'pointer',
     }}
   >{label}</button>
 )
@@ -43,6 +40,7 @@ export function TextEditor({ data, onChange, blockId }) {
   const editor = useEditor({
     extensions: [StarterKit, TabEscape],
     content: data?.html ?? '',
+    immediatelyRender: false,
     onUpdate({ editor }) {
       onChange({ html: editor.getHTML() })
     },
@@ -62,7 +60,7 @@ export function TextEditor({ data, onChange, blockId }) {
         <div
           role="toolbar"
           aria-label="Text formatting"
-          style={{ display: 'flex', gap: '4px', marginBottom: '8px', flexWrap: 'wrap' }}
+          style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}
         >
           <ToolbarButton
             label="Bold"
@@ -89,10 +87,7 @@ export function TextEditor({ data, onChange, blockId }) {
       <div
         id={'block-input-' + blockId}
         aria-label="Text content"
-        style={{
-          border: '1px solid #E5E7EB', borderRadius: '4px', padding: '12px',
-          minHeight: '120px', fontSize: '14px', lineHeight: 1.5,
-        }}
+        style={{ minHeight: '120px' }}
       >
         <EditorContent editor={editor} />
       </div>

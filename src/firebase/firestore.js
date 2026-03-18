@@ -1,5 +1,5 @@
 // src/firebase/firestore.js
-// All Firestore access for the /cms/pages/{slug} schema.
+// All Firestore access for the pages/{slug} collection.
 // No other file in this package makes direct Firestore calls.
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, getDocs
@@ -7,7 +7,7 @@ import {
 
 // Internal helper — not exported
 function pageRef(db, slug) {
-  return doc(db, 'cms', 'pages', slug)
+  return doc(db, 'pages', slug)
 }
 
 // Returns the page document data, or null if the document does not exist.
@@ -49,10 +49,10 @@ export async function deletePage(db, slug) {
   await deleteDoc(pageRef(db, slug))
 }
 
-// Returns an array of all page objects from the /cms/pages sub-collection.
+// Returns an array of all page objects from the pages collection.
 // No orderBy — avoids silently excluding documents missing updatedAt field.
 export async function listPages(db) {
-  const col = collection(db, 'cms', 'pages')
+  const col = collection(db, 'pages')
   const snap = await getDocs(col)
   return snap.docs.map(d => ({ slug: d.id, ...d.data() }))
 }

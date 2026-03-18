@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import { useCMSFirebase } from '../index.js'
-import { getPage, saveDraft } from '../firebase/firestore.js'
+import { getPage, saveDraft, renamePage } from '../firebase/firestore.js'
 import { EditorHeader } from './EditorHeader.js'
 import { BlockCanvas } from './BlockCanvas.js'
 import { UndoToast } from './UndoToast.js'
@@ -11,6 +11,7 @@ export function PageEditor({ slug }) {
   const { db } = useCMSFirebase()
 
   const [blocks, setBlocks] = useState([])
+  const [pageName, setPageName] = useState('')
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState(null)
   const [deletedBlock, setDeletedBlock] = useState(null)
@@ -32,6 +33,7 @@ export function PageEditor({ slug }) {
         const page = await getPage(db, slug)
         if (!cancelled) {
           setBlocks(page?.draft?.blocks ?? [])
+          setPageName(page?.name ?? slug)
           setLoading(false)
         }
       } catch {
@@ -137,6 +139,15 @@ export function PageEditor({ slug }) {
     }
   }
 
+  async function handleRenameSlug(newSlug) {
+    try {
+      await renamePage(db, slug, newSlug)
+      window.location.href = '/admin/pages/' + newSlug
+    } catch (err) {
+      setSaveStatus('error')
+    }
+  }
+
   function handleBackClick(e) {
     if (pendingSaveRef.current) {
       e.preventDefault()
@@ -146,12 +157,11 @@ export function PageEditor({ slug }) {
 
   if (loading) {
     return (
-      <div className="jeeby-cms-page-editor" style={{ padding: '24px' }}>
-        <div role="status" aria-label="Loading editor" style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+      <div className="jeeby-cms-page-editor">
+        <div role="status" aria-label="Loading editor" style={{ display: 'flex', justifyContent: 'center' }}>
           <div aria-hidden="true" style={{
             width: '32px', height: '32px',
-            border: '3px solid #2563EB', borderTopColor: 'transparent',
-            borderRadius: '50%', animation: 'jeeby-spin 0.75s linear infinite'
+            animation: 'jeeby-spin 0.75s linear infinite'
           }} />
         </div>
       </div>
@@ -161,12 +171,14 @@ export function PageEditor({ slug }) {
   return (
     <div className="jeeby-cms-page-editor">
       <EditorHeader
+        pageName={pageName}
         slug={slug}
         saveStatus={saveStatus}
         onRetry={handleRetry}
         onBackClick={handleBackClick}
+        onRenameSlug={handleRenameSlug}
       />
-      <div className="jeeby-cms-editor-main" style={{ padding: '24px', background: '#F9FAFB', minHeight: 'calc(100vh - 120px)' }}>
+      <div className="jeeby-cms-editor-main" style={{ minHeight: 'calc(100vh - 120px)' }}>
         <BlockCanvas
           blocks={blocks}
           onReorder={handleReorder}

@@ -8,11 +8,12 @@ export function UndoToast({ blockType, onUndo }) {
       role="status"
       aria-live="polite"
       aria-atomic="true"
+      className="jeeby-cms-undo-toast"
       style={{
         position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-        background: '#1F2937', color: '#F9FAFB', borderRadius: '6px', padding: '8px 16px',
-        fontSize: '14px', display: 'flex', alignItems: 'center', gap: '12px',
-        zIndex: 200, boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        display: 'flex', alignItems: 'center', gap: '12px',
+        zIndex: 200,
+        background: '#1f2937', color: '#f9fafb',
       }}
     >
       <span>{(DISPLAY_NAMES[blockType] || blockType) + ' block deleted.'}</span>
@@ -21,8 +22,8 @@ export function UndoToast({ blockType, onUndo }) {
         aria-label={'Undo delete ' + (DISPLAY_NAMES[blockType] || blockType) + ' block'}
         onClick={onUndo}
         style={{
-          color: '#93C5FD', fontWeight: 600, background: 'none', border: 'none',
-          cursor: 'pointer', fontSize: '14px', minHeight: '44px', padding: '4px 8px'
+          background: 'none', border: 'none',
+          cursor: 'pointer', minHeight: '44px'
         }}
       >Undo delete</button>
     </div>

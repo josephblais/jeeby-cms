@@ -28,7 +28,7 @@ export default defineConfig([
     format: ['esm', 'cjs'],
     splitting: true,
     treeshake: true,
-    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', /^firebase-admin/],
+    external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', /^firebase-admin/, /^use-sync-external-store/],
     loader: { '.js': 'jsx' },
     esbuildPlugins: [
       {

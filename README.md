@@ -49,19 +49,34 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 2. Add the admin page
+### 2. Add the admin pages
 
-Create `app/admin/page.js`:
+Create `app/admin/page.js` (page manager):
 
 ```js
 import { AdminPanel } from 'jeeby-cms/admin'
 
 export default function AdminPage() {
-  return <AdminPanel>{/* your admin content */}</AdminPanel>
+  return <AdminPanel />
 }
 ```
 
-`AdminPanel` handles three states automatically: loading, unauthenticated (shows login form), and authenticated (shows your content with a nav bar).
+Create `app/admin/pages/[slug]/page.js` (block editor):
+
+```js
+import { AdminPanel, PageEditor } from 'jeeby-cms/admin'
+
+export default async function PageEditorPage({ params }) {
+  const { slug } = await params
+  return (
+    <AdminPanel>
+      <PageEditor slug={slug} />
+    </AdminPanel>
+  )
+}
+```
+
+`AdminPanel` handles three states automatically: loading, unauthenticated (shows login form), and authenticated (shows its children — or the page manager when no children are passed).
 
 ### 3. Protect admin routes with middleware
 
@@ -121,3 +136,21 @@ export default async function Page({ params }) {
 2. Create an admin user: Authentication → Users → Add user
 3. Set up Firestore with a `pages` collection for CMS content
 4. Enable Storage if using media uploads
+
+### Firestore security rules
+
+The CMS reads and writes to a `pages` collection. Add these rules in Firebase Console → Firestore → Rules:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /pages/{slug} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+```
+
+This allows anyone to read published content and only authenticated users to write. Tighten as needed for your project.

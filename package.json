@@ -61,5 +61,8 @@
     "react-dom": ">=18",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "use-sync-external-store": "^1.0.0"
   }
 }
