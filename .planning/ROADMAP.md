@@ -174,6 +174,15 @@ Plans:
 
 **Requirements:** PKG-01 (publish verification)
 
+**README sections to complete** (foundation started in phase 4):
+- Block editor usage and block types reference
+- Draft/publish workflow
+- Configuration options reference
+- Theming and CSS customisation
+- Media upload usage
+- Firestore data structure reference
+- Troubleshooting / common errors
+
 **Success Criteria:**
 1. README documents installation, CMSProvider setup, page rendering, admin panel setup, and configuration options
 2. `npm publish --dry-run` shows only `dist/` files and no source files
