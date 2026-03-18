@@ -53,6 +53,8 @@
     }
   },
   "devDependencies": {
+    "@tiptap/react": "^3.20.4",
+    "@tiptap/starter-kit": "^3.20.4",
     "dompurify": "^3.3.3",
     "firebase-admin": ">=12",
     "react": ">=18",
