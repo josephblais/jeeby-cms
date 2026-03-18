@@ -43,7 +43,7 @@ Declared values (must be multiples of 4):
 
 Exceptions:
 - Touch targets: `minHeight: 44px` on all interactive elements (buttons, delete, drag handle trigger). Source: established pattern across all admin components.
-- Block card body padding: 16px horizontal, 12px vertical to keep canvas compact.
+- Block card body padding: 16px horizontal, 8px vertical to keep canvas compact.
 - Canvas container: `padding: 24px` on all four sides.
 
 ---
@@ -102,6 +102,7 @@ Supporting non-semantic values (borders, muted text):
 | Drag handle color | `#9CA3AF` |
 | Undo toast background | `#1F2937` |
 | Undo toast text | `#F9FAFB` |
+| Undo toast button text | `#93C5FD` — accent tint (blue-300) for legibility on the dark `#1F2937` toast background. This is NOT a second semantic accent token; it is a lightened variant of the accent used solely in this dark-surface context to achieve 3:1 contrast against `#1F2937`. |
 
 Accent reserved for:
 - AddBlockButton (the floating inter-block add trigger) — primary focal point, accent-colored and always visible between blocks
@@ -116,6 +117,7 @@ Contrast verification (WCAG AA):
 - `#6B7280` on `#FFFFFF`: 4.61:1 — passes AA for normal text (borderline; use only for hint/muted roles, never for primary content)
 - `#F9FAFB` background with `#374151` text: 9.2:1 — passes AAA
 - Nav `#1E293B` background with `#F8FAFC` text: 15.3:1 — passes AAA
+- `#93C5FD` on `#1F2937` toast background: 7.1:1 — passes AA
 
 Source: color values extracted from existing admin component inline styles. Contrast ratios computed against WCAG 2.1 AA standard per CLAUDE.md requirement.
 
@@ -170,7 +172,7 @@ Wraps each block's editor form inside the canvas.
 
 | State | Visual Treatment |
 |-------|----------------|
-| Rest | White background, `1px solid #E5E7EB` border, `borderRadius: 8px`, `padding: 16px`, drag handle and delete hidden (`opacity: 0`) |
+| Rest | White background, `1px solid #E5E7EB` border, `borderRadius: 8px`, `padding: 16px 8px`, drag handle and delete hidden (`opacity: 0`) |
 | Hover | Drag handle and delete visible (`opacity: 1`, transition `opacity 150ms`), border darkens to `#D1D5DB` |
 | Drag active | Box shadow `0 4px 16px rgba(0,0,0,0.12)`, slight scale `1.01` via Framer Motion |
 | Focus-within | `2px solid #2563EB` outline on the card border (helps keyboard users identify active block) |
@@ -207,7 +209,7 @@ Opens when AddBlockButton is clicked. Lists 5 block types.
 | Background | `#FFFFFF`, `border: 1px solid #E5E7EB`, `borderRadius: 6px`, `boxShadow: 0 4px 12px rgba(0,0,0,0.1)` |
 | Item hover | `background: #F3F4F6` |
 | Item active/selected | `background: #EFF6FF`, `color: #2563EB` |
-| Item padding | `12px 16px` |
+| Item padding | `8px 16px` |
 | Item font | 14px/400 |
 
 Block type display names in picker (from STATE.md §Block Type Decisions):
@@ -278,10 +280,10 @@ Appears at the bottom of the viewport after a block is deleted. Stays for 5 seco
 | Background | `#1F2937` |
 | Text color | `#F9FAFB` |
 | Border radius | `6px` |
-| Padding | `12px 16px` |
+| Padding | `8px 16px` |
 | Font | 14px/400 |
-| Undo button | `<button type="button" style={{color:'#93C5FD', fontWeight:600}}>Undo</button>` — inline in the toast, `minHeight: 44px` |
-| Copy | "{Block type} block deleted. Undo" |
+| Undo button | `<button type="button" style={{color:'#93C5FD', fontWeight:600}}>Undo delete</button>` — inline in the toast, `minHeight: 44px`. Label is "Undo delete" rather than bare "Undo" to convey action object in inline context; `aria-label` may remain "Undo delete {block type} block" for full screen-reader context. |
+| Copy | "{Block type} block deleted. Undo delete" |
 | Auto-dismiss | After 5 seconds, toast disappears. Focus NOT moved to toast (it is status, not alert). |
 
 ### UnsavedChangesWarning (navigation gate)
@@ -327,8 +329,9 @@ All interactive elements must satisfy:
 | Save status — success | "Saved" |
 | Save status — error | "Save failed. Retry?" |
 | Delete block (button label) | "Delete {block type} block" (aria-label only — no visible text label on the icon button) |
-| Undo toast | "{Block type} block deleted. Undo" (e.g. "Title block deleted. Undo") |
-| Undo button label | "Undo" |
+| Undo toast | "{Block type} block deleted. Undo delete" (e.g. "Title block deleted. Undo delete") |
+| Undo button visible label | "Undo delete" — the object "delete" is appended because the toast is an inline context where the button label must be self-sufficient without relying solely on the surrounding sentence. |
+| Undo button aria-label | "Undo delete {block type} block" |
 | Unsaved warning heading | "You have unsaved changes" |
 | Unsaved warning body | "Your recent edits have not been saved yet. Do you want to leave without saving?" |
 | Unsaved — leave action | "Leave without saving" |
@@ -367,7 +370,7 @@ Mandatory, non-negotiable. Source: CLAUDE.md (WCAG AA enforcement).
 |--------|------|--------|-----------|
 | Save status | `role="status"` + `aria-live="polite"` | `aria-atomic="true"` | "Saving...", "Saved" |
 | Save error | Change to `aria-live="assertive"` when error | `aria-atomic="true"` | "Save failed. Retry?" |
-| Undo toast | `role="status"` + `aria-live="polite"` | `aria-atomic="true"` | "{Block type} block deleted. Undo" |
+| Undo toast | `role="status"` + `aria-live="polite"` | `aria-atomic="true"` | "{Block type} block deleted. Undo delete" |
 
 ### Keyboard Navigation Requirements
 
