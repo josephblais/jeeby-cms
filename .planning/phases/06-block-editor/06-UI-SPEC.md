@@ -50,16 +50,20 @@ Exceptions:
 
 ## Typography
 
+UI chrome uses exactly 2 font sizes and 2 weights. These are the only values permitted for admin interface elements (labels, headings, buttons, status text, form fields).
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 14px | 400 | 1.5 |
-| Label | 14px | 400 | 1.4 |
-| Subheading / section heading | 20px | 600 | 1.2 |
-| Page header (editor title) | 20px | 600 | 1.2 |
+| Body / Label | 14px | 400 | 1.5 |
+| Subheading / Page header | 20px | 600 | 1.2 |
 
 Source: extracted from existing admin components — `CreatePageModal.js` h2 is 20px/600, all body text and labels are 14px/400.
 
-Additional Phase 6 rule: Title block editor input renders at the heading font size of the selected level, not at 14px body. Sizes map as follows (inline style on the `contenteditable` input):
+### Canvas Fidelity Overrides (TitleEditor only)
+
+The following sizes are NOT UI typography tokens. They are WYSIWYG content-rendering sizes applied exclusively to the `contenteditable` input inside TitleEditor, so the editor reflects the final published heading appearance. This is the locked "canvas fidelity" decision from `06-CONTEXT.md` §Block Editor Forms.
+
+These values do not count toward the UI typography scale above and must not be used for any admin UI chrome element.
 
 | Heading Level | Editor Input Font Size | Weight |
 |--------------|----------------------|--------|
@@ -69,7 +73,7 @@ Additional Phase 6 rule: Title block editor input renders at the heading font si
 | h5 | 16px | 600 |
 | h6 | 14px | 600 |
 
-This is the WYSIWYG "canvas fidelity" rule from CONTEXT.md. Source: `06-CONTEXT.md` §Block Editor Forms.
+Implementation: applied as an inline `style` on the `contenteditable` `<div>`, keyed off `data.level`. Only the TitleEditor component reads these values.
 
 ---
 
@@ -100,7 +104,7 @@ Supporting non-semantic values (borders, muted text):
 | Undo toast text | `#F9FAFB` |
 
 Accent reserved for:
-- "Add Block" + button (the floating inter-block add trigger)
+- AddBlockButton (the floating inter-block add trigger) — primary focal point, accent-colored and always visible between blocks
 - Block type picker dropdown active/selected item highlight
 - Primary form submit buttons (Create Page pattern carried forward)
 - "Saved" auto-save status indicator text color
@@ -178,7 +182,7 @@ ARIA on BlockCard:
 
 ### AddBlockButton (floating + trigger)
 
-The inter-block + button that opens the block type picker.
+Primary focal point of the editor canvas. Accent-colored and always visible between blocks.
 
 | Property | Value |
 |----------|-------|
@@ -222,7 +226,7 @@ Block type display names in picker (from STATE.md §Block Type Decisions):
 
 | Field | Element | ARIA | Notes |
 |-------|---------|------|-------|
-| Text input | `<div contentEditable role="textbox" aria-label="Title text" aria-multiline="false">` | Renders at heading font size (28px for h2, etc.) | Placeholder text: "Enter title..." in `#9CA3AF` via CSS `::before` pseudo-element or empty check |
+| Text input | `<div contentEditable role="textbox" aria-label="Title text" aria-multiline="false">` | Renders at canvas fidelity heading font size (see Typography §Canvas Fidelity Overrides) | Placeholder text: "Enter title..." in `#9CA3AF` via CSS `::before` pseudo-element or empty check |
 | Level selector | `<select aria-label="Heading level">` | Options: h2–h6 | Positioned to the left of or below the contenteditable. Updates `data.level`. |
 
 #### TextEditor (RichText / Tiptap)
@@ -242,7 +246,7 @@ Block type display names in picker (from STATE.md §Block Type Decisions):
 |-------|---------|------|-------|
 | URL input | `<input type="url" aria-label="Image URL">` | 14px, full width | On valid URL entry, render `<img>` preview below at max-width 100%, max-height 240px |
 | Alt text input | `<input type="text" aria-label="Alt text" aria-describedby="alt-hint-{id}">` | 14px, full width | Hint: "Describe the image for screen readers" in `#6B7280` |
-| Preview | `<img src={url} alt={altText}>` | Error fallback: show `#F3F4F6` placeholder box with text "Image not found" | Wrapped in `<figure>` |
+| Preview | `<img src={url} alt={altText}>` | Error fallback: show `#F3F4F6` placeholder box with text "Image not found. Check that the URL is correct and publicly accessible." | Wrapped in `<figure>` |
 | Caption input | Not in Phase 6 (Phase 8+ concern) | — | — |
 
 #### VideoEditor
@@ -332,7 +336,7 @@ All interactive elements must satisfy:
 | Image alt hint | "Describe the image for screen readers" |
 | Video URL hint | "YouTube, Vimeo, or Loom URLs are supported" |
 | Invalid video URL error | "Unrecognised video URL" |
-| Image not found fallback | "Image not found" |
+| Image not found fallback | "Image not found. Check that the URL is correct and publicly accessible." |
 | Gallery add button | "+ Add image" |
 | Gallery remove button label | "Remove gallery image {n}" (aria-label) |
 | Back link label | "Back to Pages" (aria-label on the ← link) |
