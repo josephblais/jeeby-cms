@@ -99,6 +99,13 @@ Plans:
 
 **Requirements:** PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, PAGE-06
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Data layer: listPages, renamePage, validateSlug + CMSProvider templates prop
+- [ ] 05-02-PLAN.md — PageManager component (table, inline edit, empty state) + AdminPanel wiring
+- [ ] 05-03-PLAN.md — CreatePageModal + DeletePageModal + integration into PageManager
+
 **Success Criteria:**
 1. Page Manager lists all pages in Firestore with slug and last published date
 2. Admin can create a new page by entering a slug and selecting a template; page appears in the list
@@ -213,3 +220,4 @@ Plans:
 *Phase 2 plans added: 2026-03-10*
 *Phase 3 plans added: 2026-03-11*
 *Phase 4 plans added: 2026-03-17*
+*Phase 5 plans added: 2026-03-18*
