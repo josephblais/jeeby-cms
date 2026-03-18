@@ -79,7 +79,7 @@ Plans:
 
 **Requirements:** AUTH-01, AUTH-02, AUTH-03
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 04-01-PLAN.md — useAuth cookie lifecycle (__session write/clear in onAuthStateChanged)
@@ -187,8 +187,7 @@ Plans:
 
 | Phase | Requirements | Count |
 |-------|-------------|-------|
-| 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 |
-| 2 | FIRE-01, FIRE-02, FIRE-03, FIRE-04 | 4 |
+| 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 | 1/2 | In Progress|  | 4 |
 | 3 | FRONT-01 through FRONT-10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
 | 5 | PAGE-01–06 | 6 |
