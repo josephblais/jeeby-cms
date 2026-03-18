@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T04:42:39.809Z"
+last_updated: "2026-03-18T19:02:40.248Z"
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 5
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 23
+  completed_plans: 20
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 5 — Page Manager (complete)
-**Last completed:** Phase 5, Plan 03 — CreatePageModal and DeletePageModal with WCAG dialog pattern, wired into PageManager (2026-03-18)
+**Current focus:** Phase 6 — Block Editor (in progress)
+**Last completed:** Phase 6, Plan 01 — Tiptap deps installed, 11 test scaffolds created, PageManager edit navigation wired (2026-03-18)
 
 ## Phase Status
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | 3 | Front-End Block System | ● Complete | 5/5 complete |
 | 4 | Admin Auth | ◑ In Progress | 2/? complete |
 | 5 | Page Manager | ● Complete | 3/3 complete |
-| 6 | Block Editor | ○ Pending | — |
+| 6 | Block Editor | ◑ In Progress | 1/4 complete |
 | 7 | Draft / Publish | ○ Pending | — |
 | 8 | CSS & Theming | ○ Pending | — |
 | 9 | Media Handling | ○ Pending | — |
@@ -85,6 +85,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | requestAnimationFrame for focus-return in commitEdit | 5 | Ensures focus fires after React finishes clearing editingSlug (ref element may still be mounted otherwise) |
 | deleteBtnRef.current set from e.currentTarget on click | 5 | Captures exact DOM node for per-row focus return without prop drilling |
 | Announcement auto-clear via 3s useEffect | 5 | Prevents stale live region re-announcements if same success message fires twice |
+| Tiptap as devDependency (bundled, not peer) | 6 | Used only in admin bundle — consumers don't install it; not added to tsup external array |
+| Wave 0 Nyquist scaffolding for Phase 6 | 6 | 11 test files written before source files exist — intentional red state until Plans 02-04 |
 
 ## Accumulated Context
 
