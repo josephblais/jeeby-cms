@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
 import { useCMSFirebase } from '../index.js'
 import { listPages, renamePage, savePage, validateSlug } from '../firebase/firestore.js'
+import { CreatePageModal } from './CreatePageModal.js'
+import { DeletePageModal } from './DeletePageModal.js'
 
 // Internal helper — not exported
 function formatDate(ts) {
@@ -31,9 +33,10 @@ export function PageManager() {
   // editTriggerRef is set per-row to return focus after commit
   const editTriggerRefs = useRef({})
 
-  // State variables for Plan 03 integration (declared but not yet used)
+  // State variables for Plan 03 integration
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const deleteBtnRef = useRef(null)
 
   // Load pages from Firestore
   const loadPages = useCallback(async () => {
@@ -49,6 +52,14 @@ export function PageManager() {
   }, [db])
 
   useEffect(() => { loadPages() }, [loadPages])
+
+  // Clear announcement after 3 seconds
+  useEffect(() => {
+    if (announcement) {
+      const t = setTimeout(() => setAnnouncement(''), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [announcement])
 
   // --- Inline edit handlers ---
 
@@ -347,7 +358,7 @@ export function PageManager() {
                   <button
                     type="button"
                     aria-label={`Delete ${page.slug}`}
-                    onClick={() => setDeleteTarget(page)}
+                    onClick={(e) => { deleteBtnRef.current = e.currentTarget; setDeleteTarget(page) }}
                     style={{
                       color: '#DC2626', background: 'none', border: 'none',
                       cursor: 'pointer', fontSize: '14px', minHeight: '44px', padding: '8px 16px'
@@ -373,6 +384,19 @@ export function PageManager() {
           ))}
         </tbody>
       </table>
+
+      <CreatePageModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }}
+        triggerRef={newPageBtnRef}
+      />
+      <DeletePageModal
+        page={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onDeleted={() => { loadPages(); setAnnouncement('Page deleted.') }}
+        triggerRef={deleteBtnRef}
+      />
     </div>
   )
 }
