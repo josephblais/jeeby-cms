@@ -1,8 +1,56 @@
 'use strict';
 
+var server = require('next/server');
+var app = require('firebase-admin/app');
+var auth = require('firebase-admin/auth');
+var firestore = require('firebase-admin/firestore');
+
 // src/server/index.js
-async function getCMSContent(_slug) {
-  return null;
+function getAdminApp() {
+  var _a;
+  if (app.getApps().length > 0) return app.getApp();
+  return app.initializeApp({
+    credential: app.cert({
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      // Env vars serialize PEM newlines as literal \n — restore real newlines
+      privateKey: (_a = process.env.FIREBASE_ADMIN_PRIVATE_KEY) == null ? void 0 : _a.replace(/\\n/g, "\n")
+    })
+  });
+}
+function getAdminAuth() {
+  return auth.getAuth(getAdminApp());
+}
+function getAdminFirestore() {
+  return firestore.getFirestore(getAdminApp());
+}
+
+// src/server/index.js
+function withCMSAuth() {
+  return async function middleware(request) {
+    var _a;
+    const sessionCookie = (_a = request.cookies.get("__session")) == null ? void 0 : _a.value;
+    if (!sessionCookie) {
+      const adminUrl = new URL("/admin", request.url);
+      return server.NextResponse.redirect(adminUrl);
+    }
+    try {
+      const adminAuth = getAdminAuth();
+      await adminAuth.verifyIdToken(sessionCookie);
+      return server.NextResponse.next();
+    } catch {
+      const adminUrl = new URL("/admin", request.url);
+      return server.NextResponse.redirect(adminUrl);
+    }
+  };
+}
+async function getCMSContent(slug) {
+  const db = getAdminFirestore();
+  const snap = await db.doc("pages/" + slug).get();
+  if (!snap.exists) return null;
+  const pageData = snap.data();
+  return (pageData == null ? void 0 : pageData.published) ?? null;
 }
 
 exports.getCMSContent = getCMSContent;
+exports.withCMSAuth = withCMSAuth;

@@ -71,9 +71,18 @@ var DOMPURIFY_CONFIG = {
   // Without ADD_ATTR, DOMPurify strips aria-* and role attributes by default.
   ADD_ATTR: ["aria-label", "aria-describedby", "aria-labelledby", "role", "tabindex"]
 };
+function stripDangerous(html) {
+  if (!html) return "";
+  return html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, "").replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href=""');
+}
 function RichText({ data, className }) {
   const raw = (data == null ? void 0 : data.html) ?? "";
-  const clean = typeof (DOMPurify == null ? void 0 : DOMPurify.sanitize) === "function" ? DOMPurify.sanitize(raw, DOMPURIFY_CONFIG) : raw;
+  const [clean, setClean] = react.useState(() => stripDangerous(raw));
+  react.useEffect(() => {
+    if (typeof (DOMPurify == null ? void 0 : DOMPurify.sanitize) === "function") {
+      setClean(DOMPurify.sanitize(raw, DOMPURIFY_CONFIG));
+    }
+  }, [raw]);
   return react.createElement("div", { className, dangerouslySetInnerHTML: { __html: clean } });
 }
 function Image({ data, className }) {
@@ -259,7 +268,14 @@ function useAuth() {
   const [user, setUser] = react.useState(void 0);
   const [loading, setLoading] = react.useState(true);
   react.useEffect(() => {
-    const unsubscribe = subscribeToAuthState(auth, (u) => {
+    const unsubscribe = subscribeToAuthState(auth, async (u) => {
+      if (u) {
+        const token = await u.getIdToken();
+        const secure = typeof document !== "undefined" && document.location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = `__session=${token}; path=/; SameSite=Strict${secure}`;
+      } else {
+        document.cookie = "__session=; path=/; SameSite=Strict; max-age=0";
+      }
       setUser(u);
       setLoading(false);
     });
@@ -280,7 +296,7 @@ function useCMSContent(slug) {
   react.useEffect(() => {
     if (!slug || !db) return;
     setLoading(true);
-    const ref = firestore.doc(db, "cms", "pages", slug);
+    const ref = firestore.doc(db, "pages", slug);
     const unsubscribe = firestore.onSnapshot(
       ref,
       (snap) => {
