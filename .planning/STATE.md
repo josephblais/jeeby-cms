@@ -86,5 +86,10 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | deleteBtnRef.current set from e.currentTarget on click | 5 | Captures exact DOM node for per-row focus return without prop drilling |
 | Announcement auto-clear via 3s useEffect | 5 | Prevents stale live region re-announcements if same success message fires twice |
 
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 11 added: i18n localization for admin panel and block components
+
 ---
 *Initialized: 2026-03-10*
