@@ -40,7 +40,7 @@
 
 ### Page Manager
 
-- [ ] **PAGE-01**: Admin can view a list of all CMS pages with their slugs and last published date
+- [x] **PAGE-01**: Admin can view a list of all CMS pages with their slugs and last published date
 - [ ] **PAGE-02**: Admin can create a new page by entering a slug and selecting a template
 - [ ] **PAGE-03**: Admin can delete a page
 - [x] **PAGE-04**: Admin can rename a page slug
@@ -133,7 +133,7 @@
 | AUTH-01 | Phase 4 | Complete |
 | AUTH-02 | Phase 4 | Complete |
 | AUTH-03 | Phase 4 | Complete |
-| PAGE-01 | Phase 5 | Pending |
+| PAGE-01 | Phase 5 | Complete |
 | PAGE-02 | Phase 5 | Pending |
 | PAGE-03 | Phase 5 | Pending |
 | PAGE-04 | Phase 5 | Complete |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T04:32:02.556Z"
+last_updated: "2026-03-18T04:37:35.644Z"
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State: jeeby-cms
@@ -19,7 +19,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
 **Current focus:** Phase 5 — Page Manager (in progress)
-**Last completed:** Phase 5, Plan 01 — Page Manager data layer (listPages, renamePage, validateSlug, CMSProvider templates prop) (2026-03-18)
+**Last completed:** Phase 5, Plan 02 — PageManager component (table, inline edit, empty state, live region) wired into AdminPanel (2026-03-18)
 
 ## Phase Status
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
 | 3 | Front-End Block System | ● Complete | 5/5 complete |
 | 4 | Admin Auth | ◑ In Progress | 2/? complete |
-| 5 | Page Manager | ◑ In Progress | 1/? complete |
+| 5 | Page Manager | ◑ In Progress | 2/? complete |
 | 6 | Block Editor | ○ Pending | — |
 | 7 | Draft / Publish | ○ Pending | — |
 | 8 | CSS & Theming | ○ Pending | — |
@@ -80,6 +80,9 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | listPages uses no orderBy | 5 | Avoids silently excluding documents missing updatedAt field (RESEARCH.md Pitfall 5) |
 | validateSlug returns true when pattern falsy | 5 | No template registered means any slug is valid by design |
 | CMSContext value memoized with useMemo([firebase, templates]) | 5 | Prevents new object reference on every CMSProvider render, avoiding unnecessary consumer re-renders |
+| Fragment named import (not React.Fragment) | 5 | TSUP JSX transform handles React namespace; named import avoids needing React in scope |
+| editTriggerRefs keyed by slug-field string | 5 | Per-row focus management for inline edit without prop drilling or per-row component state |
+| requestAnimationFrame for focus-return in commitEdit | 5 | Ensures focus fires after React finishes clearing editingSlug (ref element may still be mounted otherwise) |
 
 ---
 *Initialized: 2026-03-10*

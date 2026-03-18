@@ -99,7 +99,7 @@ Plans:
 
 **Requirements:** PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, PAGE-06
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 05-01-PLAN.md — Data layer: listPages, renamePage, validateSlug + CMSProvider templates prop
@@ -206,7 +206,7 @@ Plans:
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 | 2/2 | Complete   | 2026-03-18 | 4 |
 | 3 | FRONT-01 through FRONT-10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
-| 5 | 1/3 | In Progress|  | 6 | EDIT-01–06 | 6 |
+| 5 | 2/3 | In Progress|  | 6 | EDIT-01–06 | 6 |
 | 7 | PUB-01, PUB-02, PUB-03 | 3 |
 | 8 | CSS-01–04 | 4 |
 | 9 | MEDIA-01–04 | 4 |
