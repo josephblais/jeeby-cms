@@ -37,3 +37,10 @@ test('useAuth source contains __session cookie write logic', () => {
   assert.ok(src.includes('getIdToken'), 'useAuth must call getIdToken for token')
   assert.ok(src.includes('SameSite=Strict'), 'Cookie must use SameSite=Strict')
 })
+
+test('CMSProvider accepts templates prop and passes through context', () => {
+  const src = readFileSync(new URL('./index.js', import.meta.url), 'utf8')
+  assert.ok(src.includes('templates'), 'CMSProvider must reference templates')
+  assert.ok(src.includes('templates = []'), 'templates must default to empty array')
+  assert.ok(/useMemo\([^)]*templates/.test(src) || src.includes('...firebase, templates'), 'templates must be included in memoized context value')
+})

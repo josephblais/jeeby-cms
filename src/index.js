@@ -9,12 +9,14 @@ import { signIn as _signIn, signOut as _signOut, subscribeToAuthState } from './
 
 const CMSContext = createContext(null)
 
-export function CMSProvider({ firebaseConfig, children }) {
+export function CMSProvider({ firebaseConfig, templates = [], children }) {
   // useMemo prevents re-initializing Firebase on every render.
   // initFirebase itself is idempotent via getApps() guard, but useMemo avoids
   // the overhead of calling getFirestore/getAuth/getStorage on every render.
   const firebase = useMemo(() => initFirebase(firebaseConfig), [firebaseConfig])
-  return <CMSContext.Provider value={firebase}>{children}</CMSContext.Provider>
+  // Memoize combined value to avoid new object reference on every render (Pitfall 2).
+  const value = useMemo(() => ({ ...firebase, templates }), [firebase, templates])
+  return <CMSContext.Provider value={value}>{children}</CMSContext.Provider>
 }
 
 export function useCMSFirebase() {
