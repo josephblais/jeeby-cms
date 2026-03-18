@@ -291,7 +291,7 @@ export function PageManager() {
                     />
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>{page.name || page.slug}</span>
+                      <a href={'/admin/pages/' + encodeURIComponent(page.slug)} style={{ color: '#2563EB', textDecoration: 'none', fontSize: '14px' }}>{page.name || page.slug}</a>
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
                         type="button"
@@ -355,6 +355,15 @@ export function PageManager() {
 
                 {/* Actions cell */}
                 <td style={{ padding: '16px' }}>
+                  <a
+                    href={'/admin/pages/' + encodeURIComponent(page.slug)}
+                    aria-label={'Edit blocks for ' + page.slug}
+                    style={{
+                      color: '#2563EB', background: 'none', border: 'none',
+                      cursor: 'pointer', fontSize: '14px', minHeight: '44px', padding: '8px 16px',
+                      textDecoration: 'none', display: 'inline-block', lineHeight: '44px'
+                    }}
+                  >Edit</a>
                   <button
                     type="button"
                     aria-label={`Delete ${page.slug}`}

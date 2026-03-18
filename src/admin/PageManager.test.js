@@ -94,3 +94,13 @@ test('PageManager edit inputs link to error via aria-describedby', () => {
   assert.ok(src.includes('aria-describedby'), 'Edit inputs must have aria-describedby pointing to error element')
   assert.ok(src.includes('cms-rename-error-'), 'Error element must have id prefixed cms-rename-error-')
 })
+
+// Phase 6 navigation
+test('PageManager page name is a link to /admin/pages/[slug]', () => {
+  assert.ok(src.includes('/admin/pages/'), 'Page name must link to /admin/pages/[slug]')
+  assert.ok(src.includes('<a'), 'Page name must be an anchor element')
+})
+
+test('PageManager has Edit button in Actions column linking to editor', () => {
+  assert.ok(/aria-label=.*Edit blocks/.test(src), 'Edit button must have aria-label describing action')
+})
