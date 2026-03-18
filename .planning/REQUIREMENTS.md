@@ -43,9 +43,9 @@
 - [ ] **PAGE-01**: Admin can view a list of all CMS pages with their slugs and last published date
 - [ ] **PAGE-02**: Admin can create a new page by entering a slug and selecting a template
 - [ ] **PAGE-03**: Admin can delete a page
-- [ ] **PAGE-04**: Admin can rename a page slug
-- [ ] **PAGE-05**: Slug is validated against the selected template pattern before saving
-- [ ] **PAGE-06**: Developer can register available templates in config (`jeeby.config.js` or `CMSProvider` prop)
+- [x] **PAGE-04**: Admin can rename a page slug
+- [x] **PAGE-05**: Slug is validated against the selected template pattern before saving
+- [x] **PAGE-06**: Developer can register available templates in config (`jeeby.config.js` or `CMSProvider` prop)
 
 ### Block Editor
 
@@ -136,9 +136,9 @@
 | PAGE-01 | Phase 5 | Pending |
 | PAGE-02 | Phase 5 | Pending |
 | PAGE-03 | Phase 5 | Pending |
-| PAGE-04 | Phase 5 | Pending |
-| PAGE-05 | Phase 5 | Pending |
-| PAGE-06 | Phase 5 | Pending |
+| PAGE-04 | Phase 5 | Complete |
+| PAGE-05 | Phase 5 | Complete |
+| PAGE-06 | Phase 5 | Complete |
 | EDIT-01 | Phase 6 | Pending |
 | EDIT-02 | Phase 6 | Pending |
 | EDIT-03 | Phase 6 | Pending |

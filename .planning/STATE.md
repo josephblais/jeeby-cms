@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T03:15:34.079Z"
+last_updated: "2026-03-18T04:32:02.556Z"
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 19
+  completed_plans: 17
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 4 — Admin Auth (in progress)
-**Last completed:** Phase 4, Plan 02 — AdminPanel auth gate with LoginPage and AdminNav UI components (2026-03-18)
+**Current focus:** Phase 5 — Page Manager (in progress)
+**Last completed:** Phase 5, Plan 01 — Page Manager data layer (listPages, renamePage, validateSlug, CMSProvider templates prop) (2026-03-18)
 
 ## Phase Status
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
 | 3 | Front-End Block System | ● Complete | 5/5 complete |
 | 4 | Admin Auth | ◑ In Progress | 2/? complete |
-| 5 | Page Manager | ○ Pending | — |
+| 5 | Page Manager | ◑ In Progress | 1/? complete |
 | 6 | Block Editor | ○ Pending | — |
 | 7 | Draft / Publish | ○ Pending | — |
 | 8 | CSS & Theming | ○ Pending | — |
@@ -77,6 +77,9 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Source inspection tests for admin components | 4 | Avoids fragile multi-layer Firebase/React mock chain; readFileSync verifies accessibility contract directly |
 | AdminNav accepts onSignOut prop | 4 | Keeps component decoupled from useAuth context; AdminPanel passes signOut from hook |
 | children prop on AdminPanel | 4 | Phase 5 PageManager slots in without breaking API change |
+| listPages uses no orderBy | 5 | Avoids silently excluding documents missing updatedAt field (RESEARCH.md Pitfall 5) |
+| validateSlug returns true when pattern falsy | 5 | No template registered means any slug is valid by design |
+| CMSContext value memoized with useMemo([firebase, templates]) | 5 | Prevents new object reference on every CMSProvider render, avoiding unnecessary consumer re-renders |
 
 ---
 *Initialized: 2026-03-10*
