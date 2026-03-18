@@ -1,5 +1,6 @@
 import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 // Wave 0 test stub for src/firebase/firestore.js (FIRE-02)
 //
@@ -9,7 +10,7 @@ import assert from 'node:assert/strict'
 //
 // Tests skip automatically when src/firebase/firestore.js does not exist.
 
-let getPage, savePage, saveDraft, publishPage, deletePage
+let getPage, savePage, saveDraft, publishPage, deletePage, validateSlug
 try {
   const mod = await import('./firestore.js')
   getPage = mod.getPage
@@ -17,6 +18,7 @@ try {
   saveDraft = mod.saveDraft
   publishPage = mod.publishPage
   deletePage = mod.deletePage
+  validateSlug = mod.validateSlug
 } catch {
   // src/firebase/firestore.js does not exist yet — all tests will be skipped
 }
@@ -120,4 +122,36 @@ test('deletePage calls deleteDoc', { skip: !deletePage }, async () => {
     threw = true
   }
   assert.ok(!threw || true, 'deletePage should be callable with (db, pageId)')
+})
+
+test('listPages uses collection(db, cms, pages) path', async () => {
+  const src = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
+  assert.ok(src.includes("collection(db, 'cms', 'pages')"), 'listPages must use separate string segments for collection path')
+})
+
+test('renamePage calls getPage then savePage then deletePage', async () => {
+  const src = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
+  assert.ok(src.includes('getPage(db, oldSlug)'), 'renamePage must read old doc first')
+  assert.ok(src.includes('savePage(db, newSlug'), 'renamePage must write under new slug')
+  assert.ok(src.includes('deletePage(db, oldSlug)'), 'renamePage must delete old doc')
+})
+
+test('validateSlug returns true when pattern is null', { skip: !validateSlug }, () => {
+  assert.ok(validateSlug(null, '/anything') === true)
+})
+
+test('validateSlug matches static pattern', { skip: !validateSlug }, () => {
+  assert.ok(validateSlug('/about', '/about') === true)
+  assert.ok(validateSlug('/about', '/contact') === false)
+})
+
+test('validateSlug matches [slug] dynamic segment', { skip: !validateSlug }, () => {
+  assert.ok(validateSlug('/blog/[slug]', '/blog/my-post') === true)
+  assert.ok(validateSlug('/blog/[slug]', '/blog/my-post/extra') === false)
+  assert.ok(validateSlug('/blog/[slug]', '/other/my-post') === false)
+})
+
+test('validateSlug matches [...path] catch-all', { skip: !validateSlug }, () => {
+  assert.ok(validateSlug('/docs/[...path]', '/docs/a/b/c') === true)
+  assert.ok(validateSlug('/docs/[...path]', '/docs/') === false)
 })
