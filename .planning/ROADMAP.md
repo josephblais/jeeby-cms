@@ -122,6 +122,14 @@ Plans:
 
 **Requirements:** EDIT-01, EDIT-02, EDIT-03, EDIT-04, EDIT-05, EDIT-06
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Tiptap deps, test scaffolds (Wave 0), PageManager edit navigation links
+- [ ] 06-02-PLAN.md — PageEditor + EditorHeader + BlockCanvas with Framer Motion Reorder
+- [ ] 06-03-PLAN.md — All 5 block editor forms (TitleEditor, TextEditor, ImageEditor, VideoEditor, GalleryEditor)
+- [ ] 06-04-PLAN.md — AddBlockButton + BlockTypePicker + UndoToast + UnsavedChangesWarning + admin export wiring
+
 **Success Criteria:**
 1. Page Editor renders existing draft blocks from Firestore in a vertical canvas
 2. Admin can add a block of any supported type via BlockToolbar; new block appears at the bottom
@@ -230,3 +238,4 @@ Plans:
 *Phase 3 plans added: 2026-03-11*
 *Phase 4 plans added: 2026-03-17*
 *Phase 5 plans added: 2026-03-18*
+*Phase 6 plans added: 2026-03-18*
