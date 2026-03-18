@@ -66,7 +66,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | alt="" empty string (never omit alt) | 3 | WCAG 1.1.1: omitting alt causes screen readers to announce filename; empty string signals decorative |
 | aria-label="Gallery" on ul (no heading precedes) | 3 | WCAG 1.3.1: no visible heading in Phase 3 static rendering; aria-label provides accessible context |
 | toEmbedUrl exported from Video.js | 3 | Enables independent unit testing of URL parsing logic and consumer reuse |
-| BLOCK_REGISTRY type strings are lowercase | 3 | Phase 6 must use exact strings: 'title', 'paragraph', 'richtext', 'image', 'video', 'gallery' |
+| BLOCK_REGISTRY type strings are lowercase | 3 | Phase 6 must use exact strings: 'title', 'richtext', 'image', 'video', 'gallery' (paragraph dropped — see below) |
 | jeeby-cms-block class structure only in Phase 3 | 3 | CSS custom property values deferred to Phase 8 — Phase 3 delivers class hook + id passthrough only |
 | mock.module for isomorphic-dompurify in index.test.js | 3 | Transitive CJS/ESM conflict (html-encoding-sniffer + @exodus/bytes) causes ERR_REQUIRE_ESM in Node 22; mock resolves it |
 | components prop on Blocks merges custom registry | 3 | { ...BLOCK_REGISTRY, ...components } enables v1 extensibility without breaking API change in v2 |
@@ -87,6 +87,11 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Announcement auto-clear via 3s useEffect | 5 | Prevents stale live region re-announcements if same success message fires twice |
 
 ## Accumulated Context
+
+### Block Type Decisions
+- **ParagraphBlock dropped (2026-03-18):** Replaced entirely by RichTextBlock. One text content block type for v1 — simpler admin UX, fewer editor variants to build in Phase 6.
+- **Block types for Phase 6 editor:** title, richtext, image, video, gallery (5 types, not 6)
+- **Stretch goal captured (todo):** Inline formatting (bold/italic) within non-text blocks like Title — deferred post-Phase 6.
 
 ### Roadmap Evolution
 - Phase 11 added: i18n localization for admin panel and block components
