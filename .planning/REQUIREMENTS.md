@@ -34,7 +34,7 @@
 
 ### Admin Auth
 
-- [ ] **AUTH-01**: Admin panel shows `LoginPage` (email/password) when user is unauthenticated
+- [x] **AUTH-01**: Admin panel shows `LoginPage` (email/password) when user is unauthenticated
 - [x] **AUTH-02**: `withCMSAuth` middleware helper redirects unauthenticated requests away from `/admin/*`
 - [x] **AUTH-03**: `useAuth` hook exposes current user and sign-out function to admin components
 
@@ -130,7 +130,7 @@
 | FRONT-08 | Phase 3 | Complete |
 | FRONT-09 | Phase 3 | Complete |
 | FRONT-10 | Phase 3 | Complete |
-| AUTH-01 | Phase 4 | Pending |
+| AUTH-01 | Phase 4 | Complete |
 | AUTH-02 | Phase 4 | Complete |
 | AUTH-03 | Phase 4 | Complete |
 | PAGE-01 | Phase 5 | Pending |

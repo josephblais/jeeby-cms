@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T01:24:20.512Z"
+last_updated: "2026-03-18T01:28:24.561Z"
 progress:
   total_phases: 10
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 # Project State: jeeby-cms
@@ -19,7 +19,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
 **Current focus:** Phase 4 — Admin Auth (in progress)
-**Last completed:** Phase 4, Plan 01 — useAuth __session cookie lifecycle, bridges client auth to withCMSAuth server middleware (2026-03-18)
+**Last completed:** Phase 4, Plan 02 — AdminPanel auth gate with LoginPage and AdminNav UI components (2026-03-18)
 
 ## Phase Status
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | 1 | Package Scaffolding | ● Complete | 3/3 complete |
 | 2 | Firebase Layer | ◑ In Progress | 2/5 complete |
 | 3 | Front-End Block System | ● Complete | 5/5 complete |
-| 4 | Admin Auth | ◑ In Progress | 1/? complete |
+| 4 | Admin Auth | ◑ In Progress | 2/? complete |
 | 5 | Page Manager | ○ Pending | — |
 | 6 | Block Editor | ○ Pending | — |
 | 7 | Draft / Publish | ○ Pending | — |
@@ -74,6 +74,9 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Video field: data.url canonical, data.src fallback | 3 | url matches schema and BLOCK_REGISTRY wiring; src fallback preserves backwards compat |
 | Cookie written before setUser/setLoading | 4 | Ensures __session cookie exists before React re-render so downstream reads see it |
 | Source inspection for cookie tests | 4 | Avoids fragile multi-layer mock chain (Firebase/React/document.cookie); contract confirmed via readFileSync |
+| Source inspection tests for admin components | 4 | Avoids fragile multi-layer Firebase/React mock chain; readFileSync verifies accessibility contract directly |
+| AdminNav accepts onSignOut prop | 4 | Keeps component decoupled from useAuth context; AdminPanel passes signOut from hook |
+| children prop on AdminPanel | 4 | Phase 5 PageManager slots in without breaking API change |
 
 ---
 *Initialized: 2026-03-10*
