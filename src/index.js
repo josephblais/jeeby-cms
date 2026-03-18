@@ -32,7 +32,14 @@ export function useAuth() {
     // subscribeToAuthState returns an unsubscribe function — return it for cleanup.
     // This prevents the onAuthStateChanged listener from leaking on unmount or
     // during React Strict Mode double-invoke cycles.
-    const unsubscribe = subscribeToAuthState(auth, (u) => {
+    const unsubscribe = subscribeToAuthState(auth, async (u) => {
+      if (u) {
+        const token = await u.getIdToken()
+        const secure = typeof document !== 'undefined' && document.location.protocol === 'https:' ? '; Secure' : ''
+        document.cookie = `__session=${token}; path=/; SameSite=Strict${secure}`
+      } else {
+        document.cookie = '__session=; path=/; SameSite=Strict; max-age=0'
+      }
       setUser(u)
       setLoading(false)
     })
