@@ -232,9 +232,10 @@ function Blocks({ data, components, className, blockClassName }) {
   );
 }
 var CMSContext = createContext(null);
-function CMSProvider({ firebaseConfig, children }) {
+function CMSProvider({ firebaseConfig, templates = [], children }) {
   const firebase = useMemo(() => initFirebase(firebaseConfig), [firebaseConfig]);
-  return /* @__PURE__ */ jsx(CMSContext.Provider, { value: firebase, children });
+  const value = useMemo(() => ({ ...firebase, templates }), [firebase, templates]);
+  return /* @__PURE__ */ jsx(CMSContext.Provider, { value, children });
 }
 function useCMSFirebase() {
   const ctx = useContext(CMSContext);

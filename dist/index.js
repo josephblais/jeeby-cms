@@ -254,9 +254,10 @@ function Blocks({ data, components, className, blockClassName }) {
   );
 }
 var CMSContext = react.createContext(null);
-function CMSProvider({ firebaseConfig, children }) {
+function CMSProvider({ firebaseConfig, templates = [], children }) {
   const firebase = react.useMemo(() => initFirebase(firebaseConfig), [firebaseConfig]);
-  return /* @__PURE__ */ jsxRuntime.jsx(CMSContext.Provider, { value: firebase, children });
+  const value = react.useMemo(() => ({ ...firebase, templates }), [firebase, templates]);
+  return /* @__PURE__ */ jsxRuntime.jsx(CMSContext.Provider, { value, children });
 }
 function useCMSFirebase() {
   const ctx = react.useContext(CMSContext);

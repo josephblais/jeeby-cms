@@ -28,12 +28,12 @@ export function LoginPage() {
   return (
     <main className="jeeby-cms-login-page" role="main">
       <div className="jeeby-cms-login-card" style={{
-        maxWidth: '400px', minWidth: '320px', margin: '0 auto', padding: '32px'
+        maxWidth: '400px', minWidth: '320px', width: '100%'
       }}>
-        <h1 className="jeeby-cms-login-heading" style={{ marginBottom: '24px' }}>jeeby CMS</h1>
+        <h1 className="jeeby-cms-login-heading">jeeby CMS</h1>
         <form className="jeeby-cms-login-form" onSubmit={handleSubmit} noValidate>
-          <div className="jeeby-cms-field" style={{ marginBottom: '16px' }}>
-            <label htmlFor="cms-email" style={{ display: 'block', marginBottom: '4px' }}>Email address</label>
+          <div className="jeeby-cms-field">
+            <label htmlFor="cms-email" style={{ display: 'block' }}>Email address</label>
             <input
               id="cms-email"
               type="email"
@@ -41,11 +41,11 @@ export function LoginPage() {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              style={{ display: 'block', width: '100%', padding: '8px 16px', boxSizing: 'border-box' }}
+              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
             />
           </div>
-          <div className="jeeby-cms-field" style={{ marginBottom: '16px' }}>
-            <label htmlFor="cms-password" style={{ display: 'block', marginBottom: '4px' }}>Password</label>
+          <div className="jeeby-cms-field">
+            <label htmlFor="cms-password" style={{ display: 'block' }}>Password</label>
             <input
               id="cms-password"
               type="password"
@@ -53,7 +53,7 @@ export function LoginPage() {
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
-              style={{ display: 'block', width: '100%', padding: '8px 16px', boxSizing: 'border-box' }}
+              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
             />
           </div>
           <button
@@ -62,15 +62,14 @@ export function LoginPage() {
             disabled={submitting}
             aria-busy={submitting ? 'true' : undefined}
             style={{
-              display: 'block', width: '100%', minHeight: '44px', padding: '8px 16px',
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              opacity: submitting ? 0.6 : 1
+              display: 'block', width: '100%', minHeight: '44px',
+              cursor: submitting ? 'not-allowed' : 'pointer'
             }}
           >
             {submitting ? 'Signing in\u2026' : 'Sign in'}
           </button>
           {error && (
-            <p className="jeeby-cms-auth-error" role="alert" aria-live="assertive" style={{ marginTop: '12px' }}>{error}</p>
+            <p className="jeeby-cms-auth-error" role="alert" aria-live="assertive">{error}</p>
           )}
         </form>
       </div>

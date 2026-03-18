@@ -43,8 +43,7 @@ export function TitleEditor({ data, onChange, blockId }) {
         onChange={(e) => onChange({ ...data, level: e.target.value })}
         // data.level drives font size via HEADING_SIZES lookup below
         style={{
-          minHeight: '44px', padding: '4px 8px', fontSize: '14px',
-          border: '1px solid #E5E7EB', borderRadius: '4px', background: '#FFFFFF',
+          minHeight: '44px',
           width: 'fit-content',
         }}
       >
@@ -66,13 +65,7 @@ export function TitleEditor({ data, onChange, blockId }) {
         onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault() }}
         style={{
           fontSize: HEADING_SIZES[data?.level ?? 'h2'],
-          fontWeight: 600,
-          outline: 'none',
-          padding: '4px',
           minHeight: '44px',
-          color: '#111827',
-          lineHeight: 1.2,
-          borderBottom: '2px solid transparent',
         }}
         data-placeholder="Enter title..."
       />

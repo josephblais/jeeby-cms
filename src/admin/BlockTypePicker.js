@@ -58,8 +58,7 @@ export function BlockTypePicker({ onSelect, onClose }) {
       onKeyDown={handleKeyDown}
       style={{
         position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-        zIndex: 100, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '6px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)', listStyle: 'none', padding: '4px 0', margin: '4px 0 0',
+        zIndex: 100, listStyle: 'none', padding: 0, margin: '4px 0 0',
         minWidth: '160px'
       }}
     >
@@ -71,11 +70,7 @@ export function BlockTypePicker({ onSelect, onClose }) {
           aria-selected={index === activeIndex}
           onClick={() => onSelect(bt.type)}
           onMouseEnter={() => setActiveIndex(index)}
-          style={{
-            padding: '8px 16px', cursor: 'pointer', fontSize: '14px',
-            background: index === activeIndex ? '#EFF6FF' : 'transparent',
-            color: index === activeIndex ? '#2563EB' : '#111827'
-          }}
+          style={{ cursor: 'pointer' }}
         >
           {bt.label}
         </li>

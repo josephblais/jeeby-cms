@@ -25,8 +25,7 @@ export function ImageEditor({ data, onChange, blockId }) {
         placeholder="https://example.com/image.jpg"
         onChange={(e) => { setImgError(false); onChange({ ...data, src: e.target.value }) }}
         style={{
-          width: '100%', padding: '8px 12px', fontSize: '14px',
-          border: '1px solid #E5E7EB', borderRadius: '4px', boxSizing: 'border-box',
+          width: '100%', boxSizing: 'border-box',
           minHeight: '44px',
         }}
       />
@@ -41,34 +40,30 @@ export function ImageEditor({ data, onChange, blockId }) {
           placeholder="Describe the image for screen readers"
           onChange={(e) => onChange({ ...data, alt: e.target.value })}
           style={{
-            width: '100%', padding: '8px 12px', fontSize: '14px',
-            border: '1px solid #E5E7EB', borderRadius: '4px', boxSizing: 'border-box',
+            width: '100%', boxSizing: 'border-box',
             minHeight: '44px',
           }}
         />
-        <p id={'alt-hint-' + blockId} style={{ fontSize: '14px', color: '#6B7280', margin: '4px 0 0' }}>
+        <p id={'alt-hint-' + blockId}>
           Describe the image for screen readers
         </p>
       </div>
 
       {/* Image preview — uses <figure> for semantic grouping (WCAG 1.3.1) */}
       {data?.src && !imgError && (
-        <figure style={{ margin: '8px 0 0' }}>
+        <figure style={{ margin: 0 }}>
           <img
             src={data.src}
             alt={data?.alt ?? ''}
             onError={() => setImgError(true)}
-            style={{ maxWidth: '100%', maxHeight: '240px', borderRadius: '4px', display: 'block' }}
+            style={{ maxWidth: '100%', maxHeight: '240px', display: 'block' }}
           />
         </figure>
       )}
 
       {/* Error fallback — shown when image URL resolves but image fails to load */}
       {data?.src && imgError && (
-        <div style={{
-          background: '#F3F4F6', padding: '24px', borderRadius: '4px',
-          textAlign: 'center', color: '#6B7280', fontSize: '14px',
-        }}>
+        <div>
           Image not found. Check that the URL is correct and publicly accessible.
         </div>
       )}

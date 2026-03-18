@@ -176,12 +176,11 @@ export function PageManager() {
           {announcement}
         </div>
         <div role="status" aria-label="Loading pages" style={{
-          display: 'flex', justifyContent: 'center', padding: '48px 0'
+          display: 'flex', justifyContent: 'center'
         }}>
           <div aria-hidden="true" style={{
             width: '32px', height: '32px',
-            border: '3px solid #2563EB', borderTopColor: 'transparent',
-            borderRadius: '50%', animation: 'jeeby-spin 0.75s linear infinite'
+            animation: 'jeeby-spin 0.75s linear infinite'
           }} />
         </div>
       </div>
@@ -199,20 +198,18 @@ export function PageManager() {
         }}>
           {announcement}
         </div>
-        <div className="jeeby-cms-pages-empty" style={{ textAlign: 'center', padding: '48px 0' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#374151', margin: '0 0 8px' }}>No pages yet.</h2>
-          <p style={{ fontSize: '14px', color: '#6B7280', margin: '0 0 16px' }}>Create your first page.</p>
+        <div className="jeeby-cms-pages-empty">
+          <h2>No pages yet.</h2>
+          <p>Create your first page.</p>
           <button
             ref={newPageBtnRef}
             type="button"
             className="jeeby-cms-btn-primary"
             onClick={() => setShowCreateModal(true)}
-            style={{
-              minHeight: '44px', padding: '8px 24px', background: '#2563EB', color: '#fff',
-              border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px'
-            }}
+            style={{ minHeight: '44px', cursor: 'pointer' }}
           >New Page</button>
         </div>
+        <CreatePageModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }} triggerRef={newPageBtnRef} />
       </div>
     )
   }
@@ -230,48 +227,33 @@ export function PageManager() {
 
       {/* Table header row: h2 + New Page button */}
       <div className="jeeby-cms-page-list-header" style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>Pages</h2>
+        <h2>Pages</h2>
         <button
           ref={newPageBtnRef}
           type="button"
           className="jeeby-cms-btn-primary"
           onClick={() => setShowCreateModal(true)}
-          style={{
-            minHeight: '44px', padding: '8px 24px', background: '#2563EB', color: '#fff',
-            border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px'
-          }}
+          style={{ minHeight: '44px', cursor: 'pointer' }}
         >New Page</button>
       </div>
 
       <table className="jeeby-cms-pages-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th scope="col" style={{
-              textAlign: 'left', padding: '16px', fontSize: '14px',
-              fontWeight: 600, borderBottom: '1px solid #E5E7EB'
-            }}>Name</th>
-            <th scope="col" style={{
-              textAlign: 'left', padding: '16px', fontSize: '14px',
-              fontWeight: 600, borderBottom: '1px solid #E5E7EB'
-            }}>Slug</th>
-            <th scope="col" style={{
-              textAlign: 'left', padding: '16px', fontSize: '14px',
-              fontWeight: 600, borderBottom: '1px solid #E5E7EB'
-            }}>Last Published</th>
-            <th scope="col" style={{
-              textAlign: 'left', padding: '16px', fontSize: '14px',
-              fontWeight: 600, borderBottom: '1px solid #E5E7EB'
-            }}>Actions</th>
+            <th scope="col">Name</th>
+            <th scope="col">Slug</th>
+            <th scope="col">Last Published</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
           {pages.map(page => (
             <Fragment key={page.slug}>
-              <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+              <tr>
                 {/* Name cell — inline editable */}
-                <td style={{ padding: '16px', fontSize: '14px' }}>
+                <td>
                   {editingSlug === page.slug && editField === 'name' ? (
                     <input
                       type="text"
@@ -284,14 +266,12 @@ export function PageManager() {
                       onBlur={commitEdit}
                       autoFocus
                       style={{
-                        display: 'block', width: '100%', padding: '4px 8px',
-                        boxSizing: 'border-box', fontSize: '14px',
-                        border: '1px solid #E5E7EB', borderRadius: '2px'
+                        display: 'block', width: '100%', boxSizing: 'border-box'
                       }}
                     />
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <a href={'/admin/pages/' + encodeURIComponent(page.slug)} style={{ color: '#2563EB', textDecoration: 'none', fontSize: '14px' }}>{page.name || page.slug}</a>
+                      <a href={'/admin/pages/' + encodeURIComponent(page.slug)}>{page.name || page.slug}</a>
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
                         type="button"
@@ -299,8 +279,8 @@ export function PageManager() {
                         onClick={() => startEdit(page.slug, 'name', page.name || '')}
                         style={{
                           background: 'none', border: 'none', cursor: 'pointer',
-                          fontSize: '14px', padding: '4px 8px', minHeight: '44px',
-                          opacity: 0, color: '#2563EB'
+                          minHeight: '44px',
+                          opacity: 0
                         }}
                         onFocus={e => { e.currentTarget.style.opacity = '1' }}
                         onBlur={e => { e.currentTarget.style.opacity = '0' }}
@@ -310,7 +290,7 @@ export function PageManager() {
                 </td>
 
                 {/* Slug cell — inline editable */}
-                <td style={{ padding: '16px', fontSize: '14px' }}>
+                <td>
                   {editingSlug === page.slug && editField === 'slug' ? (
                     <input
                       type="text"
@@ -323,9 +303,7 @@ export function PageManager() {
                       onBlur={commitEdit}
                       autoFocus
                       style={{
-                        display: 'block', width: '100%', padding: '4px 8px',
-                        boxSizing: 'border-box', fontSize: '14px',
-                        border: '1px solid #E5E7EB', borderRadius: '2px'
+                        display: 'block', width: '100%', boxSizing: 'border-box'
                       }}
                     />
                   ) : (
@@ -338,8 +316,8 @@ export function PageManager() {
                         onClick={() => startEdit(page.slug, 'slug', page.slug)}
                         style={{
                           background: 'none', border: 'none', cursor: 'pointer',
-                          fontSize: '14px', padding: '4px 8px', minHeight: '44px',
-                          opacity: 0, color: '#2563EB'
+                          minHeight: '44px',
+                          opacity: 0
                         }}
                         onFocus={e => { e.currentTarget.style.opacity = '1' }}
                         onBlur={e => { e.currentTarget.style.opacity = '0' }}
@@ -349,19 +327,18 @@ export function PageManager() {
                 </td>
 
                 {/* Last Published cell */}
-                <td style={{ padding: '16px', fontSize: '14px' }}>
+                <td>
                   {formatDate(page.lastPublishedAt)}
                 </td>
 
                 {/* Actions cell */}
-                <td style={{ padding: '16px' }}>
+                <td>
                   <a
                     href={'/admin/pages/' + encodeURIComponent(page.slug)}
                     aria-label={'Edit blocks for ' + page.slug}
                     style={{
-                      color: '#2563EB', background: 'none', border: 'none',
-                      cursor: 'pointer', fontSize: '14px', minHeight: '44px', padding: '8px 16px',
-                      textDecoration: 'none', display: 'inline-block', lineHeight: '44px'
+                      display: 'inline-block', minHeight: '44px',
+                      cursor: 'pointer'
                     }}
                   >Edit</a>
                   <button
@@ -369,8 +346,8 @@ export function PageManager() {
                     aria-label={`Delete ${page.slug}`}
                     onClick={(e) => { deleteBtnRef.current = e.currentTarget; setDeleteTarget(page) }}
                     style={{
-                      color: '#DC2626', background: 'none', border: 'none',
-                      cursor: 'pointer', fontSize: '14px', minHeight: '44px', padding: '8px 16px'
+                      background: 'none', border: 'none',
+                      cursor: 'pointer', minHeight: '44px'
                     }}
                   >Delete</button>
                 </td>
@@ -384,7 +361,6 @@ export function PageManager() {
                       id={`cms-rename-error-${page.slug}`}
                       role="alert"
                       className="jeeby-cms-inline-error"
-                      style={{ color: '#DC2626', fontSize: '14px', padding: '8px 16px', margin: 0 }}
                     >{editError}</p>
                   </td>
                 </tr>

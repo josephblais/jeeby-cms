@@ -7,9 +7,9 @@ export function AddBlockButton({ onAdd, insertIndex }) {
   const buttonRef = useRef(null)
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '4px 0', position: 'relative' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
       {/* Horizontal divider line */}
-      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: '#E5E7EB' }} />
+      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px' }} />
 
       <button
         ref={buttonRef}
@@ -19,11 +19,10 @@ export function AddBlockButton({ onAdd, insertIndex }) {
         aria-haspopup="listbox"
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          width: '28px', height: '28px', borderRadius: '50%', background: '#2563EB',
-          color: '#fff', border: 'none', cursor: 'pointer', fontSize: '16px', lineHeight: 1,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           position: 'relative', zIndex: 1,
-          minHeight: '44px', minWidth: '44px', padding: 0
+          minHeight: '44px', minWidth: '44px', padding: 0,
+          background: 'none', border: 'none', cursor: 'pointer'
         }}
       >+</button>
 
