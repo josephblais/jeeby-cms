@@ -92,9 +92,9 @@ Build the Block Editor — a page-level canvas where admins add, edit, reorder, 
 - `src/blocks/index.js` — BLOCK_REGISTRY (exact type strings: `title`, `paragraph`, `richtext`, `image`, `video`, `gallery`), Block wrapper, Blocks renderer
 - `src/blocks/Title.js` — Title component field structure: `data.level` (h2–h6), `data.text`
 - `src/blocks/RichText.js` — RichText component reads `data.html` — editor must write this field
-- `src/blocks/Image.js` — Image component reads `data.url`, `data.alt`, `data.caption`
+- `src/blocks/Image.js` — Image component reads `data.src`, `data.alt`, `data.caption`
 - `src/blocks/Video.js` — Video component + `toEmbedUrl()` export; reads `data.url` or `data.src`
-- `src/blocks/Gallery.js` — Gallery component reads `data.items` array of `{ url, alt }`
+- `src/blocks/Gallery.js` — Gallery component reads `data.items` array of `{ src, alt }`
 
 ### Firestore helpers
 - `src/firebase/firestore.js` — `saveDraft(db, slug, blocks)` for auto-save writes; `getPage(db, slug)` for loading draft blocks on editor open
