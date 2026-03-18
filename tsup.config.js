@@ -21,6 +21,8 @@ export default defineConfig([
     },
   },
   // Entry 2: admin components — no entry-level banner (individual files self-mark as needed)
+  // NOTE: ../index.js is rewritten to 'jeeby-cms' at bundle time so both admin and index
+  // share the same React context instance at runtime (prevents "must be inside CMSProvider").
   {
     entry: { admin: 'src/admin/index.js' },
     format: ['esm', 'cjs'],
@@ -28,6 +30,17 @@ export default defineConfig([
     treeshake: true,
     external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', /^firebase-admin/],
     loader: { '.js': 'jsx' },
+    esbuildPlugins: [
+      {
+        name: 'externalize-main-entry',
+        setup(build) {
+          build.onResolve({ filter: /\.\.\/index\.js$/ }, () => ({
+            path: 'jeeby-cms',
+            external: true,
+          }))
+        },
+      },
+    ],
     esbuildOptions(options) {
       options.jsx = 'automatic'
       options.jsxImportSource = 'react'
