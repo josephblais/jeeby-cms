@@ -146,6 +146,12 @@ Plans:
 
 **Requirements:** PUB-01, PUB-02, PUB-03
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Firestore hasDraftChanges flag + Wave 0 test scaffolds + PUB-03 contract tests
+- [ ] 07-02-PLAN.md — EditorHeader publish controls + PublishConfirmModal + PublishToast + PageEditor wiring
+
 **Success Criteria:**
 1. `PublishBar` displays the last published timestamp and an indicator when draft differs from published
 2. Clicking "Publish" copies `draft.blocks` to `published.blocks` and updates `lastPublishedAt`
@@ -238,3 +244,4 @@ Plans:
 *Phase 4 plans added: 2026-03-17*
 *Phase 5 plans added: 2026-03-18*
 *Phase 6 plans added: 2026-03-18*
+*Phase 7 plans added: 2026-03-18*
