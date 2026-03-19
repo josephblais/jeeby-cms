@@ -178,10 +178,7 @@ export function PageManager() {
         <div role="status" aria-label="Loading pages" style={{
           display: 'flex', justifyContent: 'center'
         }}>
-          <div aria-hidden="true" style={{
-            width: '32px', height: '32px',
-            animation: 'jeeby-spin 0.75s linear infinite'
-          }} />
+          <div className="jeeby-cms-spinner" aria-hidden="true" />
         </div>
       </div>
     )
@@ -206,7 +203,6 @@ export function PageManager() {
             type="button"
             className="jeeby-cms-btn-primary"
             onClick={() => setShowCreateModal(true)}
-            style={{ minHeight: '44px', cursor: 'pointer' }}
           >New Page</button>
         </div>
         <CreatePageModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }} triggerRef={newPageBtnRef} />
@@ -226,20 +222,17 @@ export function PageManager() {
       </div>
 
       {/* Table header row: h2 + New Page button */}
-      <div className="jeeby-cms-page-list-header" style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
+      <div className="jeeby-cms-page-list-header">
         <h2>Pages</h2>
         <button
           ref={newPageBtnRef}
           type="button"
           className="jeeby-cms-btn-primary"
           onClick={() => setShowCreateModal(true)}
-          style={{ minHeight: '44px', cursor: 'pointer' }}
         >New Page</button>
       </div>
 
-      <table className="jeeby-cms-pages-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="jeeby-cms-pages-table">
         <thead>
           <tr>
             <th scope="col">Name</th>
@@ -265,9 +258,6 @@ export function PageManager() {
                       onKeyDown={handleEditKeyDown}
                       onBlur={commitEdit}
                       autoFocus
-                      style={{
-                        display: 'block', width: '100%', boxSizing: 'border-box'
-                      }}
                     />
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -275,11 +265,10 @@ export function PageManager() {
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
                         type="button"
+                        className="jeeby-cms-btn-ghost"
                         aria-label={`Edit name for ${page.name || page.slug}`}
                         onClick={() => startEdit(page.slug, 'name', page.name || '')}
                         style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          minHeight: '44px',
                           opacity: 0
                         }}
                         onFocus={e => { e.currentTarget.style.opacity = '1' }}
@@ -302,9 +291,6 @@ export function PageManager() {
                       onKeyDown={handleEditKeyDown}
                       onBlur={commitEdit}
                       autoFocus
-                      style={{
-                        display: 'block', width: '100%', boxSizing: 'border-box'
-                      }}
                     />
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -312,11 +298,10 @@ export function PageManager() {
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
                         type="button"
+                        className="jeeby-cms-btn-ghost"
                         aria-label={`Edit slug for ${page.name || page.slug}`}
                         onClick={() => startEdit(page.slug, 'slug', page.slug)}
                         style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          minHeight: '44px',
                           opacity: 0
                         }}
                         onFocus={e => { e.currentTarget.style.opacity = '1' }}
@@ -336,19 +321,13 @@ export function PageManager() {
                   <a
                     href={'/admin/pages/' + encodeURIComponent(page.slug)}
                     aria-label={'Edit blocks for ' + page.slug}
-                    style={{
-                      display: 'inline-block', minHeight: '44px',
-                      cursor: 'pointer'
-                    }}
+                    style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}
                   >Edit</a>
                   <button
                     type="button"
+                    className="jeeby-cms-btn-ghost"
                     aria-label={`Delete ${page.slug}`}
                     onClick={(e) => { deleteBtnRef.current = e.currentTarget; setDeleteTarget(page) }}
-                    style={{
-                      background: 'none', border: 'none',
-                      cursor: 'pointer', minHeight: '44px'
-                    }}
                   >Delete</button>
                 </td>
               </tr>

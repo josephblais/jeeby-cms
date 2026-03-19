@@ -27,13 +27,11 @@ export function LoginPage() {
 
   return (
     <main className="jeeby-cms-login-page" role="main">
-      <div className="jeeby-cms-login-card" style={{
-        maxWidth: '400px', minWidth: '320px', width: '100%'
-      }}>
+      <div className="jeeby-cms-login-card">
         <h1 className="jeeby-cms-login-heading">jeeby CMS</h1>
         <form className="jeeby-cms-login-form" onSubmit={handleSubmit} noValidate>
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-email" style={{ display: 'block' }}>Email address</label>
+            <label htmlFor="cms-email">Email address</label>
             <input
               id="cms-email"
               type="email"
@@ -41,11 +39,10 @@ export function LoginPage() {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
             />
           </div>
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-password" style={{ display: 'block' }}>Password</label>
+            <label htmlFor="cms-password">Password</label>
             <input
               id="cms-password"
               type="password"
@@ -53,7 +50,6 @@ export function LoginPage() {
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
-              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
             />
           </div>
           <button
@@ -61,10 +57,7 @@ export function LoginPage() {
             className="jeeby-cms-btn-primary"
             disabled={submitting}
             aria-busy={submitting ? 'true' : undefined}
-            style={{
-              display: 'block', width: '100%', minHeight: '44px',
-              cursor: submitting ? 'not-allowed' : 'pointer'
-            }}
+            style={{ cursor: submitting ? 'not-allowed' : 'pointer', display: 'block', width: '100%' }}
           >
             {submitting ? 'Signing in\u2026' : 'Sign in'}
           </button>
