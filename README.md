@@ -154,3 +154,48 @@ service cloud.firestore {
 ```
 
 This allows anyone to read published content and only authenticated users to write. Tighten as needed for your project.
+
+---
+
+## CSS & Theming
+
+### Importing styles
+
+Import the admin stylesheet in your layout or page — once is enough:
+
+```js
+import 'jeeby-cms/dist/styles.css'
+```
+
+### CSS custom properties
+
+All admin UI styles are controlled by CSS custom properties declared under `.jeeby-cms-admin`. Override any of these in your own CSS to match your brand:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `--jeeby-cms-accent` | `#4a90d9` | Primary action color (buttons, links, active states) |
+| `--jeeby-cms-focus-ring` | `#4a90d9` | Focus indicator color |
+| `--jeeby-cms-bg-surface` | `#191919` | Admin panel background |
+| `--jeeby-cms-text-primary` | `#e8e6e1` | Main admin UI text color |
+| `--jeeby-cms-max-width` | `720px` | Maximum width of content blocks |
+| `--jeeby-cms-block-spacing` | `1.5rem` | Vertical spacing between blocks |
+| `--jeeby-cms-gallery-columns` | `3` | Number of columns in gallery grid |
+
+### Overriding variables
+
+Target `.jeeby-cms-admin` in your own stylesheet:
+
+```css
+.jeeby-cms-admin {
+  --jeeby-cms-accent: #e74c3c;
+  --jeeby-cms-bg-surface: #1a1a2e;
+}
+```
+
+### Block component styling
+
+Content block components (Title, Paragraph, RichText, Image, Video, Gallery) ship with no visual styles. They render semantic HTML and inherit from your site's CSS. Apply styles via the `className` prop on each block component or by targeting the rendered elements in your own stylesheet.
+
+### Scoping
+
+All admin panel styles are scoped under `.jeeby-cms-admin` and do not affect content outside that wrapper.
