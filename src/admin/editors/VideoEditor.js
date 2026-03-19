@@ -32,12 +32,12 @@ export function VideoEditor({ data, onChange, blockId }) {
           onChange={(e) => onChange({ ...data, url: e.target.value })}
           style={{ width: '100%', minHeight: '44px' }}
         />
-        <p>
+        <p className="jeeby-cms-field-hint">
           YouTube, Vimeo, or Loom URLs are supported
         </p>
         {/* role="alert" announces error immediately to screen reader users (WCAG 4.1.3) */}
         {showError && (
-          <p role="alert">
+          <p role="alert" className="jeeby-cms-inline-error">
             Unrecognised video URL
           </p>
         )}

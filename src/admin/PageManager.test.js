@@ -27,7 +27,7 @@ test('PageManager shows Name, Slug, Last Published, Actions columns', () => {
 // PAGE-01: Empty state
 test('PageManager has empty state with correct copy', () => {
   assert.ok(src.includes('No pages yet.'), 'Must show empty state heading')
-  assert.ok(src.includes('Create your first page.'), 'Must show empty state body')
+  assert.ok(src.includes('Create your first page'), 'Must show create CTA')
 })
 
 // PAGE-04: Inline edit

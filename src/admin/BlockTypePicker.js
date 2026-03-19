@@ -1,12 +1,72 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 
+function IconText() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        <rect x="1" y="1" width="12" height="3" rx="0.7" />
+        <rect x="5.5" y="4" width="3" height="9" rx="0.7" />
+      </svg>
+    </span>
+  )
+}
+
+function IconHeading() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        <rect x="1" y="1" width="3" height="12" rx="0.7" />
+        <rect x="10" y="1" width="3" height="12" rx="0.7" />
+        <rect x="4" y="5.5" width="6" height="3" rx="0.7" />
+      </svg>
+    </span>
+  )
+}
+
+function IconImage() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="2" width="12" height="10" rx="1.5" />
+        <circle cx="4.5" cy="5.5" r="1.2" fill="currentColor" stroke="none" />
+        <polyline points="1,11 4,7.5 7,10 9.5,7.5 13,11" />
+      </svg>
+    </span>
+  )
+}
+
+function IconVideo() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="2.5" width="9" height="9" rx="1.5" />
+        <polygon points="10,5 13,7 10,9" fill="currentColor" stroke="none" />
+        <polygon points="5,4.5 9.5,7 5,9.5" fill="currentColor" stroke="none" />
+      </svg>
+    </span>
+  )
+}
+
+function IconGallery() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        <rect x="1" y="1" width="5.5" height="5.5" rx="1" />
+        <rect x="7.5" y="1" width="5.5" height="5.5" rx="1" />
+        <rect x="1" y="7.5" width="5.5" height="5.5" rx="1" />
+        <rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" />
+      </svg>
+    </span>
+  )
+}
+
 const BLOCK_TYPES = [
-  { type: 'title', label: 'Title' },
-  { type: 'richtext', label: 'Text' },
-  { type: 'image', label: 'Image' },
-  { type: 'video', label: 'Video' },
-  { type: 'gallery', label: 'Gallery' },
+  { type: 'title',    label: 'Heading', icon: <IconHeading /> },
+  { type: 'richtext', label: 'Text',    icon: <IconText /> },
+  { type: 'image',    label: 'Image',   icon: <IconImage /> },
+  { type: 'video',    label: 'Video',   icon: <IconVideo /> },
+  { type: 'gallery',  label: 'Gallery', icon: <IconGallery /> },
 ]
 
 export function BlockTypePicker({ onSelect, onClose }) {
@@ -67,7 +127,8 @@ export function BlockTypePicker({ onSelect, onClose }) {
           onClick={() => onSelect(bt.type)}
           onMouseEnter={() => setActiveIndex(index)}
         >
-          {bt.label}
+          {bt.icon}
+          <span>{bt.label}</span>
         </li>
       ))}
     </ul>

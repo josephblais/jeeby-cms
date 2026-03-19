@@ -1,9 +1,9 @@
 "use client"
 
-export function AdminNav({ onSignOut }) {
+export function AdminNav({ onSignOut, siteName }) {
   return (
     <header className="jeeby-cms-nav" role="banner">
-      <span className="jeeby-cms-nav-brand">jeeby CMS</span>
+      <span className="jeeby-cms-nav-brand">{siteName ? `${siteName} Admin` : 'Admin'}</span>
       <nav aria-label="Admin navigation">
         <button
           type="button"

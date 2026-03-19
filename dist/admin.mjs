@@ -1,8 +1,8 @@
 "use client";
-import React, { forwardRef, createContext, useContext, useMemo, useState, useRef, useEffect, useCallback, Fragment as Fragment$1, useDebugValue, useLayoutEffect } from 'react';
+import React, { forwardRef, createContext, useContext, useMemo, useState, useRef, useEffect, useCallback, Fragment as Fragment$2, useDebugValue, useLayoutEffect } from 'react';
 import { useCMSFirebase, useAuth } from 'jeeby-cms';
 import { getDoc, updateDoc, serverTimestamp, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { jsxs, Fragment, jsx } from 'react/jsx-runtime';
+import { jsxs, Fragment as Fragment$1, jsx } from 'react/jsx-runtime';
 import { Reorder, useDragControls } from 'framer-motion';
 import ReactDOM from 'react-dom';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/index.js';
@@ -58,14 +58,40 @@ function validateSlug(pattern, slug) {
   const regexStr = pattern.replace(/\[\.\.\.[\w]+\]/g, ".*").replace(/\[[\w]+\]/g, "[^/]+").replace(/\//g, "\\/");
   return new RegExp("^" + regexStr + "$").test(slug);
 }
-function formatDate(ts2) {
-  if (!ts2) return "Never";
+function formatPublishedDate(ts2) {
+  if (!ts2) return null;
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
-  return date.toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" });
+  const isToday = date.toDateString() === (/* @__PURE__ */ new Date()).toDateString();
+  if (isToday) {
+    const time = date.toLocaleTimeString(void 0, { hour: "numeric", minute: "2-digit" });
+    return `today at ${time}`;
+  }
+  return date.toLocaleDateString(void 0, { month: "short", day: "numeric" });
+}
+function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
+  if (saveStatus === "error") {
+    return { label: "Save failed", tone: "error", retry: true };
+  }
+  if (saveStatus === "saving") {
+    return { label: "Saving\u2026", tone: "muted", retry: false };
+  }
+  if (hasDraftChanges) {
+    return {
+      label: saveStatus === "saved" ? "Unpublished, saved" : "Unsaved changes",
+      tone: "draft",
+      retry: false
+    };
+  }
+  if (lastPublishedAt) {
+    const date = formatPublishedDate(lastPublishedAt);
+    return { label: date ? `Published ${date}` : "Published", tone: "published", retry: false };
+  }
+  return { label: "Not yet live", tone: "muted", retry: false };
 }
 function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
   const [editingSlug, setEditingSlug] = useState(slug);
   const [slugDirty, setSlugDirty] = useState(false);
+  const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt });
   useEffect(() => {
     setEditingSlug(slug);
     setSlugDirty(false);
@@ -95,18 +121,19 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
     }
   }
   return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-editor-header", children: [
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-editor-zone-left", children: /* @__PURE__ */ jsx(
       "a",
       {
         href: "/admin",
         onClick: onBackClick,
+        className: "jeeby-cms-editor-back",
         "aria-label": "Back to Pages",
         children: "\u2190 Pages"
       }
-    ),
-    /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }, children: [
+    ) }),
+    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-editor-zone-center", children: [
       /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-editor-title", children: pageName || slug }),
-      /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
+      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-slug-row", children: [
         /* @__PURE__ */ jsx("span", { className: "jeeby-cms-slug-prefix", "aria-hidden": "true", children: "/" }),
         /* @__PURE__ */ jsx(
           "input",
@@ -121,40 +148,28 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
             onKeyDown: handleSlugKeyDown
           }
         ),
-        slugDirty && /* @__PURE__ */ jsx("span", { className: "jeeby-cms-slug-hint", "aria-live": "polite", children: "Press Enter to rename" })
+        slugDirty && /* @__PURE__ */ jsx("span", { className: "jeeby-cms-slug-hint", "aria-live": "polite", children: "Enter to save" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-publish-controls", children: [
-      /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-publish-status", children: [
-        "Last published: ",
-        formatDate(lastPublishedAt)
-      ] }),
-      hasDraftChanges && /* @__PURE__ */ jsxs(Fragment, { children: [
-        /* @__PURE__ */ jsx("span", { "aria-hidden": "true", children: "\xB7" }),
-        /* @__PURE__ */ jsx("span", { className: "jeeby-cms-draft-indicator", children: "Unpublished changes" })
-      ] }),
+    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-editor-zone-right", children: [
       /* @__PURE__ */ jsxs(
         "div",
         {
           role: "status",
           "aria-live": saveStatus === "error" ? "assertive" : "polite",
           "aria-atomic": "true",
+          className: `jeeby-cms-doc-status jeeby-cms-doc-status--${status.tone}`,
           children: [
-            saveStatus === "saving" && /* @__PURE__ */ jsx("span", { children: "Saving..." }),
-            saveStatus === "saved" && /* @__PURE__ */ jsx("span", { children: "Saved" }),
-            saveStatus === "error" && /* @__PURE__ */ jsxs("span", { children: [
-              "Save failed.",
-              " ",
-              /* @__PURE__ */ jsx(
-                "button",
-                {
-                  type: "button",
-                  className: "jeeby-cms-btn-ghost",
-                  onClick: onRetry,
-                  children: "Retry?"
-                }
-              )
-            ] })
+            /* @__PURE__ */ jsx("span", { children: status.label }),
+            status.retry && /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                className: "jeeby-cms-status-retry",
+                onClick: onRetry,
+                children: "Try again"
+              }
+            )
           ]
         }
       ),
@@ -167,7 +182,10 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
           onClick: onPublish,
           "aria-disabled": publishStatus === "publishing" || saveStatus === "saving" ? "true" : void 0,
           "aria-busy": publishStatus === "publishing" ? "true" : void 0,
-          style: { cursor: publishStatus === "publishing" || saveStatus === "saving" ? "not-allowed" : "pointer", pointerEvents: publishStatus === "publishing" || saveStatus === "saving" ? "none" : void 0 },
+          style: {
+            cursor: publishStatus === "publishing" || saveStatus === "saving" ? "not-allowed" : "pointer",
+            pointerEvents: publishStatus === "publishing" || saveStatus === "saving" ? "none" : void 0
+          },
           children: publishStatus === "publishing" ? "Publishing\u2026" : "Publish"
         }
       )
@@ -176,6 +194,117 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
 }
 var HEADING_SIZES = { h2: "28px", h3: "24px", h4: "20px", h5: "16px", h6: "14px" };
 var LEVELS = ["h2", "h3", "h4", "h5", "h6"];
+var LEVEL_LABELS = { h2: "Heading 2", h3: "Heading 3", h4: "Heading 4", h5: "Heading 5", h6: "Heading 6" };
+function HeadingLevelIcon({ level }) {
+  const num = level.slice(1);
+  return /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-heading-icon-h", children: "H" }),
+    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-heading-icon-n", children: num })
+  ] });
+}
+function HeadingLevelPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [hoverIndex, setHoverIndex] = useState(LEVELS.indexOf(value));
+  const wrapperRef = useRef(null);
+  const triggerRef = useRef(null);
+  const listRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+  useEffect(() => {
+    var _a, _b;
+    if (open) {
+      const idx = LEVELS.indexOf(value);
+      setHoverIndex(idx);
+      (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="option"]')[idx]) == null ? void 0 : _b.focus();
+    }
+  }, [open, value]);
+  function handleTriggerKeyDown(e) {
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+    }
+  }
+  function handleListKeyDown(e) {
+    var _a, _b, _c, _d, _e, _f;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = (hoverIndex + 1) % LEVELS.length;
+      setHoverIndex(next);
+      (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="option"]')[next]) == null ? void 0 : _b.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = (hoverIndex - 1 + LEVELS.length) % LEVELS.length;
+      setHoverIndex(prev);
+      (_d = (_c = listRef.current) == null ? void 0 : _c.querySelectorAll('[role="option"]')[prev]) == null ? void 0 : _d.focus();
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onChange(LEVELS[hoverIndex]);
+      setOpen(false);
+      (_e = triggerRef.current) == null ? void 0 : _e.focus();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      (_f = triggerRef.current) == null ? void 0 : _f.focus();
+    }
+  }
+  return /* @__PURE__ */ jsxs("div", { ref: wrapperRef, className: "jeeby-cms-heading-picker-wrapper", children: [
+    /* @__PURE__ */ jsxs(
+      "button",
+      {
+        ref: triggerRef,
+        type: "button",
+        className: "jeeby-cms-heading-picker-trigger",
+        "aria-haspopup": "listbox",
+        "aria-expanded": open,
+        "aria-label": `Heading level: ${LEVEL_LABELS[value]}`,
+        onClick: () => setOpen((o) => !o),
+        onKeyDown: handleTriggerKeyDown,
+        children: [
+          /* @__PURE__ */ jsx(HeadingLevelIcon, { level: value }),
+          /* @__PURE__ */ jsx("span", { className: "jeeby-cms-heading-picker-chevron", "aria-hidden": "true", children: "\u25BE" })
+        ]
+      }
+    ),
+    open && /* @__PURE__ */ jsx(
+      "ul",
+      {
+        ref: listRef,
+        role: "listbox",
+        "aria-label": "Choose heading level",
+        onKeyDown: handleListKeyDown,
+        className: "jeeby-cms-block-type-picker jeeby-cms-heading-picker-dropdown",
+        children: LEVELS.map((l, i) => /* @__PURE__ */ jsxs(
+          "li",
+          {
+            role: "option",
+            tabIndex: 0,
+            "aria-selected": l === value,
+            onMouseEnter: () => setHoverIndex(i),
+            onClick: () => {
+              var _a;
+              onChange(l);
+              setOpen(false);
+              (_a = triggerRef.current) == null ? void 0 : _a.focus();
+            },
+            children: [
+              /* @__PURE__ */ jsx(HeadingLevelIcon, { level: l }),
+              /* @__PURE__ */ jsx("span", { children: LEVEL_LABELS[l] })
+            ]
+          },
+          l
+        ))
+      }
+    )
+  ] });
+}
 function TitleEditor({ data, onChange, blockId }) {
   const divRef = useRef(null);
   const isInternalChange = useRef(false);
@@ -193,13 +322,10 @@ function TitleEditor({ data, onChange, blockId }) {
   }, [data == null ? void 0 : data.text]);
   return /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", gap: "8px" }, children: [
     /* @__PURE__ */ jsx(
-      "select",
+      HeadingLevelPicker,
       {
         value: (data == null ? void 0 : data.level) ?? "h2",
-        "aria-label": "Heading level",
-        onChange: (e) => onChange({ ...data, level: e.target.value }),
-        style: { width: "fit-content" },
-        children: LEVELS.map((l) => /* @__PURE__ */ jsx("option", { value: l, children: l.toUpperCase() }, l))
+        onChange: (level) => onChange({ ...data, level })
       }
     ),
     /* @__PURE__ */ jsx(
@@ -400,7 +526,7 @@ function findDiffEnd(a, b, posA, posB) {
     posB -= size;
   }
 }
-var Fragment2 = class _Fragment {
+var Fragment = class _Fragment {
   /**
   @internal
   */
@@ -692,7 +818,7 @@ var Fragment2 = class _Fragment {
     throw new RangeError("Can not convert " + nodes + " to a Fragment" + (nodes.nodesBetween ? " (looks like multiple versions of prosemirror-model were loaded)" : ""));
   }
 };
-Fragment2.empty = new Fragment2([], 0);
+Fragment.empty = new Fragment([], 0);
 var found = { index: 0, offset: 0 };
 function retIndex(index, offset) {
   found.index = index;
@@ -917,7 +1043,7 @@ var Slice = class _Slice {
     let openStart = json.openStart || 0, openEnd = json.openEnd || 0;
     if (typeof openStart != "number" || typeof openEnd != "number")
       throw new RangeError("Invalid input for Slice.fromJSON");
-    return new _Slice(Fragment2.fromJSON(schema, json.content), openStart, openEnd);
+    return new _Slice(Fragment.fromJSON(schema, json.content), openStart, openEnd);
   }
   /**
   Create a slice from a fragment by taking the maximum possible
@@ -932,7 +1058,7 @@ var Slice = class _Slice {
     return new _Slice(fragment, openStart, openEnd);
   }
 };
-Slice.empty = new Slice(Fragment2.empty, 0, 0);
+Slice.empty = new Slice(Fragment.empty, 0, 0);
 function removeRange(content, from2, to) {
   let { index, offset } = content.findIndex(from2), child = content.maybeChild(index);
   let { index: indexTo, offset: offsetTo } = content.findIndex(to);
@@ -1030,7 +1156,7 @@ function replaceThreeWay($from, $start, $end, $to, depth) {
       addNode(close(openEnd, replaceTwoWay($end, $to, depth + 1)), content);
   }
   addRange($to, null, depth, content);
-  return new Fragment2(content);
+  return new Fragment(content);
 }
 function replaceTwoWay($from, $to, depth) {
   let content = [];
@@ -1040,13 +1166,13 @@ function replaceTwoWay($from, $to, depth) {
     addNode(close(type, replaceTwoWay($from, $to, depth + 1)), content);
   }
   addRange($to, null, depth, content);
-  return new Fragment2(content);
+  return new Fragment(content);
 }
 function prepareSliceForReplace(slice2, $along) {
   let extra = $along.depth - slice2.openStart, parent = $along.node(extra);
   let node = parent.copy(slice2.content);
   for (let i = extra - 1; i >= 0; i--)
-    node = $along.node(i).copy(Fragment2.from(node));
+    node = $along.node(i).copy(Fragment.from(node));
   return {
     start: node.resolveNoCache(slice2.openStart + extra),
     end: node.resolveNoCache(node.content.size - slice2.openEnd - extra)
@@ -1385,7 +1511,7 @@ var Node = class _Node2 {
     this.type = type;
     this.attrs = attrs;
     this.marks = marks;
-    this.content = content || Fragment2.empty;
+    this.content = content || Fragment.empty;
   }
   /**
   The array of this node's child nodes.
@@ -1690,7 +1816,7 @@ var Node = class _Node2 {
   can optionally pass `start` and `end` indices into the
   replacement fragment.
   */
-  canReplace(from2, to, replacement = Fragment2.empty, start = 0, end = replacement.childCount) {
+  canReplace(from2, to, replacement = Fragment.empty, start = 0, end = replacement.childCount) {
     let one = this.contentMatchAt(from2).matchFragment(replacement, start, end);
     let two = one && one.matchFragment(this.content, to);
     if (!two || !two.validEnd)
@@ -1772,7 +1898,7 @@ var Node = class _Node2 {
         throw new RangeError("Invalid text node in JSON");
       return schema.text(json.text, marks);
     }
-    let content = Fragment2.fromJSON(schema, json.content);
+    let content = Fragment.fromJSON(schema, json.content);
     let node = schema.nodeType(json.type).create(json.attrs, content, marks);
     node.type.checkAttrs(node.attrs);
     return node;
@@ -1914,7 +2040,7 @@ var ContentMatch = class _ContentMatch {
     function search(match, types) {
       let finished = match.matchFragment(after, startIndex);
       if (finished && (!toEnd || finished.validEnd))
-        return Fragment2.from(types.map((tp) => tp.createAndFill()));
+        return Fragment.from(types.map((tp) => tp.createAndFill()));
       for (let i = 0; i < match.next.length; i++) {
         let { type, next } = match.next[i];
         if (!(type.isText || type.hasRequiredAttrs()) && seen.indexOf(next) == -1) {
@@ -2366,7 +2492,7 @@ var NodeType = class _NodeType {
   create(attrs = null, content, marks) {
     if (this.isText)
       throw new Error("NodeType.create can't construct text nodes");
-    return new Node(this, this.computeAttrs(attrs), Fragment2.from(content), Mark.setFrom(marks));
+    return new Node(this, this.computeAttrs(attrs), Fragment.from(content), Mark.setFrom(marks));
   }
   /**
   Like [`create`](https://prosemirror.net/docs/ref/#model.NodeType.create), but check the given content
@@ -2374,7 +2500,7 @@ var NodeType = class _NodeType {
   if it doesn't match.
   */
   createChecked(attrs = null, content, marks) {
-    content = Fragment2.from(content);
+    content = Fragment.from(content);
     this.checkContent(content);
     return new Node(this, this.computeAttrs(attrs), content, Mark.setFrom(marks));
   }
@@ -2388,7 +2514,7 @@ var NodeType = class _NodeType {
   */
   createAndFill(attrs = null, content, marks) {
     attrs = this.computeAttrs(attrs);
-    content = Fragment2.from(content);
+    content = Fragment.from(content);
     if (content.size) {
       let before = this.contentMatch.fillBefore(content);
       if (!before)
@@ -2396,7 +2522,7 @@ var NodeType = class _NodeType {
       content = before.append(content);
     }
     let matched = this.contentMatch.matchFragment(content);
-    let after = matched && matched.fillBefore(Fragment2.empty, true);
+    let after = matched && matched.fillBefore(Fragment.empty, true);
     if (!after)
       return null;
     return new Node(this, attrs, content.append(after), Mark.setFrom(marks));
@@ -2860,7 +2986,7 @@ var NodeContext = class {
     if (!this.match) {
       if (!this.type)
         return [];
-      let fill = this.type.contentMatch.fillBefore(Fragment2.from(node));
+      let fill = this.type.contentMatch.fillBefore(Fragment.from(node));
       if (fill) {
         this.match = this.type.contentMatch.matchFragment(fill);
       } else {
@@ -2886,9 +3012,9 @@ var NodeContext = class {
           this.content[this.content.length - 1] = text.withText(text.text.slice(0, text.text.length - m[0].length));
       }
     }
-    let content = Fragment2.from(this.content);
+    let content = Fragment.from(this.content);
     if (!openEnd && this.match)
-      content = content.append(this.match.fillBefore(Fragment2.empty, true));
+      content = content.append(this.match.fillBefore(Fragment.empty, true));
     return this.type ? this.type.create(this.attrs, content, this.marks) : content;
   }
   inlineContext(node) {
@@ -3914,7 +4040,7 @@ function mapFragment(fragment, f, parent) {
       child = f(child, parent, i);
     mapped.push(child);
   }
-  return Fragment2.fromArray(mapped);
+  return Fragment.fromArray(mapped);
 }
 var AddMarkStep = class _AddMarkStep extends Step {
   /**
@@ -4031,7 +4157,7 @@ var AddNodeMarkStep = class _AddNodeMarkStep extends Step {
     if (!node)
       return StepResult.fail("No node at mark step's position");
     let updated = node.type.create(node.attrs, null, this.mark.addToSet(node.marks));
-    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment2.from(updated), 0, node.isLeaf ? 0 : 1));
+    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1));
   }
   invert(doc4) {
     let node = doc4.nodeAt(this.pos);
@@ -4077,7 +4203,7 @@ var RemoveNodeMarkStep = class _RemoveNodeMarkStep extends Step {
     if (!node)
       return StepResult.fail("No node at mark step's position");
     let updated = node.type.create(node.attrs, null, this.mark.removeFromSet(node.marks));
-    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment2.from(updated), 0, node.isLeaf ? 0 : 1));
+    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1));
   }
   invert(doc4) {
     let node = doc4.nodeAt(this.pos);
@@ -4342,7 +4468,7 @@ function clearIncompatible(tr2, pos, parentType, match = parentType.contentMatch
         let m, newline = /\r?\n|\r/g, slice2;
         while (m = newline.exec(child.text)) {
           if (!slice2)
-            slice2 = new Slice(Fragment2.from(parentType.schema.text(" ", parentType.allowedMarks(child.marks))), 0, 0);
+            slice2 = new Slice(Fragment.from(parentType.schema.text(" ", parentType.allowedMarks(child.marks))), 0, 0);
           replSteps.push(new ReplaceStep(cur + m.index, cur + m.index + m[0].length, slice2));
         }
       }
@@ -4350,7 +4476,7 @@ function clearIncompatible(tr2, pos, parentType, match = parentType.contentMatch
     cur = end;
   }
   if (!match.validEnd) {
-    let fill = match.fillBefore(Fragment2.empty, true);
+    let fill = match.fillBefore(Fragment.empty, true);
     tr2.replace(cur, cur, new Slice(fill, 0, 0));
   }
   for (let i = replSteps.length - 1; i >= 0; i--)
@@ -4380,20 +4506,20 @@ function lift(tr2, range, target) {
   let { $from, $to, depth } = range;
   let gapStart = $from.before(depth + 1), gapEnd = $to.after(depth + 1);
   let start = gapStart, end = gapEnd;
-  let before = Fragment2.empty, openStart = 0;
+  let before = Fragment.empty, openStart = 0;
   for (let d = depth, splitting = false; d > target; d--)
     if (splitting || $from.index(d) > 0) {
       splitting = true;
-      before = Fragment2.from($from.node(d).copy(before));
+      before = Fragment.from($from.node(d).copy(before));
       openStart++;
     } else {
       start--;
     }
-  let after = Fragment2.empty, openEnd = 0;
+  let after = Fragment.empty, openEnd = 0;
   for (let d = depth, splitting = false; d > target; d--)
     if (splitting || $to.after(d + 1) < $to.end(d)) {
       splitting = true;
-      after = Fragment2.from($to.node(d).copy(after));
+      after = Fragment.from($to.node(d).copy(after));
       openEnd++;
     } else {
       end++;
@@ -4433,14 +4559,14 @@ function findWrappingInside(range, type) {
   return inside;
 }
 function wrap(tr2, range, wrappers) {
-  let content = Fragment2.empty;
+  let content = Fragment.empty;
   for (let i = wrappers.length - 1; i >= 0; i--) {
     if (content.size) {
       let match = wrappers[i].type.contentMatch.matchFragment(content);
       if (!match || !match.validEnd)
         throw new RangeError("Wrapper type given to Transform.wrap does not form valid content of its parent wrapper");
     }
-    content = Fragment2.from(wrappers[i].type.create(wrappers[i].attrs, content));
+    content = Fragment.from(wrappers[i].type.create(wrappers[i].attrs, content));
   }
   let start = range.start, end = range.end;
   tr2.step(new ReplaceAroundStep(start, end, start, end, new Slice(content, 0, 0), wrappers.length, true));
@@ -4465,7 +4591,7 @@ function setBlockType(tr2, from2, to, type, attrs) {
       clearIncompatible(tr2, tr2.mapping.slice(mapFrom).map(pos, 1), type, void 0, convertNewlines === null);
       let mapping = tr2.mapping.slice(mapFrom);
       let startM = mapping.map(pos, 1), endM = mapping.map(pos + node.nodeSize, 1);
-      tr2.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1, new Slice(Fragment2.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true));
+      tr2.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1, new Slice(Fragment.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true));
       if (convertNewlines === true)
         replaceNewlines(tr2, node, pos, mapFrom);
       return false;
@@ -4506,7 +4632,7 @@ function setNodeMarkup(tr2, pos, type, attrs, marks) {
     return tr2.replaceWith(pos, pos + node.nodeSize, newNode);
   if (!type.validContent(node.content))
     throw new RangeError("Invalid content for node type " + type.name);
-  tr2.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1, new Slice(Fragment2.from(newNode), 0, 0), 1, true));
+  tr2.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1, new Slice(Fragment.from(newNode), 0, 0), 1, true));
 }
 function canSplit(doc4, pos, depth = 1, typesAfter) {
   let $pos = doc4.resolve(pos), base2 = $pos.depth - depth;
@@ -4530,11 +4656,11 @@ function canSplit(doc4, pos, depth = 1, typesAfter) {
   return $pos.node(base2).canReplaceWith(index, index, baseType ? baseType.type : $pos.node(base2 + 1).type);
 }
 function split(tr2, pos, depth = 1, typesAfter) {
-  let $pos = tr2.doc.resolve(pos), before = Fragment2.empty, after = Fragment2.empty;
+  let $pos = tr2.doc.resolve(pos), before = Fragment.empty, after = Fragment.empty;
   for (let d = $pos.depth, e = $pos.depth - depth, i = depth - 1; d > e; d--, i--) {
-    before = Fragment2.from($pos.node(d).copy(before));
+    before = Fragment.from($pos.node(d).copy(before));
     let typeAfter = typesAfter && typesAfter[i];
-    after = Fragment2.from(typeAfter ? typeAfter.type.create(typeAfter.attrs, after) : $pos.node(d).copy(after));
+    after = Fragment.from(typeAfter ? typeAfter.type.create(typeAfter.attrs, after) : $pos.node(d).copy(after));
   }
   tr2.step(new ReplaceStep(pos, pos, new Slice(before.append(after), depth, depth), true));
 }
@@ -4673,7 +4799,7 @@ var Fitter = class {
     this.$to = $to;
     this.unplaced = unplaced;
     this.frontier = [];
-    this.placed = Fragment2.empty;
+    this.placed = Fragment.empty;
     for (let i = 0; i <= $from.depth; i++) {
       let node = $from.node(i);
       this.frontier.push({
@@ -4682,7 +4808,7 @@ var Fitter = class {
       });
     }
     for (let i = $from.depth; i > 0; i--)
-      this.placed = Fragment2.from($from.node(i).copy(this.placed));
+      this.placed = Fragment.from($from.node(i).copy(this.placed));
   }
   get depth() {
     return this.frontier.length - 1;
@@ -4739,7 +4865,7 @@ var Fitter = class {
         let first2 = fragment.firstChild;
         for (let frontierDepth = this.depth; frontierDepth >= 0; frontierDepth--) {
           let { type, match } = this.frontier[frontierDepth], wrap2, inject = null;
-          if (pass == 1 && (first2 ? match.matchType(first2.type) || (inject = match.fillBefore(Fragment2.from(first2), false)) : parent && type.compatibleContent(parent.type)))
+          if (pass == 1 && (first2 ? match.matchType(first2.type) || (inject = match.fillBefore(Fragment.from(first2), false)) : parent && type.compatibleContent(parent.type)))
             return { sliceDepth, frontierDepth, parent, inject };
           else if (pass == 2 && first2 && (wrap2 = match.findWrapping(first2.type)))
             return { sliceDepth, frontierDepth, parent, wrap: wrap2 };
@@ -4799,7 +4925,7 @@ var Fitter = class {
     let toEnd = taken == fragment.childCount;
     if (!toEnd)
       openEndCount = -1;
-    this.placed = addToFragment(this.placed, frontierDepth, Fragment2.from(add));
+    this.placed = addToFragment(this.placed, frontierDepth, Fragment.from(add));
     this.frontier[frontierDepth].match = match;
     if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type && this.frontier.length > 1)
       this.closeFrontierNode();
@@ -4855,12 +4981,12 @@ var Fitter = class {
   openFrontierNode(type, attrs = null, content) {
     let top = this.frontier[this.depth];
     top.match = top.match.matchType(type);
-    this.placed = addToFragment(this.placed, this.depth, Fragment2.from(type.create(attrs, content)));
+    this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(attrs, content)));
     this.frontier.push({ type, match: type.contentMatch });
   }
   closeFrontierNode() {
     let open = this.frontier.pop();
-    let add = open.match.fillBefore(Fragment2.empty, true);
+    let add = open.match.fillBefore(Fragment.empty, true);
     if (add.childCount)
       this.placed = addToFragment(this.placed, this.frontier.length, add);
   }
@@ -4889,7 +5015,7 @@ function closeNodeStart(node, openStart, openEnd) {
   if (openStart > 0) {
     frag = node.type.contentMatch.fillBefore(frag).append(frag);
     if (openEnd <= 0)
-      frag = frag.append(node.type.contentMatch.matchFragment(frag).fillBefore(Fragment2.empty, true));
+      frag = frag.append(node.type.contentMatch.matchFragment(frag).fillBefore(Fragment.empty, true));
   }
   return node.copy(frag);
 }
@@ -4981,7 +5107,7 @@ function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
   if (depth > newOpen) {
     let match = parent.contentMatchAt(0);
     let start = match.fillBefore(fragment).append(fragment);
-    fragment = start.append(match.matchFragment(start).fillBefore(Fragment2.empty, true));
+    fragment = start.append(match.matchFragment(start).fillBefore(Fragment.empty, true));
   }
   return fragment;
 }
@@ -4991,7 +5117,7 @@ function replaceRangeWith(tr2, from2, to, node) {
     if (point != null)
       from2 = to = point;
   }
-  tr2.replaceRange(from2, to, new Slice(Fragment2.from(node), 0, 0));
+  tr2.replaceRange(from2, to, new Slice(Fragment.from(node), 0, 0));
 }
 function deleteRange(tr2, from2, to) {
   let $from = tr2.doc.resolve(from2), $to = tr2.doc.resolve(to);
@@ -5039,7 +5165,7 @@ var AttrStep = class _AttrStep extends Step {
       attrs[name] = node.attrs[name];
     attrs[this.attr] = this.value;
     let updated = node.type.create(attrs, null, node.marks);
-    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment2.from(updated), 0, node.isLeaf ? 0 : 1));
+    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1));
   }
   getMap() {
     return StepMap.empty;
@@ -5195,7 +5321,7 @@ var Transform = class {
   fragment, node, or array of nodes.
   */
   replaceWith(from2, to, content) {
-    return this.replace(from2, to, new Slice(Fragment2.from(content), 0, 0));
+    return this.replace(from2, to, new Slice(Fragment.from(content), 0, 0));
   }
   /**
   Delete the content between the given positions.
@@ -5697,7 +5823,7 @@ var NodeSelection = class _NodeSelection extends Selection {
     return new _NodeSelection($pos);
   }
   content() {
-    return new Slice(Fragment2.from(this.node), 0, 0);
+    return new Slice(Fragment.from(this.node), 0, 0);
   }
   eq(other) {
     return other instanceof _NodeSelection && other.anchor == this.anchor;
@@ -6691,10 +6817,10 @@ function deleteBarrier(state, $cut, dispatch, dir) {
   let canDelAfter = !isolated && $cut.parent.canReplace($cut.index(), $cut.index() + 1);
   if (canDelAfter && (conn = (match = before.contentMatchAt(before.childCount)).findWrapping(after.type)) && match.matchType(conn[0] || after.type).validEnd) {
     if (dispatch) {
-      let end = $cut.pos + after.nodeSize, wrap2 = Fragment2.empty;
+      let end = $cut.pos + after.nodeSize, wrap2 = Fragment.empty;
       for (let i = conn.length - 1; i >= 0; i--)
-        wrap2 = Fragment2.from(conn[i].create(null, wrap2));
-      wrap2 = Fragment2.from(before.copy(wrap2));
+        wrap2 = Fragment.from(conn[i].create(null, wrap2));
+      wrap2 = Fragment.from(before.copy(wrap2));
       let tr2 = state.tr.step(new ReplaceAroundStep($cut.pos - 1, end, $cut.pos, end, new Slice(wrap2, 1, 0), conn.length, true));
       let $joinAt = tr2.doc.resolve(end + 2 * conn.length);
       if ($joinAt.nodeAfter && $joinAt.nodeAfter.type == before.type && canJoin(tr2.doc, $joinAt.pos))
@@ -6723,9 +6849,9 @@ function deleteBarrier(state, $cut, dispatch, dir) {
       afterDepth++;
     if (at.canReplace(at.childCount, at.childCount, afterText.content)) {
       if (dispatch) {
-        let end = Fragment2.empty;
+        let end = Fragment.empty;
         for (let i = wrap2.length - 1; i >= 0; i--)
-          end = Fragment2.from(wrap2[i].copy(end));
+          end = Fragment.from(wrap2[i].copy(end));
         let tr2 = state.tr.step(new ReplaceAroundStep($cut.pos - wrap2.length, $cut.pos + after.nodeSize, $cut.pos + afterDepth, $cut.pos + after.nodeSize - afterDepth, new Slice(end, wrap2.length, 0), 0, true));
         dispatch(tr2.scrollIntoView());
       }
@@ -6842,9 +6968,9 @@ function wrapRangeInList(tr2, range, listType, attrs = null) {
   return true;
 }
 function doWrapInList(tr2, range, wrappers, joinBefore, listType) {
-  let content = Fragment2.empty;
+  let content = Fragment.empty;
   for (let i = wrappers.length - 1; i >= 0; i--)
-    content = Fragment2.from(wrappers[i].type.create(wrappers[i].attrs, content));
+    content = Fragment.from(wrappers[i].type.create(wrappers[i].attrs, content));
   tr2.step(new ReplaceAroundStep(range.start - (joinBefore ? 2 : 0), range.end, range.start, range.end, new Slice(content, 0, 0), wrappers.length, true));
   let found2 = 0;
   for (let i = 0; i < wrappers.length; i++)
@@ -6878,7 +7004,7 @@ function liftListItem(itemType) {
 function liftToOuterList(state, dispatch, itemType, range) {
   let tr2 = state.tr, end = range.end, endOfList = range.$to.end(range.depth);
   if (end < endOfList) {
-    tr2.step(new ReplaceAroundStep(end - 1, endOfList, end, endOfList, new Slice(Fragment2.from(itemType.create(null, range.parent.copy())), 1, 0), 1, true));
+    tr2.step(new ReplaceAroundStep(end - 1, endOfList, end, endOfList, new Slice(Fragment.from(itemType.create(null, range.parent.copy())), 1, 0), 1, true));
     range = new NodeRange(tr2.doc.resolve(range.$from.pos), tr2.doc.resolve(endOfList), range.depth);
   }
   const target = liftTarget(range);
@@ -6902,10 +7028,10 @@ function liftOutOfList(state, dispatch, range) {
     return false;
   let atStart = range.startIndex == 0, atEnd = range.endIndex == list.childCount;
   let parent = $start.node(-1), indexBefore = $start.index(-1);
-  if (!parent.canReplace(indexBefore + (atStart ? 0 : 1), indexBefore + 1, item.content.append(atEnd ? Fragment2.empty : Fragment2.from(list))))
+  if (!parent.canReplace(indexBefore + (atStart ? 0 : 1), indexBefore + 1, item.content.append(atEnd ? Fragment.empty : Fragment.from(list))))
     return false;
   let start = $start.pos, end = start + item.nodeSize;
-  tr2.step(new ReplaceAroundStep(start - (atStart ? 1 : 0), end + (atEnd ? 1 : 0), start + 1, end - 1, new Slice((atStart ? Fragment2.empty : Fragment2.from(list.copy(Fragment2.empty))).append(atEnd ? Fragment2.empty : Fragment2.from(list.copy(Fragment2.empty))), atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1));
+  tr2.step(new ReplaceAroundStep(start - (atStart ? 1 : 0), end + (atEnd ? 1 : 0), start + 1, end - 1, new Slice((atStart ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))).append(atEnd ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))), atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1));
   dispatch(tr2.scrollIntoView());
   return true;
 }
@@ -6923,8 +7049,8 @@ function sinkListItem(itemType) {
       return false;
     if (dispatch) {
       let nestedBefore = nodeBefore.lastChild && nodeBefore.lastChild.type == parent.type;
-      let inner = Fragment2.from(nestedBefore ? itemType.create() : null);
-      let slice2 = new Slice(Fragment2.from(itemType.create(null, Fragment2.from(parent.type.create(null, inner)))), nestedBefore ? 3 : 1, 0);
+      let inner = Fragment.from(nestedBefore ? itemType.create() : null);
+      let slice2 = new Slice(Fragment.from(itemType.create(null, Fragment.from(parent.type.create(null, inner)))), nestedBefore ? 3 : 1, 0);
       let before = range.start, after = range.end;
       dispatch(state.tr.step(new ReplaceAroundStep(before - (nestedBefore ? 3 : 1), after, before, after, slice2, 1, true)).scrollIntoView());
     }
@@ -8145,7 +8271,7 @@ var NodeViewDesc = class _NodeViewDesc extends ViewDesc {
         }
       }
       if (!rule.contentElement)
-        rule.getContent = () => Fragment2.empty;
+        rule.getContent = () => Fragment.empty;
     }
     return rule;
   }
@@ -9460,7 +9586,7 @@ function parseFromClipboard(view, text, html, plainText, $context) {
       text = f(text, inCode || plainText, view);
     });
     if (inCode) {
-      slice2 = new Slice(Fragment2.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0);
+      slice2 = new Slice(Fragment.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0);
       view.someProp("transformPasted", (f) => {
         slice2 = f(slice2, view, true);
       });
@@ -9554,13 +9680,13 @@ function normalizeSiblings(fragment, $context) {
       }
     });
     if (result)
-      return Fragment2.from(result);
+      return Fragment.from(result);
   }
   return fragment;
 }
 function withWrappers(node, wrap2, from2 = 0) {
   for (let i = wrap2.length - 1; i >= from2; i--)
-    node = wrap2[i].create(null, Fragment2.from(node));
+    node = wrap2[i].create(null, Fragment.from(node));
   return node;
 }
 function addToSibling(wrap2, lastWrap, node, sibling, depth) {
@@ -9570,14 +9696,14 @@ function addToSibling(wrap2, lastWrap, node, sibling, depth) {
       return sibling.copy(sibling.content.replaceChild(sibling.childCount - 1, inner));
     let match = sibling.contentMatchAt(sibling.childCount);
     if (match.matchType(depth == wrap2.length - 1 ? node.type : wrap2[depth + 1]))
-      return sibling.copy(sibling.content.append(Fragment2.from(withWrappers(node, wrap2, depth + 1))));
+      return sibling.copy(sibling.content.append(Fragment.from(withWrappers(node, wrap2, depth + 1))));
   }
 }
 function closeRight(node, depth) {
   if (depth == 0)
     return node;
   let fragment = node.content.replaceChild(node.childCount - 1, closeRight(node.lastChild, depth - 1));
-  let fill = node.contentMatchAt(node.childCount).fillBefore(Fragment2.empty, true);
+  let fill = node.contentMatchAt(node.childCount).fillBefore(Fragment.empty, true);
   return node.copy(fragment.append(fill));
 }
 function closeRange(fragment, side, from2, to, depth, openEnd) {
@@ -9587,7 +9713,7 @@ function closeRange(fragment, side, from2, to, depth, openEnd) {
   if (depth < to - 1)
     inner = closeRange(inner, side, from2, to, depth + 1, openEnd);
   if (depth >= from2)
-    inner = side < 0 ? node.contentMatchAt(0).fillBefore(inner, openEnd <= depth).append(inner) : inner.append(node.contentMatchAt(node.childCount).fillBefore(Fragment2.empty, true));
+    inner = side < 0 ? node.contentMatchAt(0).fillBefore(inner, openEnd <= depth).append(inner) : inner.append(node.contentMatchAt(node.childCount).fillBefore(Fragment.empty, true));
   return fragment.replaceChild(side < 0 ? 0 : fragment.childCount - 1, node.copy(inner));
 }
 function closeSlice(slice2, openStart, openEnd) {
@@ -9657,7 +9783,7 @@ function addContext(slice2, context) {
     let type = schema.nodes[array[i]];
     if (!type || type.hasRequiredAttrs())
       break;
-    content = Fragment2.from(type.create(array[i + 1], content));
+    content = Fragment.from(type.create(array[i + 1], content));
     openStart++;
     openEnd++;
   }
@@ -11576,7 +11702,7 @@ function isMarkChange(cur, prev) {
   let updated = [];
   for (let i = 0; i < prev.childCount; i++)
     updated.push(update(prev.child(i)));
-  if (Fragment2.from(updated).eq(cur))
+  if (Fragment.from(updated).eq(cur))
     return { mark, type };
 }
 function looksLikeBackspace(old, start, end, $newStart, $newEnd) {
@@ -12867,7 +12993,7 @@ function elementFromString(value) {
   return removeWhitespaces(html);
 }
 function createNodeFromContent(content, schema, options) {
-  if (content instanceof Node || content instanceof Fragment2) {
+  if (content instanceof Node || content instanceof Fragment) {
     return content;
   }
   options = {
@@ -12881,7 +13007,7 @@ function createNodeFromContent(content, schema, options) {
     try {
       const isArrayContent = Array.isArray(content) && content.length > 0;
       if (isArrayContent) {
-        return Fragment2.fromArray(content.map((item) => schema.nodeFromJSON(item)));
+        return Fragment.fromArray(content.map((item) => schema.nodeFromJSON(item)));
       }
       const node = schema.nodeFromJSON(content);
       if (options.errorOnInvalidContent) {
@@ -13028,7 +13154,7 @@ var insertContentAt = (position, value, options) => ({ tr: tr2, dispatch, editor
     if (isOnlyTextContent) {
       if (Array.isArray(value)) {
         newContent = value.map((v) => v.text || "").join("");
-      } else if (value instanceof Fragment2) {
+      } else if (value instanceof Fragment) {
         let text = "";
         value.forEach((node) => {
           if (node.text) {
@@ -14463,10 +14589,10 @@ var splitListItem = (typeOrName, overrideAttrs = {}) => ({ tr: tr2, state, dispa
       return false;
     }
     if (dispatch) {
-      let wrap2 = Fragment2.empty;
+      let wrap2 = Fragment.empty;
       const depthBefore = $from.index(-1) ? 1 : $from.index(-2) ? 2 : 3;
       for (let d = $from.depth - depthBefore; d >= $from.depth - 3; d -= 1) {
-        wrap2 = Fragment2.from($from.node(d).copy(wrap2));
+        wrap2 = Fragment.from($from.node(d).copy(wrap2));
       }
       const depthAfter = (
         // eslint-disable-next-line no-nested-ternary
@@ -14477,7 +14603,7 @@ var splitListItem = (typeOrName, overrideAttrs = {}) => ({ tr: tr2, state, dispa
         ...overrideAttrs
       };
       const nextType2 = ((_a = type.contentMatch.defaultType) == null ? void 0 : _a.createAndFill(newNextTypeAttributes2)) || void 0;
-      wrap2 = wrap2.append(Fragment2.from(type.createAndFill(null, nextType2) || void 0));
+      wrap2 = wrap2.append(Fragment.from(type.createAndFill(null, nextType2) || void 0));
       const start = $from.before($from.depth - (depthBefore - 1));
       tr2.replace(start, $from.after(-depthAfter), new Slice(wrap2, 4 - depthBefore, 0));
       let sel = -1;
@@ -14979,7 +15105,7 @@ function inputRulesPlugin(props) {
             if (typeof text === "string") {
               text = text;
             } else {
-              text = getHTMLFromFragment(Fragment2.from(text), state.schema);
+              text = getHTMLFromFragment(Fragment.from(text), state.schema);
             }
             const { from: from2 } = simulatedInputMeta;
             const to = from2 + text.length;
@@ -15362,7 +15488,7 @@ function pasteRulesPlugin(props) {
           if (typeof text === "string") {
             text = text;
           } else {
-            text = getHTMLFromFragment(Fragment2.from(text), state.schema);
+            text = getHTMLFromFragment(Fragment.from(text), state.schema);
           }
           const { from: from22 } = simulatedPasteMeta;
           const to2 = from22 + text.length;
@@ -18098,7 +18224,7 @@ var Portals = ({ contentComponent }) => {
     contentComponent.getSnapshot,
     contentComponent.getServerSnapshot
   );
-  return /* @__PURE__ */ jsx(Fragment, { children: Object.values(renderers) });
+  return /* @__PURE__ */ jsx(Fragment$1, { children: Object.values(renderers) });
 };
 function getInstance() {
   const subscribers = /* @__PURE__ */ new Set();
@@ -18218,7 +18344,7 @@ var PureEditorContent = class extends React.Component {
   }
   render() {
     const { editor, innerRef, ...rest } = this.props;
-    return /* @__PURE__ */ jsxs(Fragment, { children: [
+    return /* @__PURE__ */ jsxs(Fragment$1, { children: [
       /* @__PURE__ */ jsx("div", { ref: mergeRefs(innerRef, this.editorContentRef), ...rest }),
       (editor == null ? void 0 : editor.contentComponent) && /* @__PURE__ */ jsx(Portals, { contentComponent: editor.contentComponent })
     ] });
@@ -21080,6 +21206,7 @@ var Link = Mark2.create({
     return plugins;
   }
 });
+var index_default = Link;
 
 // node_modules/@tiptap/extension-list/dist/index.js
 var __defProp2 = Object.defineProperty;
@@ -22654,9 +22781,9 @@ function beforeinput(view, event) {
   let insert = $from.parent.contentMatchAt($from.index()).findWrapping(view.state.schema.nodes.text);
   if (!insert)
     return false;
-  let frag = Fragment2.empty;
+  let frag = Fragment.empty;
   for (let i = insert.length - 1; i >= 0; i--)
-    frag = Fragment2.from(insert[i].createAndFill(null, frag));
+    frag = Fragment.from(insert[i].createAndFill(null, frag));
   let tr2 = view.state.tr.replace($from.pos, $from.pos, new Slice(frag, 0, 0));
   tr2.setSelection(TextSelection.near(tr2.doc.resolve($from.pos + 1)));
   view.dispatch(tr2);
@@ -23637,7 +23764,7 @@ var StarterKit = Extension.create({
     return extensions;
   }
 });
-var index_default = StarterKit;
+var index_default2 = StarterKit;
 var TabEscape = Extension.create({
   name: "tabEscape",
   addKeyboardShortcuts() {
@@ -23647,20 +23774,64 @@ var TabEscape = Extension.create({
     };
   }
 });
-var ToolbarButton = ({ label, isActive: isActive2, onClick }) => /* @__PURE__ */ jsx(
+function IconBold() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--bold", "aria-hidden": "true", children: "B" });
+}
+function IconItalic() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--italic", "aria-hidden": "true", children: "I" });
+}
+function IconLink() {
+  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx("path", { d: "M6.5 9.5a3.5 3.5 0 0 0 4.95 0l2-2a3.5 3.5 0 0 0-4.95-4.95l-1 1" }),
+    /* @__PURE__ */ jsx("path", { d: "M9.5 6.5a3.5 3.5 0 0 0-4.95 0l-2 2a3.5 3.5 0 0 0 4.95 4.95l1-1" })
+  ] });
+}
+function IconBulletList() {
+  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  ] });
+}
+function IconOrderedList() {
+  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  ] });
+}
+var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PURE__ */ jsx(
   "button",
   {
     type: "button",
     "aria-label": label,
     "aria-pressed": isActive2,
+    title: label,
     onClick,
     className: "jeeby-cms-toolbar-btn",
-    children: label
+    children: icon
   }
 );
+var ToolbarSeparator = () => /* @__PURE__ */ jsx("div", { className: "jeeby-cms-toolbar-separator", role: "separator", "aria-orientation": "vertical" });
 function TextEditor({ data, onChange, blockId }) {
+  const [linkInputOpen, setLinkInputOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const linkInputRef = useRef(null);
   const editor = useEditor({
-    extensions: [index_default, TabEscape],
+    extensions: [
+      index_default2,
+      TabEscape,
+      index_default.configure({ openOnClick: false })
+    ],
     content: (data == null ? void 0 : data.html) ?? "",
     immediatelyRender: false,
     onUpdate({ editor: editor2 }) {
@@ -23672,18 +23843,45 @@ function TextEditor({ data, onChange, blockId }) {
       editor.commands.setContent(data.html, false);
     }
   }, [data == null ? void 0 : data.html]);
+  useEffect(() => {
+    var _a;
+    if (linkInputOpen) (_a = linkInputRef.current) == null ? void 0 : _a.focus();
+  }, [linkInputOpen]);
+  function handleLinkClick() {
+    if (editor.isActive("link")) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    const href = editor.getAttributes("link").href ?? "";
+    setLinkUrl(href);
+    setLinkInputOpen(true);
+  }
+  function commitLink() {
+    const trimmed = linkUrl.trim();
+    if (trimmed) {
+      editor.chain().focus().setLink({ href: trimmed }).run();
+    }
+    setLinkInputOpen(false);
+    setLinkUrl("");
+  }
+  function cancelLink() {
+    setLinkInputOpen(false);
+    setLinkUrl("");
+    editor.commands.focus();
+  }
   return /* @__PURE__ */ jsxs("div", { children: [
     editor && /* @__PURE__ */ jsxs(
       "div",
       {
         role: "toolbar",
         "aria-label": "Text formatting",
-        style: { display: "flex", gap: "4px", flexWrap: "wrap" },
+        className: "jeeby-cms-toolbar",
         children: [
           /* @__PURE__ */ jsx(
             ToolbarButton,
             {
               label: "Bold",
+              icon: /* @__PURE__ */ jsx(IconBold, {}),
               isActive: editor.isActive("bold"),
               onClick: () => editor.chain().focus().toggleBold().run()
             }
@@ -23692,6 +23890,7 @@ function TextEditor({ data, onChange, blockId }) {
             ToolbarButton,
             {
               label: "Italic",
+              icon: /* @__PURE__ */ jsx(IconItalic, {}),
               isActive: editor.isActive("italic"),
               onClick: () => editor.chain().focus().toggleItalic().run()
             }
@@ -23699,7 +23898,18 @@ function TextEditor({ data, onChange, blockId }) {
           /* @__PURE__ */ jsx(
             ToolbarButton,
             {
+              label: editor.isActive("link") ? "Remove link" : "Add link",
+              icon: /* @__PURE__ */ jsx(IconLink, {}),
+              isActive: editor.isActive("link") || linkInputOpen,
+              onClick: handleLinkClick
+            }
+          ),
+          /* @__PURE__ */ jsx(ToolbarSeparator, {}),
+          /* @__PURE__ */ jsx(
+            ToolbarButton,
+            {
               label: "Bullet list",
+              icon: /* @__PURE__ */ jsx(IconBulletList, {}),
               isActive: editor.isActive("bulletList"),
               onClick: () => editor.chain().focus().toggleBulletList().run()
             }
@@ -23708,6 +23918,7 @@ function TextEditor({ data, onChange, blockId }) {
             ToolbarButton,
             {
               label: "Ordered list",
+              icon: /* @__PURE__ */ jsx(IconOrderedList, {}),
               isActive: editor.isActive("orderedList"),
               onClick: () => editor.chain().focus().toggleOrderedList().run()
             }
@@ -23715,6 +23926,48 @@ function TextEditor({ data, onChange, blockId }) {
         ]
       }
     ),
+    linkInputOpen && /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-link-input-row", children: [
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          ref: linkInputRef,
+          type: "url",
+          className: "jeeby-cms-link-input",
+          value: linkUrl,
+          onChange: (e) => setLinkUrl(e.target.value),
+          placeholder: "https://",
+          "aria-label": "Link URL",
+          onKeyDown: (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitLink();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              cancelLink();
+            }
+          }
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-primary jeeby-cms-link-apply-btn",
+          onClick: commitLink,
+          children: "Apply"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost",
+          onClick: cancelLink,
+          children: "Cancel"
+        }
+      )
+    ] }),
     /* @__PURE__ */ jsx(
       "div",
       {
@@ -23757,7 +24010,7 @@ function ImageEditor({ data, onChange, blockId }) {
           style: { width: "100%", minHeight: "44px" }
         }
       ),
-      /* @__PURE__ */ jsx("p", { id: "alt-hint-" + blockId, children: "Describe the image for screen readers" })
+      /* @__PURE__ */ jsx("p", { id: "alt-hint-" + blockId, className: "jeeby-cms-field-hint", children: "Describe the image for screen readers" })
     ] }),
     (data == null ? void 0 : data.src) && !imgError && /* @__PURE__ */ jsx("figure", { style: { margin: 0 }, children: /* @__PURE__ */ jsx(
       "img",
@@ -23800,8 +24053,8 @@ function VideoEditor({ data, onChange, blockId }) {
           style: { width: "100%", minHeight: "44px" }
         }
       ),
-      /* @__PURE__ */ jsx("p", { children: "YouTube, Vimeo, or Loom URLs are supported" }),
-      showError && /* @__PURE__ */ jsx("p", { role: "alert", children: "Unrecognised video URL" })
+      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" }),
+      showError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Unrecognised video URL" })
     ] }),
     embedUrl && isRecognized && /* @__PURE__ */ jsx("div", { style: { aspectRatio: "16/9", width: "100%" }, children: /* @__PURE__ */ jsx(
       "iframe",
@@ -23817,68 +24070,114 @@ function VideoEditor({ data, onChange, blockId }) {
 function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item);
 }
+function GalleryItem({ item, index, items, blockId, onChange, data }) {
+  const controls = useDragControls();
+  return /* @__PURE__ */ jsx(
+    Reorder.Item,
+    {
+      value: item,
+      dragListener: false,
+      dragControls: controls,
+      as: "li",
+      style: { listStyle: "none" },
+      children: /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: "8px", alignItems: "flex-start", paddingBottom: "8px" }, children: [
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            className: "jeeby-cms-drag-handle",
+            "aria-label": "Drag to reorder gallery image " + (index + 1),
+            "aria-hidden": "true",
+            onPointerDown: (e) => {
+              e.preventDefault();
+              controls.start(e);
+            },
+            style: { alignSelf: "center" },
+            children: "\u283F"
+          }
+        ),
+        item.src && /* @__PURE__ */ jsx(
+          "img",
+          {
+            src: item.src,
+            alt: item.alt || "",
+            className: "jeeby-cms-gallery-preview"
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { style: { flex: 1, display: "flex", flexDirection: "column", gap: "4px" }, children: [
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              id: index === 0 ? "block-input-" + blockId : void 0,
+              type: "url",
+              value: item.src ?? "",
+              "aria-label": "Image URL for item " + (index + 1),
+              placeholder: "https://example.com/image.jpg",
+              onChange: (e) => onChange({
+                ...data,
+                items: updateItem(items, index, "src", e.target.value)
+              }),
+              style: { width: "100%", minHeight: "44px" }
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              type: "text",
+              value: item.alt ?? "",
+              "aria-label": "Alt text for item " + (index + 1),
+              placeholder: "Describe the image",
+              onChange: (e) => onChange({
+                ...data,
+                items: updateItem(items, index, "alt", e.target.value)
+              }),
+              style: { width: "100%", minHeight: "44px" }
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            "aria-label": "Remove gallery image " + (index + 1),
+            onClick: () => onChange({
+              ...data,
+              items: items.filter((_, i) => i !== index)
+            }),
+            className: "jeeby-cms-btn-ghost",
+            style: { minWidth: "44px", padding: 0, alignSelf: "center" },
+            children: "Remove"
+          }
+        )
+      ] })
+    }
+  );
+}
 function GalleryEditor({ data, onChange, blockId }) {
   const items = (data == null ? void 0 : data.items) ?? [];
   return /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", gap: "8px" }, children: [
-    /* @__PURE__ */ jsx("ol", { "aria-label": "Gallery images", style: { listStyle: "none", padding: 0, margin: 0 }, children: items.map((item, index) => /* @__PURE__ */ jsxs("li", { style: {
-      display: "flex",
-      gap: "8px",
-      alignItems: "flex-start"
-    }, children: [
-      item.src && /* @__PURE__ */ jsx(
-        "img",
-        {
-          src: item.src,
-          alt: item.alt || "",
-          className: "jeeby-cms-gallery-preview"
-        }
-      ),
-      /* @__PURE__ */ jsxs("div", { style: { flex: 1, display: "flex", flexDirection: "column", gap: "4px" }, children: [
-        /* @__PURE__ */ jsx(
-          "input",
+    /* @__PURE__ */ jsx(
+      Reorder.Group,
+      {
+        axis: "y",
+        values: items,
+        onReorder: (newItems) => onChange({ ...data, items: newItems }),
+        as: "ol",
+        "aria-label": "Gallery images",
+        style: { listStyle: "none", padding: 0, margin: 0 },
+        children: items.map((item, index) => /* @__PURE__ */ jsx(
+          GalleryItem,
           {
-            id: index === 0 ? "block-input-" + blockId : void 0,
-            type: "url",
-            value: item.src ?? "",
-            "aria-label": "Image URL for item " + (index + 1),
-            placeholder: "https://example.com/image.jpg",
-            onChange: (e) => onChange({
-              ...data,
-              items: updateItem(items, index, "src", e.target.value)
-            }),
-            style: { width: "100%", minHeight: "44px" }
-          }
-        ),
-        /* @__PURE__ */ jsx(
-          "input",
-          {
-            type: "text",
-            value: item.alt ?? "",
-            "aria-label": "Alt text for item " + (index + 1),
-            placeholder: "Describe the image",
-            onChange: (e) => onChange({
-              ...data,
-              items: updateItem(items, index, "alt", e.target.value)
-            }),
-            style: { width: "100%", minHeight: "44px" }
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsx(
-        "button",
-        {
-          type: "button",
-          "aria-label": "Remove gallery image " + (index + 1),
-          onClick: () => onChange({
-            ...data,
-            items: items.filter((_, i) => i !== index)
-          }),
-          className: "jeeby-cms-btn-ghost",
-          style: { minWidth: "44px", padding: 0 },
-          children: "\xD7"
-        }
-      )
-    ] }, index)) }),
+            item,
+            index,
+            items,
+            blockId,
+            onChange,
+            data
+          },
+          item.src + index
+        ))
+      }
+    ),
     /* @__PURE__ */ jsx(
       "button",
       {
@@ -23894,12 +24193,47 @@ function GalleryEditor({ data, onChange, blockId }) {
     )
   ] });
 }
+function IconText() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "12", height: "3", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "5.5", y: "4", width: "3", height: "9", rx: "0.7" })
+  ] }) });
+}
+function IconHeading() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "3", height: "12", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "10", y: "1", width: "3", height: "12", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "4", y: "5.5", width: "6", height: "3", rx: "0.7" })
+  ] }) });
+}
+function IconImage() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "2", width: "12", height: "10", rx: "1.5" }),
+    /* @__PURE__ */ jsx("circle", { cx: "4.5", cy: "5.5", r: "1.2", fill: "currentColor", stroke: "none" }),
+    /* @__PURE__ */ jsx("polyline", { points: "1,11 4,7.5 7,10 9.5,7.5 13,11" })
+  ] }) });
+}
+function IconVideo() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "2.5", width: "9", height: "9", rx: "1.5" }),
+    /* @__PURE__ */ jsx("polygon", { points: "10,5 13,7 10,9", fill: "currentColor", stroke: "none" }),
+    /* @__PURE__ */ jsx("polygon", { points: "5,4.5 9.5,7 5,9.5", fill: "currentColor", stroke: "none" })
+  ] }) });
+}
+function IconGallery() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ jsx("rect", { x: "7.5", y: "1", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "7.5", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ jsx("rect", { x: "7.5", y: "7.5", width: "5.5", height: "5.5", rx: "1" })
+  ] }) });
+}
 var BLOCK_TYPES = [
-  { type: "title", label: "Title" },
-  { type: "richtext", label: "Text" },
-  { type: "image", label: "Image" },
-  { type: "video", label: "Video" },
-  { type: "gallery", label: "Gallery" }
+  { type: "title", label: "Heading", icon: /* @__PURE__ */ jsx(IconHeading, {}) },
+  { type: "richtext", label: "Text", icon: /* @__PURE__ */ jsx(IconText, {}) },
+  { type: "image", label: "Image", icon: /* @__PURE__ */ jsx(IconImage, {}) },
+  { type: "video", label: "Video", icon: /* @__PURE__ */ jsx(IconVideo, {}) },
+  { type: "gallery", label: "Gallery", icon: /* @__PURE__ */ jsx(IconGallery, {}) }
 ];
 function BlockTypePicker({ onSelect, onClose }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -23946,7 +24280,7 @@ function BlockTypePicker({ onSelect, onClose }) {
       "aria-label": "Choose block type",
       onKeyDown: handleKeyDown2,
       className: "jeeby-cms-block-type-picker",
-      children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ jsx(
+      children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ jsxs(
         "li",
         {
           role: "option",
@@ -23954,7 +24288,10 @@ function BlockTypePicker({ onSelect, onClose }) {
           "aria-selected": index === activeIndex,
           onClick: () => onSelect(bt.type),
           onMouseEnter: () => setActiveIndex(index),
-          children: bt.label
+          children: [
+            bt.icon,
+            /* @__PURE__ */ jsx("span", { children: bt.label })
+          ]
         },
         bt.type
       ))
@@ -24022,6 +24359,7 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
         /* @__PURE__ */ jsxs(
           "article",
           {
+            className: "jeeby-cms-block-card",
             "aria-label": displayName(block.type) + " block",
             onMouseEnter: () => setHovered(true),
             onMouseLeave: () => setHovered(false),
@@ -24030,11 +24368,11 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
               if (!e.currentTarget.contains(e.relatedTarget)) setHovered(false);
             },
             children: [
-              /* @__PURE__ */ jsxs("div", { style: {
+              /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-card-controls", style: {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                opacity: hovered ? 1 : 0,
+                opacity: hovered ? 1 : 0.3,
                 transition: "opacity 150ms"
               }, children: [
                 /* @__PURE__ */ jsx(
@@ -24058,7 +24396,7 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
                     "aria-label": "Delete " + displayName(block.type) + " block",
                     onClick: () => onDelete(block),
                     style: { minWidth: "44px", padding: 0 },
-                    children: "\xD7"
+                    children: "Delete"
                   }
                 )
               ] }),
@@ -24076,9 +24414,15 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
 }
 function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
   if (blocks.length === 0) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ jsxs("div", { children: [
-      /* @__PURE__ */ jsx("p", { children: "No blocks yet" }),
-      /* @__PURE__ */ jsx("p", { children: "Click + to add your first block." }),
+    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty", children: [
+      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-canvas-empty-headline", children: "This page has no content yet" }),
+      /* @__PURE__ */ jsxs("p", { className: "jeeby-cms-canvas-empty-body", children: [
+        "Start by adding content \u2014 try a ",
+        /* @__PURE__ */ jsx("strong", { children: "Title" }),
+        " for the page heading, or ",
+        /* @__PURE__ */ jsx("strong", { children: "Text" }),
+        " for a paragraph."
+      ] }),
       /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type) => onAddBlock(type, -1), insertIndex: -1 })
     ] }) });
   }
@@ -24530,7 +24874,7 @@ function PageEditor({ slug }) {
     showPublishToast && /* @__PURE__ */ jsx(PublishToast, {})
   ] });
 }
-function LoginPage() {
+function LoginPage({ siteName }) {
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24549,7 +24893,7 @@ function LoginPage() {
     }
   }
   return /* @__PURE__ */ jsx("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-login-card", children: [
-    /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-login-heading", children: "jeeby CMS" }),
+    /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-login-heading", children: siteName ?? "Admin" }),
     /* @__PURE__ */ jsxs("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
       /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
         /* @__PURE__ */ jsx("label", { htmlFor: "cms-email", children: "Email address" }),
@@ -24594,9 +24938,9 @@ function LoginPage() {
     ] })
   ] }) });
 }
-function AdminNav({ onSignOut }) {
+function AdminNav({ onSignOut, siteName }) {
   return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-nav", role: "banner", children: [
-    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-nav-brand", children: "jeeby CMS" }),
+    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
     /* @__PURE__ */ jsx("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsx(
       "button",
       {
@@ -24858,7 +25202,7 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
     }
   ) });
 }
-function formatDate2(ts2) {
+function formatDate(ts2) {
   if (!ts2) return "Never";
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
   return date.toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" });
@@ -24940,11 +25284,20 @@ function PageManager() {
     const currentField = editField;
     try {
       if (currentField === "name") {
+        const page = pages.find((p) => p.slug === currentSlug);
+        if (trimmed === ((page == null ? void 0 : page.name) || "")) {
+          cancelEdit();
+          return;
+        }
         await savePage(db, currentSlug, { name: trimmed });
         await loadPages();
         setAnnouncement("Page renamed successfully.");
         setTimeout(() => setAnnouncement(""), 1e3);
       } else if (currentField === "slug") {
+        if (trimmed === currentSlug) {
+          cancelEdit();
+          return;
+        }
         const page = pages.find((p) => p.slug === currentSlug);
         const template = templates && (page == null ? void 0 : page.template) ? templates.find((t) => t.name === page.template) : null;
         const pattern = (template == null ? void 0 : template.pattern) ?? null;
@@ -24991,10 +25344,21 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading pages", style: {
-        display: "flex",
-        justifyContent: "center"
-      }, children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
+      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx("h2", { children: "Pages" }) }),
+      /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
+        /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
+          /* @__PURE__ */ jsx("th", { scope: "col", children: "Name" }),
+          /* @__PURE__ */ jsx("th", { scope: "col", children: "Slug" }),
+          /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
+          /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
+        ] }) }),
+        /* @__PURE__ */ jsx("tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs("tr", { children: [
+          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
+        ] }, i)) })
+      ] }) })
     ] });
   }
   if (pages.length === 0 && !loading) {
@@ -25009,7 +25373,7 @@ function PageManager() {
       }, children: announcement }),
       /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-pages-empty", children: [
         /* @__PURE__ */ jsx("h2", { children: "No pages yet." }),
-        /* @__PURE__ */ jsx("p", { children: "Create your first page." }),
+        /* @__PURE__ */ jsx("p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
         /* @__PURE__ */ jsx(
           "button",
           {
@@ -25017,7 +25381,7 @@ function PageManager() {
             type: "button",
             className: "jeeby-cms-btn-primary",
             onClick: () => setShowCreateModal(true),
-            children: "New Page"
+            children: "Create your first page"
           }
         )
       ] }),
@@ -25056,7 +25420,7 @@ function PageManager() {
         /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
         /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
       ] }) }),
-      /* @__PURE__ */ jsx("tbody", { children: pages.map((page) => /* @__PURE__ */ jsxs(Fragment$1, { children: [
+      /* @__PURE__ */ jsx("tbody", { children: pages.map((page) => /* @__PURE__ */ jsxs(Fragment$2, { children: [
         /* @__PURE__ */ jsxs("tr", { children: [
           /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx(
             "input",
@@ -25080,18 +25444,9 @@ function PageManager() {
                   editTriggerRefs.current[`${page.slug}-name`] = el;
                 },
                 type: "button",
-                className: "jeeby-cms-btn-ghost",
+                className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
                 "aria-label": `Edit name for ${page.name || page.slug}`,
                 onClick: () => startEdit(page.slug, "name", page.name || ""),
-                style: {
-                  opacity: 0
-                },
-                onFocus: (e) => {
-                  e.currentTarget.style.opacity = "1";
-                },
-                onBlur: (e) => {
-                  e.currentTarget.style.opacity = "0";
-                },
                 children: "Edit"
               }
             )
@@ -25118,23 +25473,14 @@ function PageManager() {
                   editTriggerRefs.current[`${page.slug}-slug`] = el;
                 },
                 type: "button",
-                className: "jeeby-cms-btn-ghost",
+                className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
                 "aria-label": `Edit slug for ${page.name || page.slug}`,
                 onClick: () => startEdit(page.slug, "slug", page.slug),
-                style: {
-                  opacity: 0
-                },
-                onFocus: (e) => {
-                  e.currentTarget.style.opacity = "1";
-                },
-                onBlur: (e) => {
-                  e.currentTarget.style.opacity = "0";
-                },
                 children: "Edit"
               }
             )
           ] }) }),
-          /* @__PURE__ */ jsx("td", { children: formatDate2(page.lastPublishedAt) }),
+          /* @__PURE__ */ jsx("td", { children: formatDate(page.lastPublishedAt) }),
           /* @__PURE__ */ jsxs("td", { children: [
             /* @__PURE__ */ jsx(
               "a",
@@ -25197,17 +25543,17 @@ function PageManager() {
     )
   ] });
 }
-function AdminPanel({ children }) {
+function AdminPanel({ children, siteName }) {
   const { user, loading, signOut } = useAuth();
   if (loading) {
     return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
   }
   if (!user) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx(LoginPage, {}) });
+    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx(LoginPage, { siteName }) });
   }
   return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-admin", children: [
     /* @__PURE__ */ jsx("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
-    /* @__PURE__ */ jsx(AdminNav, { onSignOut: signOut }),
+    /* @__PURE__ */ jsx(AdminNav, { onSignOut: signOut, siteName }),
     /* @__PURE__ */ jsx("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsx(PageManager, {}) })
   ] });
 }

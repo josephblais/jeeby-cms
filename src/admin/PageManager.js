@@ -112,12 +112,21 @@ export function PageManager() {
 
     try {
       if (currentField === 'name') {
+        const page = pages.find(p => p.slug === currentSlug)
+        if (trimmed === (page?.name || '')) {
+          cancelEdit()
+          return
+        }
         await savePage(db, currentSlug, { name: trimmed })
         await loadPages()
         setAnnouncement('Page renamed successfully.')
         // Clear announcement after a tick so it re-announces if triggered again
         setTimeout(() => setAnnouncement(''), 1000)
       } else if (currentField === 'slug') {
+        if (trimmed === currentSlug) {
+          cancelEdit()
+          return
+        }
         // Immediate validation before save
         const page = pages.find(p => p.slug === currentSlug)
         const template = templates && page?.template
@@ -175,10 +184,30 @@ export function PageManager() {
         }}>
           {announcement}
         </div>
-        <div role="status" aria-label="Loading pages" style={{
-          display: 'flex', justifyContent: 'center'
-        }}>
-          <div className="jeeby-cms-spinner" aria-hidden="true" />
+        <div className="jeeby-cms-page-list-header">
+          <h2>Pages</h2>
+        </div>
+        <div role="status" aria-label="Loading pages">
+          <table className="jeeby-cms-pages-table" aria-hidden="true">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Slug</th>
+                <th scope="col">Last Published</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[0, 1, 2].map(i => (
+                <tr key={i}>
+                  <td><span className="jeeby-cms-skeleton" style={{ width: '120px', height: '14px' }} /></td>
+                  <td><span className="jeeby-cms-skeleton" style={{ width: '80px', height: '14px' }} /></td>
+                  <td><span className="jeeby-cms-skeleton" style={{ width: '90px', height: '14px' }} /></td>
+                  <td><span className="jeeby-cms-skeleton" style={{ width: '60px', height: '14px' }} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     )
@@ -197,13 +226,13 @@ export function PageManager() {
         </div>
         <div className="jeeby-cms-pages-empty">
           <h2>No pages yet.</h2>
-          <p>Create your first page.</p>
+          <p>Each page is a section of your website — like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready.</p>
           <button
             ref={newPageBtnRef}
             type="button"
             className="jeeby-cms-btn-primary"
             onClick={() => setShowCreateModal(true)}
-          >New Page</button>
+          >Create your first page</button>
         </div>
         <CreatePageModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }} triggerRef={newPageBtnRef} />
       </div>
@@ -265,14 +294,9 @@ export function PageManager() {
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
                         type="button"
-                        className="jeeby-cms-btn-ghost"
+                        className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
                         aria-label={`Edit name for ${page.name || page.slug}`}
                         onClick={() => startEdit(page.slug, 'name', page.name || '')}
-                        style={{
-                          opacity: 0
-                        }}
-                        onFocus={e => { e.currentTarget.style.opacity = '1' }}
-                        onBlur={e => { e.currentTarget.style.opacity = '0' }}
                       >Edit</button>
                     </span>
                   )}
@@ -298,14 +322,9 @@ export function PageManager() {
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
                         type="button"
-                        className="jeeby-cms-btn-ghost"
+                        className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
                         aria-label={`Edit slug for ${page.name || page.slug}`}
                         onClick={() => startEdit(page.slug, 'slug', page.slug)}
-                        style={{
-                          opacity: 0
-                        }}
-                        onFocus={e => { e.currentTarget.style.opacity = '1' }}
-                        onBlur={e => { e.currentTarget.style.opacity = '0' }}
                       >Edit</button>
                     </span>
                   )}

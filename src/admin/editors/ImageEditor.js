@@ -38,7 +38,7 @@ export function ImageEditor({ data, onChange, blockId }) {
           onChange={(e) => onChange({ ...data, alt: e.target.value })}
           style={{ width: '100%', minHeight: '44px' }}
         />
-        <p id={'alt-hint-' + blockId}>
+        <p id={'alt-hint-' + blockId} className="jeeby-cms-field-hint">
           Describe the image for screen readers
         </p>
       </div>

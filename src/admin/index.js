@@ -5,7 +5,7 @@ import { LoginPage } from './LoginPage.js'
 import { AdminNav } from './AdminNav.js'
 import { PageManager } from './PageManager.js'
 
-export function AdminPanel({ children }) {
+export function AdminPanel({ children, siteName }) {
   const { user, loading, signOut } = useAuth()
 
   if (loading) {
@@ -21,7 +21,7 @@ export function AdminPanel({ children }) {
   if (!user) {
     return (
       <div className="jeeby-cms-admin">
-        <LoginPage />
+        <LoginPage siteName={siteName} />
       </div>
     )
   }
@@ -29,7 +29,7 @@ export function AdminPanel({ children }) {
   return (
     <div className="jeeby-cms-admin">
       <a href="#main-content" className="jeeby-cms-skip-link">Skip to main content</a>
-      <AdminNav onSignOut={signOut} />
+      <AdminNav onSignOut={signOut} siteName={siteName} />
       <main className="jeeby-cms-shell-content" id="main-content" role="main" tabIndex={-1}>
         {children ?? <PageManager />}
       </main>

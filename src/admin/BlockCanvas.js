@@ -36,16 +36,17 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
       whileDrag={{ scale: 1.01 }}
     >
       <article
+        className="jeeby-cms-block-card"
         aria-label={displayName(block.type) + ' block'}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onFocus={() => setHovered(true)}
         onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setHovered(false) }}
       >
-        {/* Drag handle + Delete row — visible on hover/focus, hidden otherwise */}
-        <div style={{
+        {/* Drag handle + Delete row — visible on hover/focus, dimmed otherwise */}
+        <div className="jeeby-cms-block-card-controls" style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          opacity: hovered ? 1 : 0, transition: 'opacity 150ms',
+          opacity: hovered ? 1 : 0.3, transition: 'opacity 150ms',
         }}>
           {/*
             Drag handle is hidden from assistive technology (aria-hidden="true") because
@@ -63,7 +64,7 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
             aria-label={'Delete ' + displayName(block.type) + ' block'}
             onClick={() => onDelete(block)}
             style={{ minWidth: '44px', padding: 0 }}
-          >×</button>
+          >Delete</button>
         </div>
 
         {/* Editor form */}
@@ -83,9 +84,11 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
   if (blocks.length === 0) {
     return (
       <div className="jeeby-cms-block-canvas">
-        <div>
-          <p>No blocks yet</p>
-          <p>Click + to add your first block.</p>
+        <div className="jeeby-cms-canvas-empty">
+          <p className="jeeby-cms-canvas-empty-headline">This page has no content yet</p>
+          <p className="jeeby-cms-canvas-empty-body">
+            Start by adding content — try a <strong>Title</strong> for the page heading, or <strong>Text</strong> for a paragraph.
+          </p>
           <AddBlockButton onAdd={(type) => onAddBlock(type, -1)} insertIndex={-1} />
         </div>
       </div>

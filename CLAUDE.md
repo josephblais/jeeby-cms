@@ -98,3 +98,38 @@ For tasks that do not involve any user-facing web content (backend logic, script
 
 
 <!-- a11y-agent-team: end -->
+
+## Design Context
+
+### Users
+
+Two audiences, weighted equally:
+
+1. Developers — built the Next.js site, drop in the CMS package, occasionally edit content themselves. Technical, comfortable with dark UIs and dense information. They want correctness and zero surprise.
+2. Content editors — a client or teammate who didn't write the code. Uses the admin panel regularly to update pages. Needs clear affordances, low friction, and confidence that their actions are reversible.
+
+The UI must be legible to a non-technical editor on first contact while remaining efficient for a developer in flow. Avoid jargon in labels and copy. Every destructive action needs clear confirmation.
+
+### Brand Personality
+
+Three-word personality: quiet, polished, trustworthy
+
+The CMS has no brand of its own — it lives inside someone else's product. Emotional goal: editors feel in control. Developers feel nothing is fighting them.
+
+### Aesthetic Direction
+
+- Dark mode only for now (light mode planned, stub in CSS)
+- Surface: near-black (`#191919`), card: `#252521` — warm dark, not cold gray
+- Accent defaults are neutral so consumer theming is the star. Current blue (`#4a90d9`) is a safe fallback, not a brand color. Prefer lower-saturation accents when adding new tokens.
+- Typography: system font stack at 0.875rem — compact, readable, no typographic personality
+- Animation: subtle, purposeful. Framer Motion is a peer dep — use for drag/toasts/modals, not decoration
+- Reference feel: Ghost CMS, Linear, Vercel dashboard
+- Anti-reference: WordPress admin, builder tools with lots of chrome
+
+### Design Principles
+
+1. Recede from the consumer's brand — defaults are neutral; every color token is overridable
+2. Confidence through clarity — status always visible (draft/published, auto-save, loading)
+3. Polished, not decorative — transitions orient the user, not impress
+4. Zero friction for both audiences — plain-language labels for editors, keyboard-operable controls for developers
+5. Accessibility is structural — WCAG AA enforced by hooks; focus rings, touch targets, live regions are non-negotiable

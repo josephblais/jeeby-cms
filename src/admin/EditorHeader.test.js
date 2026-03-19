@@ -30,23 +30,23 @@ test('Save status has aria-atomic="true"', () => {
   assert.ok(src.includes('aria-atomic="true"'), 'Save status must have aria-atomic="true"')
 })
 
-test('EditorHeader contains "Saving..." text', () => {
-  assert.ok(src.includes('Saving...'), 'EditorHeader must include "Saving..." save status text')
+test('EditorHeader contains saving state text', () => {
+  assert.ok(src.includes('Saving'), 'EditorHeader must include save status text for saving state')
 })
 
-test('EditorHeader contains "Saved" text', () => {
-  assert.ok(src.includes('Saved'), 'EditorHeader must include "Saved" save status text')
+test('EditorHeader contains saved state text', () => {
+  assert.ok(src.includes('saved') || src.includes('Saved'), 'EditorHeader must include saved state text')
 })
 
-test('EditorHeader contains "Save failed" text', () => {
-  assert.ok(src.includes('Save failed'), 'EditorHeader must include "Save failed" save status text')
+test('EditorHeader contains error state text', () => {
+  assert.ok(src.includes('Save failed'), 'EditorHeader must include "Save failed" error state text')
 })
 
 test('EditorHeader has "use client" directive', () => {
   assert.ok(src.trimStart().startsWith('"use client"'), 'EditorHeader must start with "use client"')
 })
 
-// Phase 7: Publish controls tests (Wave 0 — will fail until EditorHeader.js is extended in Plan 02)
+// Publish controls
 test('EditorHeader accepts lastPublishedAt prop', () => {
   assert.ok(src.includes('lastPublishedAt'), 'EditorHeader must accept lastPublishedAt prop')
 })
@@ -59,18 +59,18 @@ test('EditorHeader accepts onPublish prop', () => {
   assert.ok(src.includes('onPublish'), 'EditorHeader must accept onPublish prop')
 })
 
-test('EditorHeader displays "Last published:" text', () => {
-  assert.ok(src.includes('Last published:'), 'EditorHeader must display "Last published:" text')
+test('EditorHeader shows Published status for published pages', () => {
+  assert.ok(src.includes('Published'), 'EditorHeader must display Published status')
 })
 
-test('EditorHeader displays "Unpublished changes" indicator', () => {
-  assert.ok(src.includes('Unpublished changes'), 'EditorHeader must display "Unpublished changes" when hasDraftChanges is true')
+test('EditorHeader shows unpublished changes status', () => {
+  assert.ok(src.includes('Unpublished') || src.includes('Unsaved'), 'EditorHeader must display unpublished/unsaved status when hasDraftChanges is true')
 })
 
 test('EditorHeader has Publish button', () => {
   assert.ok(src.includes('Publish'), 'EditorHeader must have a Publish button')
 })
 
-test('EditorHeader has jeeby-cms-publish-controls class', () => {
-  assert.ok(src.includes('jeeby-cms-publish-controls'), 'EditorHeader must have jeeby-cms-publish-controls wrapper')
+test('EditorHeader has document status indicator', () => {
+  assert.ok(src.includes('jeeby-cms-doc-status'), 'EditorHeader must have document status chip')
 })

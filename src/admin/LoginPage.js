@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useAuth } from '../index.js'
 
-export function LoginPage() {
+export function LoginPage({ siteName }) {
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,7 +28,7 @@ export function LoginPage() {
   return (
     <main className="jeeby-cms-login-page" role="main">
       <div className="jeeby-cms-login-card">
-        <h1 className="jeeby-cms-login-heading">jeeby CMS</h1>
+        <h1 className="jeeby-cms-login-heading">{siteName ?? 'Admin'}</h1>
         <form className="jeeby-cms-login-form" onSubmit={handleSubmit} noValidate>
           <div className="jeeby-cms-field">
             <label htmlFor="cms-email">Email address</label>
