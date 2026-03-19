@@ -1,8 +1,8 @@
 "use client";
-import React, { forwardRef, createContext, useContext, useMemo, useState, useRef, useEffect, useCallback, Fragment as Fragment$2, useDebugValue, useLayoutEffect } from 'react';
+import React, { forwardRef, createContext, useContext, useMemo, useState, useRef, useEffect, useCallback, Fragment as Fragment$1, useDebugValue, useLayoutEffect } from 'react';
 import { useCMSFirebase, useAuth } from 'jeeby-cms';
 import { getDoc, updateDoc, serverTimestamp, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { jsxs, Fragment as Fragment$1, jsx } from 'react/jsx-runtime';
+import { jsxs, Fragment, jsx } from 'react/jsx-runtime';
 import { Reorder, useDragControls } from 'framer-motion';
 import ReactDOM from 'react-dom';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/index.js';
@@ -25,7 +25,18 @@ async function savePage(db, slug, data) {
 async function saveDraft(db, slug, blocks) {
   await updateDoc(pageRef(db, slug), {
     "draft.blocks": blocks,
+    hasDraftChanges: true,
     updatedAt: serverTimestamp()
+  });
+}
+async function publishPage(db, slug) {
+  var _a;
+  const page = await getPage(db, slug);
+  if (!page) throw new Error(`Page "${slug}" not found`);
+  await updateDoc(pageRef(db, slug), {
+    "published.blocks": ((_a = page.draft) == null ? void 0 : _a.blocks) ?? [],
+    lastPublishedAt: serverTimestamp(),
+    hasDraftChanges: false
   });
 }
 async function deletePage(db, slug) {
@@ -47,7 +58,12 @@ function validateSlug(pattern, slug) {
   const regexStr = pattern.replace(/\[\.\.\.[\w]+\]/g, ".*").replace(/\[[\w]+\]/g, "[^/]+").replace(/\//g, "\\/");
   return new RegExp("^" + regexStr + "$").test(slug);
 }
-function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameSlug }) {
+function formatDate(ts2) {
+  if (!ts2) return "Never";
+  const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
+  return date.toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" });
+}
+function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
   const [editingSlug, setEditingSlug] = useState(slug);
   const [slugDirty, setSlugDirty] = useState(false);
   useEffect(() => {
@@ -78,23 +94,18 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
       e.target.blur();
     }
   }
-  return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-editor-header", style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between"
-  }, children: [
+  return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-editor-header", children: [
     /* @__PURE__ */ jsx(
       "a",
       {
         href: "/admin",
         onClick: onBackClick,
         "aria-label": "Back to Pages",
-        style: { minHeight: "44px", display: "inline-flex", alignItems: "center" },
         children: "\u2190 Pages"
       }
     ),
     /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }, children: [
-      /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-editor-title", style: { margin: 0 }, children: pageName || slug }),
+      /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-editor-title", children: pageName || slug }),
       /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
         /* @__PURE__ */ jsx("span", { className: "jeeby-cms-slug-prefix", "aria-hidden": "true", children: "/" }),
         /* @__PURE__ */ jsx(
@@ -107,38 +118,60 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
             "aria-label": "Page slug",
             onChange: handleSlugChange,
             onBlur: commitSlug,
-            onKeyDown: handleSlugKeyDown,
-            style: { minHeight: "44px" }
+            onKeyDown: handleSlugKeyDown
           }
         ),
         slugDirty && /* @__PURE__ */ jsx("span", { className: "jeeby-cms-slug-hint", "aria-live": "polite", children: "Press Enter to rename" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs(
-      "div",
-      {
-        role: "status",
-        "aria-live": saveStatus === "error" ? "assertive" : "polite",
-        "aria-atomic": "true",
-        children: [
-          saveStatus === "saving" && /* @__PURE__ */ jsx("span", { children: "Saving..." }),
-          saveStatus === "saved" && /* @__PURE__ */ jsx("span", { children: "Saved" }),
-          saveStatus === "error" && /* @__PURE__ */ jsxs("span", { children: [
-            "Save failed.",
-            " ",
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                type: "button",
-                onClick: onRetry,
-                style: { background: "none", border: "none", cursor: "pointer", minHeight: "44px" },
-                children: "Retry?"
-              }
-            )
-          ] })
-        ]
-      }
-    )
+    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-publish-controls", children: [
+      /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-publish-status", children: [
+        "Last published: ",
+        formatDate(lastPublishedAt)
+      ] }),
+      hasDraftChanges && /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsx("span", { "aria-hidden": "true", children: "\xB7" }),
+        /* @__PURE__ */ jsx("span", { className: "jeeby-cms-draft-indicator", children: "Unpublished changes" })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        "div",
+        {
+          role: "status",
+          "aria-live": saveStatus === "error" ? "assertive" : "polite",
+          "aria-atomic": "true",
+          children: [
+            saveStatus === "saving" && /* @__PURE__ */ jsx("span", { children: "Saving..." }),
+            saveStatus === "saved" && /* @__PURE__ */ jsx("span", { children: "Saved" }),
+            saveStatus === "error" && /* @__PURE__ */ jsxs("span", { children: [
+              "Save failed.",
+              " ",
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  className: "jeeby-cms-btn-ghost",
+                  onClick: onRetry,
+                  children: "Retry?"
+                }
+              )
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          ref: publishBtnRef,
+          type: "button",
+          className: "jeeby-cms-btn-primary",
+          onClick: onPublish,
+          "aria-disabled": publishStatus === "publishing" || saveStatus === "saving" ? "true" : void 0,
+          "aria-busy": publishStatus === "publishing" ? "true" : void 0,
+          style: { cursor: publishStatus === "publishing" || saveStatus === "saving" ? "not-allowed" : "pointer", pointerEvents: publishStatus === "publishing" || saveStatus === "saving" ? "none" : void 0 },
+          children: publishStatus === "publishing" ? "Publishing\u2026" : "Publish"
+        }
+      )
+    ] })
   ] });
 }
 var HEADING_SIZES = { h2: "28px", h3: "24px", h4: "20px", h5: "16px", h6: "14px" };
@@ -165,10 +198,7 @@ function TitleEditor({ data, onChange, blockId }) {
         value: (data == null ? void 0 : data.level) ?? "h2",
         "aria-label": "Heading level",
         onChange: (e) => onChange({ ...data, level: e.target.value }),
-        style: {
-          minHeight: "44px",
-          width: "fit-content"
-        },
+        style: { width: "fit-content" },
         children: LEVELS.map((l) => /* @__PURE__ */ jsx("option", { value: l, children: l.toUpperCase() }, l))
       }
     ),
@@ -370,7 +400,7 @@ function findDiffEnd(a, b, posA, posB) {
     posB -= size;
   }
 }
-var Fragment = class _Fragment {
+var Fragment2 = class _Fragment {
   /**
   @internal
   */
@@ -662,7 +692,7 @@ var Fragment = class _Fragment {
     throw new RangeError("Can not convert " + nodes + " to a Fragment" + (nodes.nodesBetween ? " (looks like multiple versions of prosemirror-model were loaded)" : ""));
   }
 };
-Fragment.empty = new Fragment([], 0);
+Fragment2.empty = new Fragment2([], 0);
 var found = { index: 0, offset: 0 };
 function retIndex(index, offset) {
   found.index = index;
@@ -887,7 +917,7 @@ var Slice = class _Slice {
     let openStart = json.openStart || 0, openEnd = json.openEnd || 0;
     if (typeof openStart != "number" || typeof openEnd != "number")
       throw new RangeError("Invalid input for Slice.fromJSON");
-    return new _Slice(Fragment.fromJSON(schema, json.content), openStart, openEnd);
+    return new _Slice(Fragment2.fromJSON(schema, json.content), openStart, openEnd);
   }
   /**
   Create a slice from a fragment by taking the maximum possible
@@ -902,7 +932,7 @@ var Slice = class _Slice {
     return new _Slice(fragment, openStart, openEnd);
   }
 };
-Slice.empty = new Slice(Fragment.empty, 0, 0);
+Slice.empty = new Slice(Fragment2.empty, 0, 0);
 function removeRange(content, from2, to) {
   let { index, offset } = content.findIndex(from2), child = content.maybeChild(index);
   let { index: indexTo, offset: offsetTo } = content.findIndex(to);
@@ -1000,7 +1030,7 @@ function replaceThreeWay($from, $start, $end, $to, depth) {
       addNode(close(openEnd, replaceTwoWay($end, $to, depth + 1)), content);
   }
   addRange($to, null, depth, content);
-  return new Fragment(content);
+  return new Fragment2(content);
 }
 function replaceTwoWay($from, $to, depth) {
   let content = [];
@@ -1010,13 +1040,13 @@ function replaceTwoWay($from, $to, depth) {
     addNode(close(type, replaceTwoWay($from, $to, depth + 1)), content);
   }
   addRange($to, null, depth, content);
-  return new Fragment(content);
+  return new Fragment2(content);
 }
 function prepareSliceForReplace(slice2, $along) {
   let extra = $along.depth - slice2.openStart, parent = $along.node(extra);
   let node = parent.copy(slice2.content);
   for (let i = extra - 1; i >= 0; i--)
-    node = $along.node(i).copy(Fragment.from(node));
+    node = $along.node(i).copy(Fragment2.from(node));
   return {
     start: node.resolveNoCache(slice2.openStart + extra),
     end: node.resolveNoCache(node.content.size - slice2.openEnd - extra)
@@ -1355,7 +1385,7 @@ var Node = class _Node2 {
     this.type = type;
     this.attrs = attrs;
     this.marks = marks;
-    this.content = content || Fragment.empty;
+    this.content = content || Fragment2.empty;
   }
   /**
   The array of this node's child nodes.
@@ -1660,7 +1690,7 @@ var Node = class _Node2 {
   can optionally pass `start` and `end` indices into the
   replacement fragment.
   */
-  canReplace(from2, to, replacement = Fragment.empty, start = 0, end = replacement.childCount) {
+  canReplace(from2, to, replacement = Fragment2.empty, start = 0, end = replacement.childCount) {
     let one = this.contentMatchAt(from2).matchFragment(replacement, start, end);
     let two = one && one.matchFragment(this.content, to);
     if (!two || !two.validEnd)
@@ -1742,7 +1772,7 @@ var Node = class _Node2 {
         throw new RangeError("Invalid text node in JSON");
       return schema.text(json.text, marks);
     }
-    let content = Fragment.fromJSON(schema, json.content);
+    let content = Fragment2.fromJSON(schema, json.content);
     let node = schema.nodeType(json.type).create(json.attrs, content, marks);
     node.type.checkAttrs(node.attrs);
     return node;
@@ -1884,7 +1914,7 @@ var ContentMatch = class _ContentMatch {
     function search(match, types) {
       let finished = match.matchFragment(after, startIndex);
       if (finished && (!toEnd || finished.validEnd))
-        return Fragment.from(types.map((tp) => tp.createAndFill()));
+        return Fragment2.from(types.map((tp) => tp.createAndFill()));
       for (let i = 0; i < match.next.length; i++) {
         let { type, next } = match.next[i];
         if (!(type.isText || type.hasRequiredAttrs()) && seen.indexOf(next) == -1) {
@@ -2336,7 +2366,7 @@ var NodeType = class _NodeType {
   create(attrs = null, content, marks) {
     if (this.isText)
       throw new Error("NodeType.create can't construct text nodes");
-    return new Node(this, this.computeAttrs(attrs), Fragment.from(content), Mark.setFrom(marks));
+    return new Node(this, this.computeAttrs(attrs), Fragment2.from(content), Mark.setFrom(marks));
   }
   /**
   Like [`create`](https://prosemirror.net/docs/ref/#model.NodeType.create), but check the given content
@@ -2344,7 +2374,7 @@ var NodeType = class _NodeType {
   if it doesn't match.
   */
   createChecked(attrs = null, content, marks) {
-    content = Fragment.from(content);
+    content = Fragment2.from(content);
     this.checkContent(content);
     return new Node(this, this.computeAttrs(attrs), content, Mark.setFrom(marks));
   }
@@ -2358,7 +2388,7 @@ var NodeType = class _NodeType {
   */
   createAndFill(attrs = null, content, marks) {
     attrs = this.computeAttrs(attrs);
-    content = Fragment.from(content);
+    content = Fragment2.from(content);
     if (content.size) {
       let before = this.contentMatch.fillBefore(content);
       if (!before)
@@ -2366,7 +2396,7 @@ var NodeType = class _NodeType {
       content = before.append(content);
     }
     let matched = this.contentMatch.matchFragment(content);
-    let after = matched && matched.fillBefore(Fragment.empty, true);
+    let after = matched && matched.fillBefore(Fragment2.empty, true);
     if (!after)
       return null;
     return new Node(this, attrs, content.append(after), Mark.setFrom(marks));
@@ -2830,7 +2860,7 @@ var NodeContext = class {
     if (!this.match) {
       if (!this.type)
         return [];
-      let fill = this.type.contentMatch.fillBefore(Fragment.from(node));
+      let fill = this.type.contentMatch.fillBefore(Fragment2.from(node));
       if (fill) {
         this.match = this.type.contentMatch.matchFragment(fill);
       } else {
@@ -2856,9 +2886,9 @@ var NodeContext = class {
           this.content[this.content.length - 1] = text.withText(text.text.slice(0, text.text.length - m[0].length));
       }
     }
-    let content = Fragment.from(this.content);
+    let content = Fragment2.from(this.content);
     if (!openEnd && this.match)
-      content = content.append(this.match.fillBefore(Fragment.empty, true));
+      content = content.append(this.match.fillBefore(Fragment2.empty, true));
     return this.type ? this.type.create(this.attrs, content, this.marks) : content;
   }
   inlineContext(node) {
@@ -3884,7 +3914,7 @@ function mapFragment(fragment, f, parent) {
       child = f(child, parent, i);
     mapped.push(child);
   }
-  return Fragment.fromArray(mapped);
+  return Fragment2.fromArray(mapped);
 }
 var AddMarkStep = class _AddMarkStep extends Step {
   /**
@@ -4001,7 +4031,7 @@ var AddNodeMarkStep = class _AddNodeMarkStep extends Step {
     if (!node)
       return StepResult.fail("No node at mark step's position");
     let updated = node.type.create(node.attrs, null, this.mark.addToSet(node.marks));
-    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1));
+    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment2.from(updated), 0, node.isLeaf ? 0 : 1));
   }
   invert(doc4) {
     let node = doc4.nodeAt(this.pos);
@@ -4047,7 +4077,7 @@ var RemoveNodeMarkStep = class _RemoveNodeMarkStep extends Step {
     if (!node)
       return StepResult.fail("No node at mark step's position");
     let updated = node.type.create(node.attrs, null, this.mark.removeFromSet(node.marks));
-    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1));
+    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment2.from(updated), 0, node.isLeaf ? 0 : 1));
   }
   invert(doc4) {
     let node = doc4.nodeAt(this.pos);
@@ -4312,7 +4342,7 @@ function clearIncompatible(tr2, pos, parentType, match = parentType.contentMatch
         let m, newline = /\r?\n|\r/g, slice2;
         while (m = newline.exec(child.text)) {
           if (!slice2)
-            slice2 = new Slice(Fragment.from(parentType.schema.text(" ", parentType.allowedMarks(child.marks))), 0, 0);
+            slice2 = new Slice(Fragment2.from(parentType.schema.text(" ", parentType.allowedMarks(child.marks))), 0, 0);
           replSteps.push(new ReplaceStep(cur + m.index, cur + m.index + m[0].length, slice2));
         }
       }
@@ -4320,7 +4350,7 @@ function clearIncompatible(tr2, pos, parentType, match = parentType.contentMatch
     cur = end;
   }
   if (!match.validEnd) {
-    let fill = match.fillBefore(Fragment.empty, true);
+    let fill = match.fillBefore(Fragment2.empty, true);
     tr2.replace(cur, cur, new Slice(fill, 0, 0));
   }
   for (let i = replSteps.length - 1; i >= 0; i--)
@@ -4350,20 +4380,20 @@ function lift(tr2, range, target) {
   let { $from, $to, depth } = range;
   let gapStart = $from.before(depth + 1), gapEnd = $to.after(depth + 1);
   let start = gapStart, end = gapEnd;
-  let before = Fragment.empty, openStart = 0;
+  let before = Fragment2.empty, openStart = 0;
   for (let d = depth, splitting = false; d > target; d--)
     if (splitting || $from.index(d) > 0) {
       splitting = true;
-      before = Fragment.from($from.node(d).copy(before));
+      before = Fragment2.from($from.node(d).copy(before));
       openStart++;
     } else {
       start--;
     }
-  let after = Fragment.empty, openEnd = 0;
+  let after = Fragment2.empty, openEnd = 0;
   for (let d = depth, splitting = false; d > target; d--)
     if (splitting || $to.after(d + 1) < $to.end(d)) {
       splitting = true;
-      after = Fragment.from($to.node(d).copy(after));
+      after = Fragment2.from($to.node(d).copy(after));
       openEnd++;
     } else {
       end++;
@@ -4403,14 +4433,14 @@ function findWrappingInside(range, type) {
   return inside;
 }
 function wrap(tr2, range, wrappers) {
-  let content = Fragment.empty;
+  let content = Fragment2.empty;
   for (let i = wrappers.length - 1; i >= 0; i--) {
     if (content.size) {
       let match = wrappers[i].type.contentMatch.matchFragment(content);
       if (!match || !match.validEnd)
         throw new RangeError("Wrapper type given to Transform.wrap does not form valid content of its parent wrapper");
     }
-    content = Fragment.from(wrappers[i].type.create(wrappers[i].attrs, content));
+    content = Fragment2.from(wrappers[i].type.create(wrappers[i].attrs, content));
   }
   let start = range.start, end = range.end;
   tr2.step(new ReplaceAroundStep(start, end, start, end, new Slice(content, 0, 0), wrappers.length, true));
@@ -4435,7 +4465,7 @@ function setBlockType(tr2, from2, to, type, attrs) {
       clearIncompatible(tr2, tr2.mapping.slice(mapFrom).map(pos, 1), type, void 0, convertNewlines === null);
       let mapping = tr2.mapping.slice(mapFrom);
       let startM = mapping.map(pos, 1), endM = mapping.map(pos + node.nodeSize, 1);
-      tr2.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1, new Slice(Fragment.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true));
+      tr2.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1, new Slice(Fragment2.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true));
       if (convertNewlines === true)
         replaceNewlines(tr2, node, pos, mapFrom);
       return false;
@@ -4476,7 +4506,7 @@ function setNodeMarkup(tr2, pos, type, attrs, marks) {
     return tr2.replaceWith(pos, pos + node.nodeSize, newNode);
   if (!type.validContent(node.content))
     throw new RangeError("Invalid content for node type " + type.name);
-  tr2.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1, new Slice(Fragment.from(newNode), 0, 0), 1, true));
+  tr2.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1, new Slice(Fragment2.from(newNode), 0, 0), 1, true));
 }
 function canSplit(doc4, pos, depth = 1, typesAfter) {
   let $pos = doc4.resolve(pos), base2 = $pos.depth - depth;
@@ -4500,11 +4530,11 @@ function canSplit(doc4, pos, depth = 1, typesAfter) {
   return $pos.node(base2).canReplaceWith(index, index, baseType ? baseType.type : $pos.node(base2 + 1).type);
 }
 function split(tr2, pos, depth = 1, typesAfter) {
-  let $pos = tr2.doc.resolve(pos), before = Fragment.empty, after = Fragment.empty;
+  let $pos = tr2.doc.resolve(pos), before = Fragment2.empty, after = Fragment2.empty;
   for (let d = $pos.depth, e = $pos.depth - depth, i = depth - 1; d > e; d--, i--) {
-    before = Fragment.from($pos.node(d).copy(before));
+    before = Fragment2.from($pos.node(d).copy(before));
     let typeAfter = typesAfter && typesAfter[i];
-    after = Fragment.from(typeAfter ? typeAfter.type.create(typeAfter.attrs, after) : $pos.node(d).copy(after));
+    after = Fragment2.from(typeAfter ? typeAfter.type.create(typeAfter.attrs, after) : $pos.node(d).copy(after));
   }
   tr2.step(new ReplaceStep(pos, pos, new Slice(before.append(after), depth, depth), true));
 }
@@ -4643,7 +4673,7 @@ var Fitter = class {
     this.$to = $to;
     this.unplaced = unplaced;
     this.frontier = [];
-    this.placed = Fragment.empty;
+    this.placed = Fragment2.empty;
     for (let i = 0; i <= $from.depth; i++) {
       let node = $from.node(i);
       this.frontier.push({
@@ -4652,7 +4682,7 @@ var Fitter = class {
       });
     }
     for (let i = $from.depth; i > 0; i--)
-      this.placed = Fragment.from($from.node(i).copy(this.placed));
+      this.placed = Fragment2.from($from.node(i).copy(this.placed));
   }
   get depth() {
     return this.frontier.length - 1;
@@ -4709,7 +4739,7 @@ var Fitter = class {
         let first2 = fragment.firstChild;
         for (let frontierDepth = this.depth; frontierDepth >= 0; frontierDepth--) {
           let { type, match } = this.frontier[frontierDepth], wrap2, inject = null;
-          if (pass == 1 && (first2 ? match.matchType(first2.type) || (inject = match.fillBefore(Fragment.from(first2), false)) : parent && type.compatibleContent(parent.type)))
+          if (pass == 1 && (first2 ? match.matchType(first2.type) || (inject = match.fillBefore(Fragment2.from(first2), false)) : parent && type.compatibleContent(parent.type)))
             return { sliceDepth, frontierDepth, parent, inject };
           else if (pass == 2 && first2 && (wrap2 = match.findWrapping(first2.type)))
             return { sliceDepth, frontierDepth, parent, wrap: wrap2 };
@@ -4769,7 +4799,7 @@ var Fitter = class {
     let toEnd = taken == fragment.childCount;
     if (!toEnd)
       openEndCount = -1;
-    this.placed = addToFragment(this.placed, frontierDepth, Fragment.from(add));
+    this.placed = addToFragment(this.placed, frontierDepth, Fragment2.from(add));
     this.frontier[frontierDepth].match = match;
     if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type && this.frontier.length > 1)
       this.closeFrontierNode();
@@ -4825,12 +4855,12 @@ var Fitter = class {
   openFrontierNode(type, attrs = null, content) {
     let top = this.frontier[this.depth];
     top.match = top.match.matchType(type);
-    this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(attrs, content)));
+    this.placed = addToFragment(this.placed, this.depth, Fragment2.from(type.create(attrs, content)));
     this.frontier.push({ type, match: type.contentMatch });
   }
   closeFrontierNode() {
     let open = this.frontier.pop();
-    let add = open.match.fillBefore(Fragment.empty, true);
+    let add = open.match.fillBefore(Fragment2.empty, true);
     if (add.childCount)
       this.placed = addToFragment(this.placed, this.frontier.length, add);
   }
@@ -4859,7 +4889,7 @@ function closeNodeStart(node, openStart, openEnd) {
   if (openStart > 0) {
     frag = node.type.contentMatch.fillBefore(frag).append(frag);
     if (openEnd <= 0)
-      frag = frag.append(node.type.contentMatch.matchFragment(frag).fillBefore(Fragment.empty, true));
+      frag = frag.append(node.type.contentMatch.matchFragment(frag).fillBefore(Fragment2.empty, true));
   }
   return node.copy(frag);
 }
@@ -4951,7 +4981,7 @@ function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
   if (depth > newOpen) {
     let match = parent.contentMatchAt(0);
     let start = match.fillBefore(fragment).append(fragment);
-    fragment = start.append(match.matchFragment(start).fillBefore(Fragment.empty, true));
+    fragment = start.append(match.matchFragment(start).fillBefore(Fragment2.empty, true));
   }
   return fragment;
 }
@@ -4961,7 +4991,7 @@ function replaceRangeWith(tr2, from2, to, node) {
     if (point != null)
       from2 = to = point;
   }
-  tr2.replaceRange(from2, to, new Slice(Fragment.from(node), 0, 0));
+  tr2.replaceRange(from2, to, new Slice(Fragment2.from(node), 0, 0));
 }
 function deleteRange(tr2, from2, to) {
   let $from = tr2.doc.resolve(from2), $to = tr2.doc.resolve(to);
@@ -5009,7 +5039,7 @@ var AttrStep = class _AttrStep extends Step {
       attrs[name] = node.attrs[name];
     attrs[this.attr] = this.value;
     let updated = node.type.create(attrs, null, node.marks);
-    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1));
+    return StepResult.fromReplace(doc4, this.pos, this.pos + 1, new Slice(Fragment2.from(updated), 0, node.isLeaf ? 0 : 1));
   }
   getMap() {
     return StepMap.empty;
@@ -5165,7 +5195,7 @@ var Transform = class {
   fragment, node, or array of nodes.
   */
   replaceWith(from2, to, content) {
-    return this.replace(from2, to, new Slice(Fragment.from(content), 0, 0));
+    return this.replace(from2, to, new Slice(Fragment2.from(content), 0, 0));
   }
   /**
   Delete the content between the given positions.
@@ -5667,7 +5697,7 @@ var NodeSelection = class _NodeSelection extends Selection {
     return new _NodeSelection($pos);
   }
   content() {
-    return new Slice(Fragment.from(this.node), 0, 0);
+    return new Slice(Fragment2.from(this.node), 0, 0);
   }
   eq(other) {
     return other instanceof _NodeSelection && other.anchor == this.anchor;
@@ -6661,10 +6691,10 @@ function deleteBarrier(state, $cut, dispatch, dir) {
   let canDelAfter = !isolated && $cut.parent.canReplace($cut.index(), $cut.index() + 1);
   if (canDelAfter && (conn = (match = before.contentMatchAt(before.childCount)).findWrapping(after.type)) && match.matchType(conn[0] || after.type).validEnd) {
     if (dispatch) {
-      let end = $cut.pos + after.nodeSize, wrap2 = Fragment.empty;
+      let end = $cut.pos + after.nodeSize, wrap2 = Fragment2.empty;
       for (let i = conn.length - 1; i >= 0; i--)
-        wrap2 = Fragment.from(conn[i].create(null, wrap2));
-      wrap2 = Fragment.from(before.copy(wrap2));
+        wrap2 = Fragment2.from(conn[i].create(null, wrap2));
+      wrap2 = Fragment2.from(before.copy(wrap2));
       let tr2 = state.tr.step(new ReplaceAroundStep($cut.pos - 1, end, $cut.pos, end, new Slice(wrap2, 1, 0), conn.length, true));
       let $joinAt = tr2.doc.resolve(end + 2 * conn.length);
       if ($joinAt.nodeAfter && $joinAt.nodeAfter.type == before.type && canJoin(tr2.doc, $joinAt.pos))
@@ -6693,9 +6723,9 @@ function deleteBarrier(state, $cut, dispatch, dir) {
       afterDepth++;
     if (at.canReplace(at.childCount, at.childCount, afterText.content)) {
       if (dispatch) {
-        let end = Fragment.empty;
+        let end = Fragment2.empty;
         for (let i = wrap2.length - 1; i >= 0; i--)
-          end = Fragment.from(wrap2[i].copy(end));
+          end = Fragment2.from(wrap2[i].copy(end));
         let tr2 = state.tr.step(new ReplaceAroundStep($cut.pos - wrap2.length, $cut.pos + after.nodeSize, $cut.pos + afterDepth, $cut.pos + after.nodeSize - afterDepth, new Slice(end, wrap2.length, 0), 0, true));
         dispatch(tr2.scrollIntoView());
       }
@@ -6812,9 +6842,9 @@ function wrapRangeInList(tr2, range, listType, attrs = null) {
   return true;
 }
 function doWrapInList(tr2, range, wrappers, joinBefore, listType) {
-  let content = Fragment.empty;
+  let content = Fragment2.empty;
   for (let i = wrappers.length - 1; i >= 0; i--)
-    content = Fragment.from(wrappers[i].type.create(wrappers[i].attrs, content));
+    content = Fragment2.from(wrappers[i].type.create(wrappers[i].attrs, content));
   tr2.step(new ReplaceAroundStep(range.start - (joinBefore ? 2 : 0), range.end, range.start, range.end, new Slice(content, 0, 0), wrappers.length, true));
   let found2 = 0;
   for (let i = 0; i < wrappers.length; i++)
@@ -6848,7 +6878,7 @@ function liftListItem(itemType) {
 function liftToOuterList(state, dispatch, itemType, range) {
   let tr2 = state.tr, end = range.end, endOfList = range.$to.end(range.depth);
   if (end < endOfList) {
-    tr2.step(new ReplaceAroundStep(end - 1, endOfList, end, endOfList, new Slice(Fragment.from(itemType.create(null, range.parent.copy())), 1, 0), 1, true));
+    tr2.step(new ReplaceAroundStep(end - 1, endOfList, end, endOfList, new Slice(Fragment2.from(itemType.create(null, range.parent.copy())), 1, 0), 1, true));
     range = new NodeRange(tr2.doc.resolve(range.$from.pos), tr2.doc.resolve(endOfList), range.depth);
   }
   const target = liftTarget(range);
@@ -6872,10 +6902,10 @@ function liftOutOfList(state, dispatch, range) {
     return false;
   let atStart = range.startIndex == 0, atEnd = range.endIndex == list.childCount;
   let parent = $start.node(-1), indexBefore = $start.index(-1);
-  if (!parent.canReplace(indexBefore + (atStart ? 0 : 1), indexBefore + 1, item.content.append(atEnd ? Fragment.empty : Fragment.from(list))))
+  if (!parent.canReplace(indexBefore + (atStart ? 0 : 1), indexBefore + 1, item.content.append(atEnd ? Fragment2.empty : Fragment2.from(list))))
     return false;
   let start = $start.pos, end = start + item.nodeSize;
-  tr2.step(new ReplaceAroundStep(start - (atStart ? 1 : 0), end + (atEnd ? 1 : 0), start + 1, end - 1, new Slice((atStart ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))).append(atEnd ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))), atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1));
+  tr2.step(new ReplaceAroundStep(start - (atStart ? 1 : 0), end + (atEnd ? 1 : 0), start + 1, end - 1, new Slice((atStart ? Fragment2.empty : Fragment2.from(list.copy(Fragment2.empty))).append(atEnd ? Fragment2.empty : Fragment2.from(list.copy(Fragment2.empty))), atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1));
   dispatch(tr2.scrollIntoView());
   return true;
 }
@@ -6893,8 +6923,8 @@ function sinkListItem(itemType) {
       return false;
     if (dispatch) {
       let nestedBefore = nodeBefore.lastChild && nodeBefore.lastChild.type == parent.type;
-      let inner = Fragment.from(nestedBefore ? itemType.create() : null);
-      let slice2 = new Slice(Fragment.from(itemType.create(null, Fragment.from(parent.type.create(null, inner)))), nestedBefore ? 3 : 1, 0);
+      let inner = Fragment2.from(nestedBefore ? itemType.create() : null);
+      let slice2 = new Slice(Fragment2.from(itemType.create(null, Fragment2.from(parent.type.create(null, inner)))), nestedBefore ? 3 : 1, 0);
       let before = range.start, after = range.end;
       dispatch(state.tr.step(new ReplaceAroundStep(before - (nestedBefore ? 3 : 1), after, before, after, slice2, 1, true)).scrollIntoView());
     }
@@ -8115,7 +8145,7 @@ var NodeViewDesc = class _NodeViewDesc extends ViewDesc {
         }
       }
       if (!rule.contentElement)
-        rule.getContent = () => Fragment.empty;
+        rule.getContent = () => Fragment2.empty;
     }
     return rule;
   }
@@ -9430,7 +9460,7 @@ function parseFromClipboard(view, text, html, plainText, $context) {
       text = f(text, inCode || plainText, view);
     });
     if (inCode) {
-      slice2 = new Slice(Fragment.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0);
+      slice2 = new Slice(Fragment2.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0);
       view.someProp("transformPasted", (f) => {
         slice2 = f(slice2, view, true);
       });
@@ -9524,13 +9554,13 @@ function normalizeSiblings(fragment, $context) {
       }
     });
     if (result)
-      return Fragment.from(result);
+      return Fragment2.from(result);
   }
   return fragment;
 }
 function withWrappers(node, wrap2, from2 = 0) {
   for (let i = wrap2.length - 1; i >= from2; i--)
-    node = wrap2[i].create(null, Fragment.from(node));
+    node = wrap2[i].create(null, Fragment2.from(node));
   return node;
 }
 function addToSibling(wrap2, lastWrap, node, sibling, depth) {
@@ -9540,14 +9570,14 @@ function addToSibling(wrap2, lastWrap, node, sibling, depth) {
       return sibling.copy(sibling.content.replaceChild(sibling.childCount - 1, inner));
     let match = sibling.contentMatchAt(sibling.childCount);
     if (match.matchType(depth == wrap2.length - 1 ? node.type : wrap2[depth + 1]))
-      return sibling.copy(sibling.content.append(Fragment.from(withWrappers(node, wrap2, depth + 1))));
+      return sibling.copy(sibling.content.append(Fragment2.from(withWrappers(node, wrap2, depth + 1))));
   }
 }
 function closeRight(node, depth) {
   if (depth == 0)
     return node;
   let fragment = node.content.replaceChild(node.childCount - 1, closeRight(node.lastChild, depth - 1));
-  let fill = node.contentMatchAt(node.childCount).fillBefore(Fragment.empty, true);
+  let fill = node.contentMatchAt(node.childCount).fillBefore(Fragment2.empty, true);
   return node.copy(fragment.append(fill));
 }
 function closeRange(fragment, side, from2, to, depth, openEnd) {
@@ -9557,7 +9587,7 @@ function closeRange(fragment, side, from2, to, depth, openEnd) {
   if (depth < to - 1)
     inner = closeRange(inner, side, from2, to, depth + 1, openEnd);
   if (depth >= from2)
-    inner = side < 0 ? node.contentMatchAt(0).fillBefore(inner, openEnd <= depth).append(inner) : inner.append(node.contentMatchAt(node.childCount).fillBefore(Fragment.empty, true));
+    inner = side < 0 ? node.contentMatchAt(0).fillBefore(inner, openEnd <= depth).append(inner) : inner.append(node.contentMatchAt(node.childCount).fillBefore(Fragment2.empty, true));
   return fragment.replaceChild(side < 0 ? 0 : fragment.childCount - 1, node.copy(inner));
 }
 function closeSlice(slice2, openStart, openEnd) {
@@ -9627,7 +9657,7 @@ function addContext(slice2, context) {
     let type = schema.nodes[array[i]];
     if (!type || type.hasRequiredAttrs())
       break;
-    content = Fragment.from(type.create(array[i + 1], content));
+    content = Fragment2.from(type.create(array[i + 1], content));
     openStart++;
     openEnd++;
   }
@@ -11546,7 +11576,7 @@ function isMarkChange(cur, prev) {
   let updated = [];
   for (let i = 0; i < prev.childCount; i++)
     updated.push(update(prev.child(i)));
-  if (Fragment.from(updated).eq(cur))
+  if (Fragment2.from(updated).eq(cur))
     return { mark, type };
 }
 function looksLikeBackspace(old, start, end, $newStart, $newEnd) {
@@ -12837,7 +12867,7 @@ function elementFromString(value) {
   return removeWhitespaces(html);
 }
 function createNodeFromContent(content, schema, options) {
-  if (content instanceof Node || content instanceof Fragment) {
+  if (content instanceof Node || content instanceof Fragment2) {
     return content;
   }
   options = {
@@ -12851,7 +12881,7 @@ function createNodeFromContent(content, schema, options) {
     try {
       const isArrayContent = Array.isArray(content) && content.length > 0;
       if (isArrayContent) {
-        return Fragment.fromArray(content.map((item) => schema.nodeFromJSON(item)));
+        return Fragment2.fromArray(content.map((item) => schema.nodeFromJSON(item)));
       }
       const node = schema.nodeFromJSON(content);
       if (options.errorOnInvalidContent) {
@@ -12998,7 +13028,7 @@ var insertContentAt = (position, value, options) => ({ tr: tr2, dispatch, editor
     if (isOnlyTextContent) {
       if (Array.isArray(value)) {
         newContent = value.map((v) => v.text || "").join("");
-      } else if (value instanceof Fragment) {
+      } else if (value instanceof Fragment2) {
         let text = "";
         value.forEach((node) => {
           if (node.text) {
@@ -14433,10 +14463,10 @@ var splitListItem = (typeOrName, overrideAttrs = {}) => ({ tr: tr2, state, dispa
       return false;
     }
     if (dispatch) {
-      let wrap2 = Fragment.empty;
+      let wrap2 = Fragment2.empty;
       const depthBefore = $from.index(-1) ? 1 : $from.index(-2) ? 2 : 3;
       for (let d = $from.depth - depthBefore; d >= $from.depth - 3; d -= 1) {
-        wrap2 = Fragment.from($from.node(d).copy(wrap2));
+        wrap2 = Fragment2.from($from.node(d).copy(wrap2));
       }
       const depthAfter = (
         // eslint-disable-next-line no-nested-ternary
@@ -14447,7 +14477,7 @@ var splitListItem = (typeOrName, overrideAttrs = {}) => ({ tr: tr2, state, dispa
         ...overrideAttrs
       };
       const nextType2 = ((_a = type.contentMatch.defaultType) == null ? void 0 : _a.createAndFill(newNextTypeAttributes2)) || void 0;
-      wrap2 = wrap2.append(Fragment.from(type.createAndFill(null, nextType2) || void 0));
+      wrap2 = wrap2.append(Fragment2.from(type.createAndFill(null, nextType2) || void 0));
       const start = $from.before($from.depth - (depthBefore - 1));
       tr2.replace(start, $from.after(-depthAfter), new Slice(wrap2, 4 - depthBefore, 0));
       let sel = -1;
@@ -14949,7 +14979,7 @@ function inputRulesPlugin(props) {
             if (typeof text === "string") {
               text = text;
             } else {
-              text = getHTMLFromFragment(Fragment.from(text), state.schema);
+              text = getHTMLFromFragment(Fragment2.from(text), state.schema);
             }
             const { from: from2 } = simulatedInputMeta;
             const to = from2 + text.length;
@@ -15332,7 +15362,7 @@ function pasteRulesPlugin(props) {
           if (typeof text === "string") {
             text = text;
           } else {
-            text = getHTMLFromFragment(Fragment.from(text), state.schema);
+            text = getHTMLFromFragment(Fragment2.from(text), state.schema);
           }
           const { from: from22 } = simulatedPasteMeta;
           const to2 = from22 + text.length;
@@ -18068,7 +18098,7 @@ var Portals = ({ contentComponent }) => {
     contentComponent.getSnapshot,
     contentComponent.getServerSnapshot
   );
-  return /* @__PURE__ */ jsx(Fragment$1, { children: Object.values(renderers) });
+  return /* @__PURE__ */ jsx(Fragment, { children: Object.values(renderers) });
 };
 function getInstance() {
   const subscribers = /* @__PURE__ */ new Set();
@@ -18188,7 +18218,7 @@ var PureEditorContent = class extends React.Component {
   }
   render() {
     const { editor, innerRef, ...rest } = this.props;
-    return /* @__PURE__ */ jsxs(Fragment$1, { children: [
+    return /* @__PURE__ */ jsxs(Fragment, { children: [
       /* @__PURE__ */ jsx("div", { ref: mergeRefs(innerRef, this.editorContentRef), ...rest }),
       (editor == null ? void 0 : editor.contentComponent) && /* @__PURE__ */ jsx(Portals, { contentComponent: editor.contentComponent })
     ] });
@@ -22624,9 +22654,9 @@ function beforeinput(view, event) {
   let insert = $from.parent.contentMatchAt($from.index()).findWrapping(view.state.schema.nodes.text);
   if (!insert)
     return false;
-  let frag = Fragment.empty;
+  let frag = Fragment2.empty;
   for (let i = insert.length - 1; i >= 0; i--)
-    frag = Fragment.from(insert[i].createAndFill(null, frag));
+    frag = Fragment2.from(insert[i].createAndFill(null, frag));
   let tr2 = view.state.tr.replace($from.pos, $from.pos, new Slice(frag, 0, 0));
   tr2.setSelection(TextSelection.near(tr2.doc.resolve($from.pos + 1)));
   view.dispatch(tr2);
@@ -23624,13 +23654,7 @@ var ToolbarButton = ({ label, isActive: isActive2, onClick }) => /* @__PURE__ */
     "aria-label": label,
     "aria-pressed": isActive2,
     onClick,
-    style: {
-      minHeight: "44px",
-      minWidth: "44px",
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    },
+    className: "jeeby-cms-toolbar-btn",
     children: label
   }
 );
@@ -23696,7 +23720,7 @@ function TextEditor({ data, onChange, blockId }) {
       {
         id: "block-input-" + blockId,
         "aria-label": "Text content",
-        style: { minHeight: "120px" },
+        className: "jeeby-cms-text-editor-content",
         children: /* @__PURE__ */ jsx(EditorContent, { editor })
       }
     )
@@ -23717,11 +23741,7 @@ function ImageEditor({ data, onChange, blockId }) {
           setImgError(false);
           onChange({ ...data, src: e.target.value });
         },
-        style: {
-          width: "100%",
-          boxSizing: "border-box",
-          minHeight: "44px"
-        }
+        style: { width: "100%", minHeight: "44px" }
       }
     ),
     /* @__PURE__ */ jsxs("div", { children: [
@@ -23734,11 +23754,7 @@ function ImageEditor({ data, onChange, blockId }) {
           "aria-describedby": "alt-hint-" + blockId,
           placeholder: "Describe the image for screen readers",
           onChange: (e) => onChange({ ...data, alt: e.target.value }),
-          style: {
-            width: "100%",
-            boxSizing: "border-box",
-            minHeight: "44px"
-          }
+          style: { width: "100%", minHeight: "44px" }
         }
       ),
       /* @__PURE__ */ jsx("p", { id: "alt-hint-" + blockId, children: "Describe the image for screen readers" })
@@ -23781,11 +23797,7 @@ function VideoEditor({ data, onChange, blockId }) {
           "aria-label": "Video URL (YouTube, Vimeo, or Loom)",
           placeholder: "https://www.youtube.com/watch?v=...",
           onChange: (e) => onChange({ ...data, url: e.target.value }),
-          style: {
-            width: "100%",
-            boxSizing: "border-box",
-            minHeight: "44px"
-          }
+          style: { width: "100%", minHeight: "44px" }
         }
       ),
       /* @__PURE__ */ jsx("p", { children: "YouTube, Vimeo, or Loom URLs are supported" }),
@@ -23818,8 +23830,7 @@ function GalleryEditor({ data, onChange, blockId }) {
         {
           src: item.src,
           alt: item.alt || "",
-          className: "jeeby-cms-gallery-preview",
-          style: { width: "80px", height: "80px", objectFit: "cover", flexShrink: 0 }
+          className: "jeeby-cms-gallery-preview"
         }
       ),
       /* @__PURE__ */ jsxs("div", { style: { flex: 1, display: "flex", flexDirection: "column", gap: "4px" }, children: [
@@ -23835,11 +23846,7 @@ function GalleryEditor({ data, onChange, blockId }) {
               ...data,
               items: updateItem(items, index, "src", e.target.value)
             }),
-            style: {
-              width: "100%",
-              boxSizing: "border-box",
-              minHeight: "44px"
-            }
+            style: { width: "100%", minHeight: "44px" }
           }
         ),
         /* @__PURE__ */ jsx(
@@ -23853,11 +23860,7 @@ function GalleryEditor({ data, onChange, blockId }) {
               ...data,
               items: updateItem(items, index, "alt", e.target.value)
             }),
-            style: {
-              width: "100%",
-              boxSizing: "border-box",
-              minHeight: "44px"
-            }
+            style: { width: "100%", minHeight: "44px" }
           }
         )
       ] }),
@@ -23870,17 +23873,8 @@ function GalleryEditor({ data, onChange, blockId }) {
             ...data,
             items: items.filter((_, i) => i !== index)
           }),
-          style: {
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            minHeight: "44px",
-            minWidth: "44px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0
-          },
+          className: "jeeby-cms-btn-ghost",
+          style: { minWidth: "44px", padding: 0 },
           children: "\xD7"
         }
       )
@@ -23894,13 +23888,7 @@ function GalleryEditor({ data, onChange, blockId }) {
           ...data,
           items: [...items, { src: "", alt: "" }]
         }),
-        style: {
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          minHeight: "44px",
-          width: "100%"
-        },
+        style: { width: "100%" },
         children: "+ Add image"
       }
     )
@@ -23957,17 +23945,7 @@ function BlockTypePicker({ onSelect, onClose }) {
       role: "listbox",
       "aria-label": "Choose block type",
       onKeyDown: handleKeyDown2,
-      style: {
-        position: "absolute",
-        top: "100%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 100,
-        listStyle: "none",
-        padding: 0,
-        margin: "4px 0 0",
-        minWidth: "160px"
-      },
+      className: "jeeby-cms-block-type-picker",
       children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ jsx(
         "li",
         {
@@ -23976,7 +23954,6 @@ function BlockTypePicker({ onSelect, onClose }) {
           "aria-selected": index === activeIndex,
           onClick: () => onSelect(bt.type),
           onMouseEnter: () => setActiveIndex(index),
-          style: { cursor: "pointer" },
           children: bt.label
         },
         bt.type
@@ -23987,7 +23964,7 @@ function BlockTypePicker({ onSelect, onClose }) {
 function AddBlockButton({ onAdd, insertIndex }) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef(null);
-  return /* @__PURE__ */ jsxs("div", { style: { display: "flex", justifyContent: "center", position: "relative" }, children: [
+  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-add-block-wrapper", children: [
     /* @__PURE__ */ jsx("div", { style: { position: "absolute", top: "50%", left: 0, right: 0, height: "1px" } }),
     /* @__PURE__ */ jsx(
       "button",
@@ -23998,19 +23975,7 @@ function AddBlockButton({ onAdd, insertIndex }) {
         "aria-expanded": isOpen,
         "aria-haspopup": "listbox",
         onClick: () => setIsOpen(!isOpen),
-        style: {
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          zIndex: 1,
-          minHeight: "44px",
-          minWidth: "44px",
-          padding: 0,
-          background: "none",
-          border: "none",
-          cursor: "pointer"
-        },
+        className: "jeeby-cms-add-block-btn",
         children: "+"
       }
     ),
@@ -24075,23 +24040,12 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
                 /* @__PURE__ */ jsx(
                   "button",
                   {
+                    className: "jeeby-cms-drag-handle",
                     "aria-label": "Drag to reorder " + displayName(block.type) + " block",
                     "aria-hidden": "true",
                     onPointerDown: (e) => {
                       e.preventDefault();
                       controls.start(e);
-                    },
-                    style: {
-                      cursor: "grab",
-                      touchAction: "none",
-                      background: "none",
-                      border: "none",
-                      minHeight: "44px",
-                      minWidth: "44px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 0
                     },
                     children: "\u283F"
                   }
@@ -24100,19 +24054,10 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
                   "button",
                   {
                     type: "button",
+                    className: "jeeby-cms-btn-ghost",
                     "aria-label": "Delete " + displayName(block.type) + " block",
                     onClick: () => onDelete(block),
-                    style: {
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      minHeight: "44px",
-                      minWidth: "44px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 0
-                    },
+                    style: { minWidth: "44px", padding: 0 },
                     children: "\xD7"
                   }
                 )
@@ -24131,13 +24076,13 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
 }
 function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
   if (blocks.length === 0) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-canvas", style: { maxWidth: "720px", margin: "0 auto" }, children: /* @__PURE__ */ jsxs("div", { children: [
+    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ jsxs("div", { children: [
       /* @__PURE__ */ jsx("p", { children: "No blocks yet" }),
       /* @__PURE__ */ jsx("p", { children: "Click + to add your first block." }),
       /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type) => onAddBlock(type, -1), insertIndex: -1 })
     ] }) });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-canvas", style: { maxWidth: "720px", margin: "0 auto" }, children: [
+  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-canvas", children: [
     /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type) => onAddBlock(type, -1), insertIndex: -1 }),
     /* @__PURE__ */ jsx(
       Reorder.Group,
@@ -24147,7 +24092,6 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
         values: blocks,
         onReorder,
         "aria-label": "Page blocks",
-        style: { listStyle: "none", padding: 0, margin: 0 },
         children: blocks.map((block, index) => /* @__PURE__ */ jsx(
           BlockCard,
           {
@@ -24172,18 +24116,6 @@ function UndoToast({ blockType, onUndo }) {
       "aria-live": "polite",
       "aria-atomic": "true",
       className: "jeeby-cms-undo-toast",
-      style: {
-        position: "fixed",
-        bottom: "24px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        zIndex: 200,
-        background: "#1f2937",
-        color: "#f9fafb"
-      },
       children: [
         /* @__PURE__ */ jsx("span", { children: (DISPLAY_NAMES2[blockType] || blockType) + " block deleted." }),
         /* @__PURE__ */ jsx(
@@ -24192,12 +24124,7 @@ function UndoToast({ blockType, onUndo }) {
             type: "button",
             "aria-label": "Undo delete " + (DISPLAY_NAMES2[blockType] || blockType) + " block",
             onClick: onUndo,
-            style: {
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              minHeight: "44px"
-            },
+            className: "jeeby-cms-btn-ghost",
             children: "Undo delete"
           }
         )
@@ -24246,15 +24173,7 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
     "div",
     {
       className: "jeeby-cms-modal-backdrop",
-      style: {
-        position: "fixed",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 300,
-        background: "rgba(0,0,0,0.5)"
-      },
+      style: { zIndex: 300 },
       children: /* @__PURE__ */ jsxs(
         "div",
         {
@@ -24264,17 +24183,16 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
           "aria-labelledby": "unsaved-heading",
           "aria-describedby": "unsaved-body",
           className: "jeeby-cms-modal-card",
-          style: { maxWidth: "420px", width: "100%", background: "#fff" },
           children: [
             /* @__PURE__ */ jsx("h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
             /* @__PURE__ */ jsx("p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
-            /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+            /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
               /* @__PURE__ */ jsx(
                 "button",
                 {
                   type: "button",
                   onClick: onLeave,
-                  style: { minHeight: "44px", cursor: "pointer", background: "none", border: "none" },
+                  className: "jeeby-cms-btn-ghost",
                   children: "Leave without saving"
                 }
               ),
@@ -24284,7 +24202,7 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
                   type: "button",
                   "data-autofocus": true,
                   onClick: onStay,
-                  style: { minHeight: "44px", cursor: "pointer", background: "none", border: "none" },
+                  className: "jeeby-cms-btn-ghost",
                   children: "Stay and save"
                 }
               )
@@ -24292,6 +24210,87 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
           ]
         }
       )
+    }
+  );
+}
+function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, publishing, publishError }) {
+  const dialogRef = useRef(null);
+  useEffect(() => {
+    var _a, _b;
+    if (open) {
+      const focusable = (_a = dialogRef.current) == null ? void 0 : _a.querySelector(
+        'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable) focusable.focus();
+    } else {
+      (_b = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _b.focus();
+    }
+  }, [open]);
+  function handleKeyDown2(e) {
+    if (e.key === "Escape") {
+      onClose();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const focusable = dialogRef.current.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const first2 = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first2) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first2.focus();
+    }
+  }
+  if (!open) return null;
+  return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-modal-backdrop", children: /* @__PURE__ */ jsxs(
+    "div",
+    {
+      ref: dialogRef,
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "publish-modal-heading",
+      className: "jeeby-cms-modal-card",
+      onKeyDown: handleKeyDown2,
+      children: [
+        /* @__PURE__ */ jsxs("h2", { id: "publish-modal-heading", children: [
+          "Publish \u2018",
+          pageName,
+          "\u2019?"
+        ] }),
+        /* @__PURE__ */ jsx("p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
+        publishError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
+        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              className: "jeeby-cms-btn-primary",
+              onClick: onConfirm,
+              disabled: publishing,
+              "aria-busy": publishing ? "true" : void 0,
+              style: { cursor: publishing ? "not-allowed" : "pointer" },
+              children: publishing ? "Publishing\u2026" : "Publish now"
+            }
+          )
+        ] })
+      ]
+    }
+  ) });
+}
+function PublishToast() {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      role: "status",
+      "aria-live": "polite",
+      "aria-atomic": "true",
+      className: "jeeby-cms-publish-toast",
+      children: /* @__PURE__ */ jsx("span", { children: "Page published successfully." })
     }
   );
 }
@@ -24303,10 +24302,17 @@ function PageEditor({ slug }) {
   const [saveStatus, setSaveStatus] = useState(null);
   const [deletedBlock, setDeletedBlock] = useState(null);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [lastPublishedAt, setLastPublishedAt] = useState(null);
+  const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishStatus, setPublishStatus] = useState("idle");
+  const [publishError, setPublishError] = useState(null);
+  const [showPublishToast, setShowPublishToast] = useState(false);
   const debounceRef = useRef(null);
   const deleteTimerRef = useRef(null);
   const blocksRef = useRef(blocks);
   const pendingSaveRef = useRef(false);
+  const publishBtnRef = useRef(null);
   useEffect(() => {
     blocksRef.current = blocks;
   }, [blocks]);
@@ -24319,6 +24325,8 @@ function PageEditor({ slug }) {
         if (!cancelled) {
           setBlocks(((_a = page == null ? void 0 : page.draft) == null ? void 0 : _a.blocks) ?? []);
           setPageName((page == null ? void 0 : page.name) ?? slug);
+          setLastPublishedAt((page == null ? void 0 : page.lastPublishedAt) ?? null);
+          setHasDraftChanges((page == null ? void 0 : page.hasDraftChanges) ?? false);
           setLoading(false);
         }
       } catch {
@@ -24334,6 +24342,11 @@ function PageEditor({ slug }) {
     clearTimeout(debounceRef.current);
     clearTimeout(deleteTimerRef.current);
   }, []);
+  useEffect(() => {
+    if (!showPublishToast) return;
+    const t = setTimeout(() => setShowPublishToast(false), 3e3);
+    return () => clearTimeout(t);
+  }, [showPublishToast]);
   function scheduleSave(updatedBlocks) {
     pendingSaveRef.current = true;
     clearTimeout(debounceRef.current);
@@ -24342,6 +24355,7 @@ function PageEditor({ slug }) {
       try {
         await saveDraft(db, slug, updatedBlocks);
         setSaveStatus("saved");
+        setHasDraftChanges(true);
         pendingSaveRef.current = false;
       } catch {
         setSaveStatus("error");
@@ -24418,6 +24432,27 @@ function PageEditor({ slug }) {
       setSaveStatus("error");
     }
   }
+  async function handlePublish() {
+    setPublishStatus("publishing");
+    setPublishError(null);
+    try {
+      await publishPage(db, slug);
+      const updated = await getPage(db, slug);
+      setLastPublishedAt((updated == null ? void 0 : updated.lastPublishedAt) ?? null);
+      setHasDraftChanges(false);
+      setPublishStatus("idle");
+      setShowPublishModal(false);
+      setShowPublishToast(true);
+    } catch {
+      setPublishStatus("error");
+      setPublishError(true);
+    }
+  }
+  function openPublishModal() {
+    setPublishError(null);
+    setPublishStatus("idle");
+    setShowPublishModal(true);
+  }
   async function handleRenameSlug(newSlug) {
     try {
       await renamePage(db, slug, newSlug);
@@ -24433,11 +24468,7 @@ function PageEditor({ slug }) {
     }
   }
   if (loading) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading editor", style: { display: "flex", justifyContent: "center" }, children: /* @__PURE__ */ jsx("div", { "aria-hidden": "true", style: {
-      width: "32px",
-      height: "32px",
-      animation: "jeeby-spin 0.75s linear infinite"
-    } }) }) });
+    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading editor", style: { display: "flex", justifyContent: "center" }, children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
   }
   return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-editor", children: [
     /* @__PURE__ */ jsx(
@@ -24448,10 +24479,15 @@ function PageEditor({ slug }) {
         saveStatus,
         onRetry: handleRetry,
         onBackClick: handleBackClick,
-        onRenameSlug: handleRenameSlug
+        onRenameSlug: handleRenameSlug,
+        lastPublishedAt,
+        hasDraftChanges,
+        onPublish: openPublishModal,
+        publishStatus,
+        publishBtnRef
       }
     ),
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-editor-main", style: { minHeight: "calc(100vh - 120px)" }, children: /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ jsx(
       BlockCanvas,
       {
         blocks,
@@ -24478,7 +24514,20 @@ function PageEditor({ slug }) {
           setShowUnsavedWarning(false);
         }
       }
-    )
+    ),
+    showPublishModal && /* @__PURE__ */ jsx(
+      PublishConfirmModal,
+      {
+        open: showPublishModal,
+        pageName,
+        onClose: () => setShowPublishModal(false),
+        onConfirm: handlePublish,
+        triggerRef: publishBtnRef,
+        publishing: publishStatus === "publishing",
+        publishError
+      }
+    ),
+    showPublishToast && /* @__PURE__ */ jsx(PublishToast, {})
   ] });
 }
 function LoginPage() {
@@ -24499,15 +24548,11 @@ function LoginPage() {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsx("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-login-card", style: {
-    maxWidth: "400px",
-    minWidth: "320px",
-    width: "100%"
-  }, children: [
+  return /* @__PURE__ */ jsx("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-login-card", children: [
     /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-login-heading", children: "jeeby CMS" }),
     /* @__PURE__ */ jsxs("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
       /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-email", style: { display: "block" }, children: "Email address" }),
+        /* @__PURE__ */ jsx("label", { htmlFor: "cms-email", children: "Email address" }),
         /* @__PURE__ */ jsx(
           "input",
           {
@@ -24516,13 +24561,12 @@ function LoginPage() {
             autoComplete: "email",
             required: true,
             value: email,
-            onChange: (e) => setEmail(e.target.value),
-            style: { display: "block", width: "100%", boxSizing: "border-box" }
+            onChange: (e) => setEmail(e.target.value)
           }
         )
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-password", style: { display: "block" }, children: "Password" }),
+        /* @__PURE__ */ jsx("label", { htmlFor: "cms-password", children: "Password" }),
         /* @__PURE__ */ jsx(
           "input",
           {
@@ -24531,8 +24575,7 @@ function LoginPage() {
             autoComplete: "current-password",
             required: true,
             value: password,
-            onChange: (e) => setPassword(e.target.value),
-            style: { display: "block", width: "100%", boxSizing: "border-box" }
+            onChange: (e) => setPassword(e.target.value)
           }
         )
       ] }),
@@ -24543,12 +24586,7 @@ function LoginPage() {
           className: "jeeby-cms-btn-primary",
           disabled: submitting,
           "aria-busy": submitting ? "true" : void 0,
-          style: {
-            display: "block",
-            width: "100%",
-            minHeight: "44px",
-            cursor: submitting ? "not-allowed" : "pointer"
-          },
+          style: { cursor: submitting ? "not-allowed" : "pointer", display: "block", width: "100%" },
           children: submitting ? "Signing in\u2026" : "Sign in"
         }
       ),
@@ -24557,12 +24595,7 @@ function LoginPage() {
   ] }) });
 }
 function AdminNav({ onSignOut }) {
-  return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-nav", role: "banner", style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    height: "56px"
-  }, children: [
+  return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-nav", role: "banner", children: [
     /* @__PURE__ */ jsx("span", { className: "jeeby-cms-nav-brand", children: "jeeby CMS" }),
     /* @__PURE__ */ jsx("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsx(
       "button",
@@ -24570,12 +24603,6 @@ function AdminNav({ onSignOut }) {
         type: "button",
         className: "jeeby-cms-btn-ghost",
         onClick: onSignOut,
-        style: {
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          minHeight: "44px"
-        },
         children: "Sign out"
       }
     ) })
@@ -24675,14 +24702,7 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     }
   }
   if (!open) return null;
-  return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-modal-backdrop", style: {
-    position: "fixed",
-    inset: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1e3
-  }, children: /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-modal-backdrop", children: /* @__PURE__ */ jsxs(
     "div",
     {
       ref: dialogRef,
@@ -24691,12 +24711,11 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       "aria-labelledby": "create-modal-heading",
       className: "jeeby-cms-modal-card",
       onKeyDown: handleKeyDown2,
-      style: { maxWidth: "480px", width: "100%" },
       children: [
         /* @__PURE__ */ jsx("h2", { id: "create-modal-heading", children: "Create New Page" }),
         /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, noValidate: true, children: [
           /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-            /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-name", style: { display: "block" }, children: "Page name" }),
+            /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-name", children: "Page name" }),
             /* @__PURE__ */ jsx(
               "input",
               {
@@ -24707,13 +24726,12 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
                 onChange: (e) => {
                   setName(e.target.value);
                   if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value));
-                },
-                style: { display: "block", width: "100%", boxSizing: "border-box" }
+                }
               }
             )
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-            /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-slug", style: { display: "block" }, children: "Slug" }),
+            /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-slug", children: "Slug" }),
             /* @__PURE__ */ jsx(
               "input",
               {
@@ -24725,40 +24743,21 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
                   setSlugTouched(true);
                   handleSlugChange(e.target.value);
                 },
-                "aria-describedby": "cms-slug-hint cms-slug-error",
-                style: { display: "block", width: "100%", boxSizing: "border-box" }
+                "aria-describedby": "cms-slug-hint cms-slug-error"
               }
             ),
             /* @__PURE__ */ jsx("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
             slugError && /* @__PURE__ */ jsx("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
           ] }),
           templates.length > 0 && /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-            /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-template", style: { display: "block" }, children: "Template" }),
-            /* @__PURE__ */ jsxs(
-              "select",
-              {
-                id: "cms-page-template",
-                value: template,
-                onChange: (e) => setTemplate(e.target.value),
-                style: { display: "block", width: "100%", boxSizing: "border-box", minHeight: "44px" },
-                children: [
-                  /* @__PURE__ */ jsx("option", { value: "", children: "Select a template" }),
-                  templates.map((t) => /* @__PURE__ */ jsx("option", { value: t.name, children: t.name }, t.name))
-                ]
-              }
-            )
+            /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-template", children: "Template" }),
+            /* @__PURE__ */ jsxs("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
+              /* @__PURE__ */ jsx("option", { value: "", children: "Select a template" }),
+              templates.map((t) => /* @__PURE__ */ jsx("option", { value: t.name, children: t.name }, t.name))
+            ] })
           ] }),
-          /* @__PURE__ */ jsxs("div", { style: { display: "flex", justifyContent: "flex-end", gap: "16px" }, children: [
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                type: "button",
-                className: "jeeby-cms-btn-ghost",
-                onClick: onClose,
-                style: { minHeight: "44px", background: "none", border: "none", cursor: "pointer" },
-                children: "Discard"
-              }
-            ),
+          /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
+            /* @__PURE__ */ jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
             /* @__PURE__ */ jsx(
               "button",
               {
@@ -24766,7 +24765,7 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
                 className: "jeeby-cms-btn-primary",
                 disabled: submitting,
                 "aria-busy": submitting ? "true" : void 0,
-                style: { minHeight: "44px", cursor: submitting ? "not-allowed" : "pointer" },
+                style: { cursor: submitting ? "not-allowed" : "pointer" },
                 children: "Create Page"
               }
             )
@@ -24824,14 +24823,7 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
     }
   }
   if (!page) return null;
-  return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-modal-backdrop", style: {
-    position: "fixed",
-    inset: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1e3
-  }, children: /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-modal-backdrop", children: /* @__PURE__ */ jsxs(
     "div",
     {
       ref: dialogRef,
@@ -24840,7 +24832,6 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
       "aria-labelledby": "delete-modal-heading",
       className: "jeeby-cms-modal-card",
       onKeyDown: handleKeyDown2,
-      style: { maxWidth: "480px", width: "100%" },
       children: [
         /* @__PURE__ */ jsx("h2", { id: "delete-modal-heading", children: "Delete page?" }),
         /* @__PURE__ */ jsxs("p", { children: [
@@ -24848,17 +24839,8 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
           page.slug,
           "? This cannot be undone."
         ] }),
-        /* @__PURE__ */ jsxs("div", { style: { display: "flex", justifyContent: "flex-end", gap: "16px" }, children: [
-          /* @__PURE__ */ jsx(
-            "button",
-            {
-              type: "button",
-              className: "jeeby-cms-btn-ghost",
-              onClick: onClose,
-              style: { minHeight: "44px", background: "none", border: "none", cursor: "pointer" },
-              children: "Keep Page"
-            }
-          ),
+        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
           /* @__PURE__ */ jsx(
             "button",
             {
@@ -24867,7 +24849,7 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
               onClick: handleDelete2,
               disabled: deleting,
               "aria-busy": deleting ? "true" : void 0,
-              style: { minHeight: "44px", cursor: deleting ? "not-allowed" : "pointer" },
+              style: { cursor: deleting ? "not-allowed" : "pointer" },
               children: "Delete Page"
             }
           )
@@ -24876,7 +24858,7 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
     }
   ) });
 }
-function formatDate(ts2) {
+function formatDate2(ts2) {
   if (!ts2) return "Never";
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
   return date.toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" });
@@ -25012,11 +24994,7 @@ function PageManager() {
       /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading pages", style: {
         display: "flex",
         justifyContent: "center"
-      }, children: /* @__PURE__ */ jsx("div", { "aria-hidden": "true", style: {
-        width: "32px",
-        height: "32px",
-        animation: "jeeby-spin 0.75s linear infinite"
-      } }) })
+      }, children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
     ] });
   }
   if (pages.length === 0 && !loading) {
@@ -25039,7 +25017,6 @@ function PageManager() {
             type: "button",
             className: "jeeby-cms-btn-primary",
             onClick: () => setShowCreateModal(true),
-            style: { minHeight: "44px", cursor: "pointer" },
             children: "New Page"
           }
         )
@@ -25059,11 +25036,7 @@ function PageManager() {
       clip: "rect(0,0,0,0)",
       whiteSpace: "nowrap"
     }, children: announcement }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-list-header", style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }, children: [
+    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-list-header", children: [
       /* @__PURE__ */ jsx("h2", { children: "Pages" }),
       /* @__PURE__ */ jsx(
         "button",
@@ -25072,19 +25045,18 @@ function PageManager() {
           type: "button",
           className: "jeeby-cms-btn-primary",
           onClick: () => setShowCreateModal(true),
-          style: { minHeight: "44px", cursor: "pointer" },
           children: "New Page"
         }
       )
     ] }),
-    /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", style: { width: "100%", borderCollapse: "collapse" }, children: [
+    /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", children: [
       /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
         /* @__PURE__ */ jsx("th", { scope: "col", children: "Name" }),
         /* @__PURE__ */ jsx("th", { scope: "col", children: "Slug" }),
         /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
         /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
       ] }) }),
-      /* @__PURE__ */ jsx("tbody", { children: pages.map((page) => /* @__PURE__ */ jsxs(Fragment$2, { children: [
+      /* @__PURE__ */ jsx("tbody", { children: pages.map((page) => /* @__PURE__ */ jsxs(Fragment$1, { children: [
         /* @__PURE__ */ jsxs("tr", { children: [
           /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx(
             "input",
@@ -25097,12 +25069,7 @@ function PageManager() {
               onChange: (e) => handleEditChange(e.target.value),
               onKeyDown: handleEditKeyDown,
               onBlur: commitEdit,
-              autoFocus: true,
-              style: {
-                display: "block",
-                width: "100%",
-                boxSizing: "border-box"
-              }
+              autoFocus: true
             }
           ) : /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
             /* @__PURE__ */ jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
@@ -25113,13 +25080,10 @@ function PageManager() {
                   editTriggerRefs.current[`${page.slug}-name`] = el;
                 },
                 type: "button",
+                className: "jeeby-cms-btn-ghost",
                 "aria-label": `Edit name for ${page.name || page.slug}`,
                 onClick: () => startEdit(page.slug, "name", page.name || ""),
                 style: {
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  minHeight: "44px",
                   opacity: 0
                 },
                 onFocus: (e) => {
@@ -25143,12 +25107,7 @@ function PageManager() {
               onChange: (e) => handleEditChange(e.target.value),
               onKeyDown: handleEditKeyDown,
               onBlur: commitEdit,
-              autoFocus: true,
-              style: {
-                display: "block",
-                width: "100%",
-                boxSizing: "border-box"
-              }
+              autoFocus: true
             }
           ) : /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
             /* @__PURE__ */ jsx("span", { children: page.slug }),
@@ -25159,13 +25118,10 @@ function PageManager() {
                   editTriggerRefs.current[`${page.slug}-slug`] = el;
                 },
                 type: "button",
+                className: "jeeby-cms-btn-ghost",
                 "aria-label": `Edit slug for ${page.name || page.slug}`,
                 onClick: () => startEdit(page.slug, "slug", page.slug),
                 style: {
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  minHeight: "44px",
                   opacity: 0
                 },
                 onFocus: (e) => {
@@ -25178,18 +25134,14 @@ function PageManager() {
               }
             )
           ] }) }),
-          /* @__PURE__ */ jsx("td", { children: formatDate(page.lastPublishedAt) }),
+          /* @__PURE__ */ jsx("td", { children: formatDate2(page.lastPublishedAt) }),
           /* @__PURE__ */ jsxs("td", { children: [
             /* @__PURE__ */ jsx(
               "a",
               {
                 href: "/admin/pages/" + encodeURIComponent(page.slug),
                 "aria-label": "Edit blocks for " + page.slug,
-                style: {
-                  display: "inline-block",
-                  minHeight: "44px",
-                  cursor: "pointer"
-                },
+                style: { minHeight: "44px", display: "inline-flex", alignItems: "center" },
                 children: "Edit"
               }
             ),
@@ -25197,16 +25149,11 @@ function PageManager() {
               "button",
               {
                 type: "button",
+                className: "jeeby-cms-btn-ghost",
                 "aria-label": `Delete ${page.slug}`,
                 onClick: (e) => {
                   deleteBtnRef.current = e.currentTarget;
                   setDeleteTarget(page);
-                },
-                style: {
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  minHeight: "44px"
                 },
                 children: "Delete"
               }
@@ -25253,36 +25200,13 @@ function PageManager() {
 function AdminPanel({ children }) {
   const { user, loading, signOut } = useAuth();
   if (loading) {
-    return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-admin", style: {
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }, children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true", style: {
-        display: "inline-block",
-        width: "32px",
-        height: "32px",
-        animation: "jeeby-spin 0.75s linear infinite"
-      } }) }),
-      /* @__PURE__ */ jsx("style", { children: `@keyframes jeeby-spin { to { transform: rotate(360deg) } }` })
-    ] });
+    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
   }
   if (!user) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", style: {
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }, children: /* @__PURE__ */ jsx(LoginPage, {}) });
+    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx(LoginPage, {}) });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-admin", style: { minHeight: "100vh" }, children: [
-    /* @__PURE__ */ jsx("a", { href: "#main-content", className: "jeeby-cms-skip-link", style: {
-      position: "absolute",
-      left: "-9999px",
-      top: "0",
-      zIndex: 1e3
-    }, children: "Skip to main content" }),
+  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-admin", children: [
+    /* @__PURE__ */ jsx("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
     /* @__PURE__ */ jsx(AdminNav, { onSignOut: signOut }),
     /* @__PURE__ */ jsx("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsx(PageManager, {}) })
   ] });
