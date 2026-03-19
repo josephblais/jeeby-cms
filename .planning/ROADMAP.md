@@ -165,13 +165,13 @@ Plans:
 
 **Requirements:** CSS-01, CSS-02, CSS-03, CSS-04
 
-**Plans:** 2/3 plans executed
+**Plans:** 4 plans
 
 Plans:
 - [ ] 08-01-PLAN.md — CSS test scaffold + complete styles/cms.css admin stylesheet
 - [ ] 08-02-PLAN.md — Inline style migration: core layout components (index.js, AdminNav, LoginPage, PageManager, EditorHeader, PageEditor, BlockCanvas)
 - [ ] 08-03-PLAN.md — Inline style migration: modals, toasts, editors, pickers + README theming docs
-
+- [ ] 08-04-PLAN.md — Gap closure: wire --jeeby-cms-block-spacing to block canvas, document --jeeby-cms-gallery-columns as consumer-side
 **Success Criteria:**
 1. `dist/styles.css` is produced by the build and importable via `jeeby-cms/dist/styles.css`
 2. All admin panel UI elements are visually styled and scoped under `.jeeby-cms-admin` (no style leaks to consumer pages)
