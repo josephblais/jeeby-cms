@@ -73,7 +73,7 @@
 
 - [x] **CSS-01**: Admin panel UI styles are scoped under `.jeeby-cms-admin`
 - [x] **CSS-02**: CSS custom properties `--jeeby-cms-max-width` and `--jeeby-cms-block-spacing` are exposed for consumer override
-- [ ] **CSS-03**: Block components accept `className` prop for consumer-applied styles
+- [x] **CSS-03**: Block components accept `className` prop for consumer-applied styles
 - [x] **CSS-04**: No color, typography, or visual opinions are applied to content blocks
 
 ## v2 Requirements
@@ -150,7 +150,7 @@
 | PUB-03 | Phase 7 | Pending |
 | CSS-01 | Phase 8 | Complete |
 | CSS-02 | Phase 8 | Complete |
-| CSS-03 | Phase 8 | Pending |
+| CSS-03 | Phase 8 | Complete |
 | CSS-04 | Phase 8 | Complete |
 | MEDIA-01 | Phase 9 | Pending |
 | MEDIA-02 | Phase 9 | Pending |
