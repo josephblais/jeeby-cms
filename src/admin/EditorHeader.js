@@ -104,9 +104,9 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
           type="button"
           className="jeeby-cms-btn-primary"
           onClick={onPublish}
-          disabled={publishStatus === 'publishing' || saveStatus === 'saving'}
+          aria-disabled={publishStatus === 'publishing' || saveStatus === 'saving' ? 'true' : undefined}
           aria-busy={publishStatus === 'publishing' ? 'true' : undefined}
-          style={{ minHeight: '44px', cursor: 'pointer' }}
+          style={{ minHeight: '44px', cursor: publishStatus === 'publishing' || saveStatus === 'saving' ? 'not-allowed' : 'pointer', pointerEvents: publishStatus === 'publishing' || saveStatus === 'saving' ? 'none' : undefined }}
         >
           {publishStatus === 'publishing' ? 'Publishing\u2026' : 'Publish'}
         </button>
