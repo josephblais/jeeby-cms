@@ -24,10 +24,7 @@ export function ImageEditor({ data, onChange, blockId }) {
         aria-label="Image URL"
         placeholder="https://example.com/image.jpg"
         onChange={(e) => { setImgError(false); onChange({ ...data, src: e.target.value }) }}
-        style={{
-          width: '100%', boxSizing: 'border-box',
-          minHeight: '44px',
-        }}
+        style={{ width: '100%', minHeight: '44px' }}
       />
 
       {/* Alt text — linked to descriptive hint via aria-describedby (WCAG 1.3.1) */}
@@ -39,10 +36,7 @@ export function ImageEditor({ data, onChange, blockId }) {
           aria-describedby={'alt-hint-' + blockId}
           placeholder="Describe the image for screen readers"
           onChange={(e) => onChange({ ...data, alt: e.target.value })}
-          style={{
-            width: '100%', boxSizing: 'border-box',
-            minHeight: '44px',
-          }}
+          style={{ width: '100%', minHeight: '44px' }}
         />
         <p id={'alt-hint-' + blockId}>
           Describe the image for screen readers

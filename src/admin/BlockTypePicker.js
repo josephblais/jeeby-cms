@@ -56,11 +56,7 @@ export function BlockTypePicker({ onSelect, onClose }) {
       role="listbox"
       aria-label="Choose block type"
       onKeyDown={handleKeyDown}
-      style={{
-        position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-        zIndex: 100, listStyle: 'none', padding: 0, margin: '4px 0 0',
-        minWidth: '160px'
-      }}
+      className="jeeby-cms-block-type-picker"
     >
       {BLOCK_TYPES.map((bt, index) => (
         <li
@@ -70,7 +66,6 @@ export function BlockTypePicker({ onSelect, onClose }) {
           aria-selected={index === activeIndex}
           onClick={() => onSelect(bt.type)}
           onMouseEnter={() => setActiveIndex(index)}
-          style={{ cursor: 'pointer' }}
         >
           {bt.label}
         </li>

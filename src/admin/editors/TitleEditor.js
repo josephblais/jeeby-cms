@@ -42,10 +42,7 @@ export function TitleEditor({ data, onChange, blockId }) {
         aria-label="Heading level"
         onChange={(e) => onChange({ ...data, level: e.target.value })}
         // data.level drives font size via HEADING_SIZES lookup below
-        style={{
-          minHeight: '44px',
-          width: 'fit-content',
-        }}
+        style={{ width: 'fit-content' }}
       >
         {LEVELS.map(l => (
           <option key={l} value={l}>{l.toUpperCase()}</option>

@@ -30,9 +30,7 @@ export function VideoEditor({ data, onChange, blockId }) {
           aria-label="Video URL (YouTube, Vimeo, or Loom)"
           placeholder="https://www.youtube.com/watch?v=..."
           onChange={(e) => onChange({ ...data, url: e.target.value })}
-          style={{
-            width: '100%', boxSizing: 'border-box', minHeight: '44px',
-          }}
+          style={{ width: '100%', minHeight: '44px' }}
         />
         <p>
           YouTube, Vimeo, or Loom URLs are supported

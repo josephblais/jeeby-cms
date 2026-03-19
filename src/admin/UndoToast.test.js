@@ -20,10 +20,10 @@ test('UndoToast has "Undo delete" button text', () => {
   assert.ok(src.includes('Undo delete'), 'UndoToast must have "Undo delete" button text')
 })
 
-test('UndoToast has position fixed', () => {
+test('UndoToast uses CSS class for fixed positioning', () => {
   assert.ok(
-    src.includes('position: ') && src.includes('fixed'),
-    'UndoToast must use position fixed for overlay placement'
+    src.includes('jeeby-cms-undo-toast'),
+    'UndoToast must use jeeby-cms-undo-toast class for fixed positioning'
   )
 })
 

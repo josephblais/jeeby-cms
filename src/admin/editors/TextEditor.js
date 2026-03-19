@@ -26,10 +26,7 @@ const ToolbarButton = ({ label, isActive, onClick }) => (
     aria-label={label}
     aria-pressed={isActive}
     onClick={onClick}
-    style={{
-      minHeight: '44px', minWidth: '44px',
-      background: 'none', border: 'none', cursor: 'pointer',
-    }}
+    className="jeeby-cms-toolbar-btn"
   >{label}</button>
 )
 
@@ -87,7 +84,7 @@ export function TextEditor({ data, onChange, blockId }) {
       <div
         id={'block-input-' + blockId}
         aria-label="Text content"
-        style={{ minHeight: '120px' }}
+        className="jeeby-cms-text-editor-content"
       >
         <EditorContent editor={editor} />
       </div>

@@ -47,11 +47,7 @@ export function UnsavedChangesWarning({ onLeave, onStay }) {
   return (
     <div
       className="jeeby-cms-modal-backdrop"
-      style={{
-        position: 'fixed', inset: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300,
-        background: 'rgba(0,0,0,0.5)',
-      }}>
+      style={{ zIndex: 300 }}>
       <div
         ref={dialogRef}
         role="alertdialog"
@@ -59,7 +55,6 @@ export function UnsavedChangesWarning({ onLeave, onStay }) {
         aria-labelledby="unsaved-heading"
         aria-describedby="unsaved-body"
         className="jeeby-cms-modal-card"
-        style={{ maxWidth: '420px', width: '100%', background: '#fff' }}
       >
         <h2 id="unsaved-heading">
           You have unsaved changes
@@ -67,17 +62,17 @@ export function UnsavedChangesWarning({ onLeave, onStay }) {
         <p id="unsaved-body">
           Your recent edits have not been saved yet. Do you want to leave without saving?
         </p>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        <div className="jeeby-cms-modal-actions">
           <button
             type="button"
             onClick={onLeave}
-            style={{ minHeight: '44px', cursor: 'pointer', background: 'none', border: 'none' }}
+            className="jeeby-cms-btn-ghost"
           >Leave without saving</button>
           <button
             type="button"
             data-autofocus
             onClick={onStay}
-            style={{ minHeight: '44px', cursor: 'pointer', background: 'none', border: 'none' }}
+            className="jeeby-cms-btn-ghost"
           >Stay and save</button>
         </div>
       </div>

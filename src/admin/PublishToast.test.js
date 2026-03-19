@@ -29,12 +29,12 @@ test('PublishToast has aria-atomic="true"', { skip: !src }, () => {
   assert.ok(src.includes('aria-atomic="true"'), 'Toast must have aria-atomic="true"')
 })
 
-test('PublishToast has fixed positioning', { skip: !src }, () => {
-  assert.ok(src.includes("position: 'fixed'") || src.includes('position: fixed'), 'Toast must use fixed positioning')
+test('PublishToast uses CSS class for positioning', { skip: !src }, () => {
+  assert.ok(src.includes('jeeby-cms-publish-toast'), 'Toast must use jeeby-cms-publish-toast class for fixed positioning')
 })
 
-test('PublishToast has zIndex 200', { skip: !src }, () => {
-  assert.ok(src.includes('200'), 'Toast must use zIndex 200')
+test('PublishToast has jeeby-cms-publish-toast class for z-index', { skip: !src }, () => {
+  assert.ok(src.includes('jeeby-cms-publish-toast'), 'Toast must use jeeby-cms-publish-toast class (z-index 200 in CSS)')
 })
 
 test('PublishToast displays success message', { skip: !src }, () => {

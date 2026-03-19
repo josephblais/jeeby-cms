@@ -53,20 +53,15 @@ export function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
 
   if (!page) return null
   return (
-    <div className="jeeby-cms-modal-backdrop" style={{
-      position: 'fixed', inset: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
+    <div className="jeeby-cms-modal-backdrop">
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="delete-modal-heading"
-        className="jeeby-cms-modal-card" onKeyDown={handleKeyDown}
-        style={{ maxWidth: '480px', width: '100%' }}>
+        className="jeeby-cms-modal-card" onKeyDown={handleKeyDown}>
         <h2 id="delete-modal-heading">Delete page?</h2>
         <p>Delete {page.slug}? This cannot be undone.</p>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
-          <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}
-            style={{ minHeight: '44px', background: 'none', border: 'none', cursor: 'pointer' }}>Keep Page</button>
+        <div className="jeeby-cms-modal-actions">
+          <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Keep Page</button>
           <button type="button" className="jeeby-cms-btn-destructive" onClick={handleDelete} disabled={deleting} aria-busy={deleting ? 'true' : undefined}
-            style={{ minHeight: '44px', cursor: deleting ? 'not-allowed' : 'pointer' }}>Delete Page</button>
+            style={{ cursor: deleting ? 'not-allowed' : 'pointer' }}>Delete Page</button>
         </div>
       </div>
     </div>

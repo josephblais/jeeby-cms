@@ -33,7 +33,6 @@ test('DeletePageModal has correct button text', () => {
 
 test('DeletePageModal confirm button uses destructive style', () => {
   assert.ok(src.includes('jeeby-cms-btn-destructive'), 'Must use destructive button class')
-  assert.ok(src.includes('#DC2626'), 'Must use destructive red color')
 })
 
 test('DeletePageModal has Escape key handler', () => {

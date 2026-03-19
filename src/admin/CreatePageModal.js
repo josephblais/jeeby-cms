@@ -107,52 +107,44 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
 
   if (!open) return null
   return (
-    <div className="jeeby-cms-modal-backdrop" style={{
-      position: 'fixed', inset: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
+    <div className="jeeby-cms-modal-backdrop">
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="create-modal-heading"
-        className="jeeby-cms-modal-card" onKeyDown={handleKeyDown}
-        style={{ maxWidth: '480px', width: '100%' }}>
+        className="jeeby-cms-modal-card" onKeyDown={handleKeyDown}>
         <h2 id="create-modal-heading">Create New Page</h2>
         <form onSubmit={handleSubmit} noValidate>
           {/* Name field */}
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-page-name" style={{ display: 'block' }}>Page name</label>
+            <label htmlFor="cms-page-name">Page name</label>
             <input id="cms-page-name" type="text" required value={name}
               onChange={e => {
                 setName(e.target.value)
                 if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value))
-              }}
-              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }} />
+              }} />
           </div>
           {/* Slug field */}
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-page-slug" style={{ display: 'block' }}>Slug</label>
+            <label htmlFor="cms-page-slug">Slug</label>
             <input id="cms-page-slug" type="text" required value={slug}
               onChange={e => { setSlugTouched(true); handleSlugChange(e.target.value) }}
-              aria-describedby="cms-slug-hint cms-slug-error"
-              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }} />
+              aria-describedby="cms-slug-hint cms-slug-error" />
             <p id="cms-slug-hint">e.g. /about or /blog/my-post</p>
             {slugError && <p id="cms-slug-error" role="alert" className="jeeby-cms-inline-error">{slugError}</p>}
           </div>
           {/* Template dropdown — hidden when no templates */}
           {templates.length > 0 && (
             <div className="jeeby-cms-field">
-              <label htmlFor="cms-page-template" style={{ display: 'block' }}>Template</label>
-              <select id="cms-page-template" value={template} onChange={e => setTemplate(e.target.value)}
-                style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '44px' }}>
+              <label htmlFor="cms-page-template">Template</label>
+              <select id="cms-page-template" value={template} onChange={e => setTemplate(e.target.value)}>
                 <option value="">Select a template</option>
                 {templates.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
               </select>
             </div>
           )}
           {/* Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
-            <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}
-              style={{ minHeight: '44px', background: 'none', border: 'none', cursor: 'pointer' }}>Discard</button>
+          <div className="jeeby-cms-modal-actions">
+            <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Discard</button>
             <button type="submit" className="jeeby-cms-btn-primary" disabled={submitting} aria-busy={submitting ? 'true' : undefined}
-              style={{ minHeight: '44px', cursor: submitting ? 'not-allowed' : 'pointer' }}>Create Page</button>
+              style={{ cursor: submitting ? 'not-allowed' : 'pointer' }}>Create Page</button>
           </div>
         </form>
       </div>

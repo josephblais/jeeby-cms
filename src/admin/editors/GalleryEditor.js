@@ -31,7 +31,6 @@ export function GalleryEditor({ data, onChange, blockId }) {
                 src={item.src}
                 alt={item.alt || ''}
                 className="jeeby-cms-gallery-preview"
-                style={{ width: '80px', height: '80px', objectFit: 'cover', flexShrink: 0 }}
               />
             )}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -46,10 +45,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
                   ...data,
                   items: updateItem(items, index, 'src', e.target.value),
                 })}
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  minHeight: '44px',
-                }}
+                style={{ width: '100%', minHeight: '44px' }}
               />
               {/* Alt text per item — WCAG 1.1.1: every non-decorative image needs alt */}
               <input
@@ -61,10 +57,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
                   ...data,
                   items: updateItem(items, index, 'alt', e.target.value),
                 })}
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  minHeight: '44px',
-                }}
+                style={{ width: '100%', minHeight: '44px' }}
               />
             </div>
             {/* Remove button — labelled with item number so screen reader users know which item */}
@@ -75,11 +68,8 @@ export function GalleryEditor({ data, onChange, blockId }) {
                 ...data,
                 items: items.filter((_, i) => i !== index),
               })}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                minHeight: '44px', minWidth: '44px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-              }}
+              className="jeeby-cms-btn-ghost"
+              style={{ minWidth: '44px', padding: 0 }}
             >×</button>
           </li>
         ))}
@@ -93,10 +83,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
           ...data,
           items: [...items, { src: '', alt: '' }],
         })}
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          minHeight: '44px', width: '100%',
-        }}
+        style={{ width: '100%' }}
       >+ Add image</button>
     </div>
   )

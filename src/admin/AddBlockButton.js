@@ -7,7 +7,7 @@ export function AddBlockButton({ onAdd, insertIndex }) {
   const buttonRef = useRef(null)
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+    <div className="jeeby-cms-add-block-wrapper">
       {/* Horizontal divider line */}
       <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px' }} />
 
@@ -18,12 +18,7 @@ export function AddBlockButton({ onAdd, insertIndex }) {
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative', zIndex: 1,
-          minHeight: '44px', minWidth: '44px', padding: 0,
-          background: 'none', border: 'none', cursor: 'pointer'
-        }}
+        className="jeeby-cms-add-block-btn"
       >+</button>
 
       {isOpen && (
