@@ -165,7 +165,7 @@ Plans:
 
 **Requirements:** CSS-01, CSS-02, CSS-03, CSS-04
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 08-01-PLAN.md — CSS test scaffold + complete styles/cms.css admin stylesheet
@@ -237,7 +237,7 @@ Plans:
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 | 2/2 | Complete   | 2026-03-18 | 4 |
 | 3 | FRONT-01 through FRONT-10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
-| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete    | 2026-03-18 | 7 | 2/2 | Complete   | 2026-03-19 | 8 | 2/3 | In Progress|  | 9 | MEDIA-01–04 | 4 |
+| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete    | 2026-03-18 | 7 | 2/2 | Complete   | 2026-03-19 | 8 | 4/4 | Complete   | 2026-03-19 | 9 | MEDIA-01–04 | 4 |
 | 10 | Polish/publish | — |
 | **Total** | | **44** |
 
