@@ -1,5 +1,6 @@
 import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 // Mock firebase-admin modules BEFORE importing the module under test.
 // mock.module requires --experimental-test-module-mocks flag.
@@ -62,4 +63,12 @@ test('getCMSContent returns published object when page exists', { skip: !isRealI
   const result = await getCMSContent('existing-page')
   assert.ok(result !== null, 'Should return published data')
   assert.ok(Array.isArray(result?.blocks), 'published object should have blocks array')
+})
+
+test('getCMSContent returns only published sub-object (PUB-03)', async () => {
+  const serverSrc = readFileSync(new URL('./index.js', import.meta.url), 'utf8')
+  assert.ok(
+    serverSrc.includes('?.published') || serverSrc.includes('.published'),
+    'getCMSContent must return published sub-object only — draft must never leak to front-end'
+  )
 })

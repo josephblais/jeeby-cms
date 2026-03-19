@@ -45,3 +45,32 @@ test('EditorHeader contains "Save failed" text', () => {
 test('EditorHeader has "use client" directive', () => {
   assert.ok(src.trimStart().startsWith('"use client"'), 'EditorHeader must start with "use client"')
 })
+
+// Phase 7: Publish controls tests (Wave 0 — will fail until EditorHeader.js is extended in Plan 02)
+test('EditorHeader accepts lastPublishedAt prop', () => {
+  assert.ok(src.includes('lastPublishedAt'), 'EditorHeader must accept lastPublishedAt prop')
+})
+
+test('EditorHeader accepts hasDraftChanges prop', () => {
+  assert.ok(src.includes('hasDraftChanges'), 'EditorHeader must accept hasDraftChanges prop')
+})
+
+test('EditorHeader accepts onPublish prop', () => {
+  assert.ok(src.includes('onPublish'), 'EditorHeader must accept onPublish prop')
+})
+
+test('EditorHeader displays "Last published:" text', () => {
+  assert.ok(src.includes('Last published:'), 'EditorHeader must display "Last published:" text')
+})
+
+test('EditorHeader displays "Unpublished changes" indicator', () => {
+  assert.ok(src.includes('Unpublished changes'), 'EditorHeader must display "Unpublished changes" when hasDraftChanges is true')
+})
+
+test('EditorHeader has Publish button', () => {
+  assert.ok(src.includes('Publish'), 'EditorHeader must have a Publish button')
+})
+
+test('EditorHeader has jeeby-cms-publish-controls class', () => {
+  assert.ok(src.includes('jeeby-cms-publish-controls'), 'EditorHeader must have jeeby-cms-publish-controls wrapper')
+})

@@ -44,3 +44,11 @@ test('CMSProvider accepts templates prop and passes through context', () => {
   assert.ok(src.includes('templates = []'), 'templates must default to empty array')
   assert.ok(/useMemo\([^)]*templates/.test(src) || src.includes('...firebase, templates'), 'templates must be included in memoized context value')
 })
+
+test('useCMSContent returns only published sub-object (PUB-03)', async () => {
+  const indexSrc = readFileSync(new URL('./index.js', import.meta.url), 'utf8')
+  assert.ok(
+    indexSrc.includes('?.published') || indexSrc.includes('.published'),
+    'useCMSContent must return published sub-object only — draft must never leak to front-end'
+  )
+})
