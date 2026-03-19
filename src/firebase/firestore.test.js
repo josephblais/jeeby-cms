@@ -155,3 +155,13 @@ test('validateSlug matches [...path] catch-all', { skip: !validateSlug }, () => 
   assert.ok(validateSlug('/docs/[...path]', '/docs/a/b/c') === true)
   assert.ok(validateSlug('/docs/[...path]', '/docs/') === false)
 })
+
+test('saveDraft includes hasDraftChanges: true in updateDoc payload', async () => {
+  const src = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
+  assert.ok(src.includes('hasDraftChanges: true'), 'saveDraft must set hasDraftChanges: true')
+})
+
+test('publishPage includes hasDraftChanges: false in updateDoc payload', async () => {
+  const src = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
+  assert.ok(src.includes('hasDraftChanges: false'), 'publishPage must set hasDraftChanges: false')
+})

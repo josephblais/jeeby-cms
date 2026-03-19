@@ -30,6 +30,7 @@ export async function savePage(db, slug, data) {
 export async function saveDraft(db, slug, blocks) {
   await updateDoc(pageRef(db, slug), {
     'draft.blocks': blocks,
+    hasDraftChanges: true,
     updatedAt: serverTimestamp(),
   })
 }
@@ -41,6 +42,7 @@ export async function publishPage(db, slug) {
   await updateDoc(pageRef(db, slug), {
     'published.blocks': page.draft?.blocks ?? [],
     lastPublishedAt: serverTimestamp(),
+    hasDraftChanges: false,
   })
 }
 
