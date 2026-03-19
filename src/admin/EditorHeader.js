@@ -1,7 +1,13 @@
 "use client"
 import { useState, useEffect } from 'react'
 
-export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameSlug }) {
+function formatDate(ts) {
+  if (!ts) return 'Never'
+  const date = ts.toDate ? ts.toDate() : new Date(ts)
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
   const [editingSlug, setEditingSlug] = useState(slug)
   const [slugDirty, setSlugDirty] = useState(false)
 
@@ -63,23 +69,47 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
         </div>
       </div>
 
-      <div
-        role="status"
-        aria-live={saveStatus === 'error' ? 'assertive' : 'polite'}
-        aria-atomic="true"
-      >
-        {saveStatus === 'saving' && <span>Saving...</span>}
-        {saveStatus === 'saved' && <span>Saved</span>}
-        {saveStatus === 'error' && (
-          <span>
-            Save failed.{' '}
-            <button
-              type="button"
-              onClick={onRetry}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px' }}
-            >Retry?</button>
-          </span>
+      <div className="jeeby-cms-publish-controls" style={{
+        display: 'flex', alignItems: 'center', gap: '16px'
+      }}>
+        <span className="jeeby-cms-publish-status">
+          Last published: {formatDate(lastPublishedAt)}
+        </span>
+        {hasDraftChanges && (
+          <>
+            <span aria-hidden="true">&middot;</span>
+            <span className="jeeby-cms-draft-indicator">Unpublished changes</span>
+          </>
         )}
+        <div
+          role="status"
+          aria-live={saveStatus === 'error' ? 'assertive' : 'polite'}
+          aria-atomic="true"
+        >
+          {saveStatus === 'saving' && <span>Saving...</span>}
+          {saveStatus === 'saved' && <span>Saved</span>}
+          {saveStatus === 'error' && (
+            <span>
+              Save failed.{' '}
+              <button
+                type="button"
+                onClick={onRetry}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px' }}
+              >Retry?</button>
+            </span>
+          )}
+        </div>
+        <button
+          ref={publishBtnRef}
+          type="button"
+          className="jeeby-cms-btn-primary"
+          onClick={onPublish}
+          disabled={publishStatus === 'publishing' || saveStatus === 'saving'}
+          aria-busy={publishStatus === 'publishing' ? 'true' : undefined}
+          style={{ minHeight: '44px', cursor: 'pointer' }}
+        >
+          {publishStatus === 'publishing' ? 'Publishing\u2026' : 'Publish'}
+        </button>
       </div>
     </header>
   )

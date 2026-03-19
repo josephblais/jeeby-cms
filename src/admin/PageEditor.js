@@ -1,11 +1,13 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import { useCMSFirebase } from '../index.js'
-import { getPage, saveDraft, renamePage } from '../firebase/firestore.js'
+import { getPage, saveDraft, renamePage, publishPage } from '../firebase/firestore.js'
 import { EditorHeader } from './EditorHeader.js'
 import { BlockCanvas } from './BlockCanvas.js'
 import { UndoToast } from './UndoToast.js'
 import { UnsavedChangesWarning } from './UnsavedChangesWarning.js'
+import { PublishConfirmModal } from './PublishConfirmModal.js'
+import { PublishToast } from './PublishToast.js'
 
 export function PageEditor({ slug }) {
   const { db } = useCMSFirebase()
@@ -16,11 +18,18 @@ export function PageEditor({ slug }) {
   const [saveStatus, setSaveStatus] = useState(null)
   const [deletedBlock, setDeletedBlock] = useState(null)
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
+  const [lastPublishedAt, setLastPublishedAt] = useState(null)
+  const [hasDraftChanges, setHasDraftChanges] = useState(false)
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  const [publishStatus, setPublishStatus] = useState('idle')
+  const [publishError, setPublishError] = useState(null)
+  const [showPublishToast, setShowPublishToast] = useState(false)
 
   const debounceRef = useRef(null)
   const deleteTimerRef = useRef(null)
   const blocksRef = useRef(blocks)
   const pendingSaveRef = useRef(false)
+  const publishBtnRef = useRef(null)
 
   // Mirror blocks into ref to avoid stale closures in setTimeout
   useEffect(() => { blocksRef.current = blocks }, [blocks])
@@ -34,6 +43,8 @@ export function PageEditor({ slug }) {
         if (!cancelled) {
           setBlocks(page?.draft?.blocks ?? [])
           setPageName(page?.name ?? slug)
+          setLastPublishedAt(page?.lastPublishedAt ?? null)
+          setHasDraftChanges(page?.hasDraftChanges ?? false)
           setLoading(false)
         }
       } catch {
@@ -50,6 +61,13 @@ export function PageEditor({ slug }) {
     clearTimeout(deleteTimerRef.current)
   }, [])
 
+  // Auto-dismiss publish toast after 3 seconds
+  useEffect(() => {
+    if (!showPublishToast) return
+    const t = setTimeout(() => setShowPublishToast(false), 3000)
+    return () => clearTimeout(t)
+  }, [showPublishToast])
+
   function scheduleSave(updatedBlocks) {
     pendingSaveRef.current = true
     clearTimeout(debounceRef.current)
@@ -58,6 +76,7 @@ export function PageEditor({ slug }) {
       try {
         await saveDraft(db, slug, updatedBlocks)
         setSaveStatus('saved')
+        setHasDraftChanges(true)
         pendingSaveRef.current = false
       } catch {
         setSaveStatus('error')
@@ -139,6 +158,29 @@ export function PageEditor({ slug }) {
     }
   }
 
+  async function handlePublish() {
+    setPublishStatus('publishing')
+    setPublishError(null)
+    try {
+      await publishPage(db, slug)
+      const updated = await getPage(db, slug)
+      setLastPublishedAt(updated?.lastPublishedAt ?? null)
+      setHasDraftChanges(false)
+      setPublishStatus('idle')
+      setShowPublishModal(false)
+      setShowPublishToast(true)
+    } catch {
+      setPublishStatus('error')
+      setPublishError(true)
+    }
+  }
+
+  function openPublishModal() {
+    setPublishError(null)
+    setPublishStatus('idle')
+    setShowPublishModal(true)
+  }
+
   async function handleRenameSlug(newSlug) {
     try {
       await renamePage(db, slug, newSlug)
@@ -177,6 +219,11 @@ export function PageEditor({ slug }) {
         onRetry={handleRetry}
         onBackClick={handleBackClick}
         onRenameSlug={handleRenameSlug}
+        lastPublishedAt={lastPublishedAt}
+        hasDraftChanges={hasDraftChanges}
+        onPublish={openPublishModal}
+        publishStatus={publishStatus}
+        publishBtnRef={publishBtnRef}
       />
       <div className="jeeby-cms-editor-main" style={{ minHeight: 'calc(100vh - 120px)' }}>
         <BlockCanvas
@@ -199,6 +246,18 @@ export function PageEditor({ slug }) {
           onStay={() => { setShowUnsavedWarning(false) }}
         />
       )}
+      {showPublishModal && (
+        <PublishConfirmModal
+          open={showPublishModal}
+          pageName={pageName}
+          onClose={() => setShowPublishModal(false)}
+          onConfirm={handlePublish}
+          triggerRef={publishBtnRef}
+          publishing={publishStatus === 'publishing'}
+          publishError={publishError}
+        />
+      )}
+      {showPublishToast && <PublishToast />}
     </div>
   )
 }
