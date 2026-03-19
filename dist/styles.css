@@ -1,1 +1,630 @@
-/* jeeby-cms styles — Phase 8 (CSS & Theming) will populate this file */
+/* =================================================================
+   jeeby-cms Admin Stylesheet
+   All rules scoped under .jeeby-cms-admin — no leakage to consumer pages.
+   CSS custom properties declared as defaults; consumers override via:
+     .jeeby-cms-admin { --jeeby-cms-accent: #your-color; }
+   ================================================================= */
+
+/* ─── Section 1: CSS Custom Properties + Root Shell ─────────────── */
+
+.jeeby-cms-admin {
+  /* Theme color tokens */
+  --jeeby-cms-accent: #4a90d9;
+  --jeeby-cms-focus-ring: #4a90d9;
+  --jeeby-cms-bg-surface: #191919;
+  --jeeby-cms-text-primary: #e8e6e1;
+  --jeeby-cms-bg-card: #252521;
+  --jeeby-cms-border: rgba(255, 255, 255, 0.08);
+  --jeeby-cms-text-secondary: #a8a8a0;
+  --jeeby-cms-text-muted: #6b6b63;
+  --jeeby-cms-bg-hover: rgba(255, 255, 255, 0.06);
+  --jeeby-cms-bg-input: #1f1f1d;
+  --jeeby-cms-error: #e74c3c;
+
+  /* Layout tokens */
+  --jeeby-cms-nav-height: 56px;
+  --jeeby-cms-max-width: 720px;
+  --jeeby-cms-block-spacing: 1.5rem;
+  --jeeby-cms-gallery-columns: 3;
+
+  /* Shell */
+  min-height: 100vh;
+  background-color: var(--jeeby-cms-bg-surface);
+  color: var(--jeeby-cms-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* ─── Section 2: Box-sizing Reset (scoped) ───────────────────────── */
+
+.jeeby-cms-admin *,
+.jeeby-cms-admin *::before,
+.jeeby-cms-admin *::after {
+  box-sizing: inherit;
+}
+
+/* ─── Section 3: Global Focus-Visible (scoped) ───────────────────── */
+
+/* WCAG 2.4.7: Focus Visible — all interactive elements in the admin UI */
+.jeeby-cms-admin :focus-visible {
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ─── Section 4: Layout Shell ────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--jeeby-cms-nav-height);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--jeeby-cms-border);
+  background: var(--jeeby-cms-bg-surface);
+}
+
+.jeeby-cms-admin .jeeby-cms-nav-brand {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-shell-content {
+  padding: 24px 16px;
+}
+
+/* ─── Section 5: Skip Link ───────────────────────────────────────── */
+
+/* Accessible skip link — off-screen until focused (WCAG 2.4.1) */
+.jeeby-cms-admin .jeeby-cms-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  background: var(--jeeby-cms-accent);
+  color: #fff;
+  padding: 8px 16px;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-skip-link:focus {
+  left: 0;
+}
+
+/* ─── Section 6: Loading / Spinner ──────────────────────────────── */
+
+@keyframes jeeby-spin {
+  to { transform: rotate(360deg); }
+}
+
+.jeeby-cms-admin .jeeby-cms-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* WCAG 2.5.8: 44px minimum touch target */
+.jeeby-cms-admin .jeeby-cms-spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--jeeby-cms-accent);
+  border-radius: 50%;
+  animation: jeeby-spin 0.75s linear infinite;
+}
+
+/* ─── Section 7: Login Page ──────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.jeeby-cms-admin .jeeby-cms-login-card {
+  max-width: 400px;
+  min-width: 320px;
+  width: 100%;
+  background: var(--jeeby-cms-bg-card);
+  padding: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--jeeby-cms-border);
+}
+
+.jeeby-cms-admin .jeeby-cms-login-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 24px;
+  text-align: center;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jeeby-cms-admin .jeeby-cms-auth-error {
+  color: var(--jeeby-cms-error);
+  font-size: 0.8125rem;
+  margin: 8px 0 0;
+}
+
+/* ─── Section 8: Form Elements ───────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-field label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--jeeby-cms-text-secondary);
+}
+
+/* WCAG 2.5.8: min-height 44px for interactive targets */
+.jeeby-cms-admin .jeeby-cms-field input,
+.jeeby-cms-admin .jeeby-cms-field select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--jeeby-cms-bg-input);
+  color: var(--jeeby-cms-text-primary);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.jeeby-cms-admin .jeeby-cms-field input:focus,
+.jeeby-cms-admin .jeeby-cms-field select:focus {
+  border-color: var(--jeeby-cms-accent);
+}
+
+.jeeby-cms-admin .jeeby-cms-inline-error {
+  color: var(--jeeby-cms-error);
+  font-size: 0.8125rem;
+  margin: 4px 0 0;
+}
+
+/* ─── Section 9: Page Manager ────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-page-manager {
+  position: relative;
+}
+
+.jeeby-cms-admin .jeeby-cms-page-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.jeeby-cms-admin .jeeby-cms-page-list-header h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--jeeby-cms-text-secondary);
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-empty h2 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--jeeby-cms-text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--jeeby-cms-border);
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--jeeby-cms-border);
+  font-size: 0.875rem;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table a {
+  color: var(--jeeby-cms-accent);
+  text-decoration: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table a:hover {
+  text-decoration: underline;
+}
+
+/* WCAG 2.5.8: 44px minimum touch target */
+.jeeby-cms-admin .jeeby-cms-inline-edit-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--jeeby-cms-bg-input);
+  color: var(--jeeby-cms-text-primary);
+  border: 1px solid var(--jeeby-cms-accent);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+/* Note: .jeeby-cms-live-region keeps display:none inline (accessibility-critical — do not move here) */
+
+/* ─── Section 10: Page Editor / Editor Header ────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-page-editor {
+  position: relative;
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--jeeby-cms-border);
+}
+
+/* WCAG 2.5.8: 44px touch target for back link */
+.jeeby-cms-admin .jeeby-cms-editor-header a {
+  color: var(--jeeby-cms-text-secondary);
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-header a:hover {
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-slug-prefix {
+  color: var(--jeeby-cms-text-muted);
+  font-size: 0.875rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-slug-input {
+  background: var(--jeeby-cms-bg-input);
+  color: var(--jeeby-cms-text-primary);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.jeeby-cms-admin .jeeby-cms-slug-hint {
+  color: var(--jeeby-cms-text-muted);
+  font-size: 0.75rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-publish-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.jeeby-cms-admin .jeeby-cms-publish-status {
+  color: var(--jeeby-cms-text-muted);
+  font-size: 0.8125rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-draft-indicator {
+  color: var(--jeeby-cms-accent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-main {
+  min-height: calc(100vh - 120px);
+  padding: 24px 16px;
+}
+
+/* ─── Section 11: Block Canvas ───────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-block-canvas {
+  max-width: var(--jeeby-cms-max-width);
+  margin: 0 auto;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-canvas ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* WCAG 2.5.8: 44px minimum touch target for drag handle */
+.jeeby-cms-admin .jeeby-cms-drag-handle {
+  background: none;
+  border: none;
+  cursor: grab;
+  touch-action: none;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--jeeby-cms-text-muted);
+}
+
+/* ─── Section 12: Add Block Button / Block Type Picker ───────────── */
+
+.jeeby-cms-admin .jeeby-cms-add-block-wrapper {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding: 8px 0;
+}
+
+/* WCAG 2.5.8: 44px minimum touch target */
+.jeeby-cms-admin .jeeby-cms-add-block-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: 1.25rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-add-block-btn:hover {
+  border-color: var(--jeeby-cms-accent);
+  color: var(--jeeby-cms-accent);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  list-style: none;
+  padding: 4px 0;
+  margin: 4px 0 0;
+  min-width: 160px;
+  background: var(--jeeby-cms-bg-card);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker li {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker li:hover,
+.jeeby-cms-admin .jeeby-cms-block-type-picker li:focus {
+  background: var(--jeeby-cms-bg-hover);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker li[aria-selected="true"] {
+  background: var(--jeeby-cms-bg-hover);
+}
+
+/* ─── Section 13: Editor Forms (toolbar, text editor, gallery) ───── */
+
+/* WCAG 2.5.8: 44px minimum touch target for toolbar buttons */
+.jeeby-cms-admin .jeeby-cms-toolbar-btn {
+  min-height: 44px;
+  min-width: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.jeeby-cms-admin .jeeby-cms-toolbar-btn:hover {
+  background: var(--jeeby-cms-bg-hover);
+}
+
+.jeeby-cms-admin .jeeby-cms-toolbar-btn[aria-pressed="true"] {
+  background: var(--jeeby-cms-bg-hover);
+  color: var(--jeeby-cms-accent);
+}
+
+.jeeby-cms-admin .jeeby-cms-text-editor-content {
+  min-height: 120px;
+  padding: 12px;
+  background: var(--jeeby-cms-bg-input);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+/* ─── Section 14: Modals ─────────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.jeeby-cms-admin .jeeby-cms-modal-card {
+  max-width: 480px;
+  width: 100%;
+  background: var(--jeeby-cms-bg-card);
+  border-radius: 8px;
+  padding: 24px;
+  border: 1px solid var(--jeeby-cms-border);
+}
+
+.jeeby-cms-admin .jeeby-cms-modal-card h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-modal-card p {
+  font-size: 0.875rem;
+  color: var(--jeeby-cms-text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.jeeby-cms-admin .jeeby-cms-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ─── Section 15: Toasts ─────────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-publish-toast,
+.jeeby-cms-admin .jeeby-cms-undo-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 200;
+  background: var(--jeeby-cms-bg-card);
+  color: var(--jeeby-cms-text-primary);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Section 16: Buttons ────────────────────────────────────────── */
+
+/* WCAG 2.5.8: All buttons minimum 44px touch target */
+.jeeby-cms-admin .jeeby-cms-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  background: var(--jeeby-cms-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.jeeby-cms-admin .jeeby-cms-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.jeeby-cms-admin .jeeby-cms-btn-primary:disabled,
+.jeeby-cms-admin .jeeby-cms-btn-primary[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.jeeby-cms-admin .jeeby-cms-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  color: var(--jeeby-cms-text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.jeeby-cms-admin .jeeby-cms-btn-ghost:hover {
+  background: var(--jeeby-cms-bg-hover);
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-btn-destructive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.jeeby-cms-admin .jeeby-cms-btn-destructive:hover {
+  filter: brightness(1.1);
+}
+
+/* ─── Section 17: data-theme="light" stub ────────────────────────── */
+
+/* Future light mode — override color vars here when implemented */
+/* Triggered by: <div class="jeeby-cms-admin" data-theme="light"> */
+.jeeby-cms-admin[data-theme="light"] {
+  /* --jeeby-cms-bg-surface: #f5f5f3; */
+  /* --jeeby-cms-bg-card: #ffffff; */
+  /* --jeeby-cms-text-primary: #1a1918; */
+  /* --jeeby-cms-border: rgba(0, 0, 0, 0.08); */
+}

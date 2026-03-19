@@ -27,26 +27,43 @@ describe('CSS-01: Selector scoping', () => {
 
     // Extract lines that contain an opening brace (potential selector lines)
     const lines = stripped.split('\n')
-    const selectorLines = lines.filter(line => line.includes('{'))
-
     const violations = []
 
-    for (const rawLine of selectorLines) {
+    // Track whether we are inside a @keyframes block (frames like `to { }` are valid)
+    let insideKeyframes = false
+    let braceDepth = 0
+
+    for (const rawLine of lines) {
       const line = rawLine.trim()
 
-      // Skip empty lines, at-rules (@keyframes, @media, @supports etc.)
-      if (!line || line.startsWith('@')) continue
+      if (!line) continue
 
-      // Skip property declarations inside a rule block (contain ':' before '{')
-      // A property:value line looks like "  color: red;" — no '{' on value lines
-      // But we already filtered for lines with '{', so check for property pattern
-      const colonBeforeBrace = line.indexOf(':') !== -1 && line.indexOf(':') < line.indexOf('{')
-      if (colonBeforeBrace) {
-        // Could be a selector like `.jeeby-cms-admin[data-theme="light"] {`
-        // If it starts with '.jeeby-cms-admin' that's fine; if colon is inside [] that's an attribute selector
-        // Only skip if it looks like a CSS property declaration (identifier: value)
-        const beforeColon = line.slice(0, line.indexOf(':')).trim()
-        // Property names are lowercase with hyphens, no spaces or dots
+      // Track @keyframes context — once inside, frame selectors (from/to/percentages) are allowed
+      if (/^@keyframes\s/.test(line)) {
+        insideKeyframes = true
+        braceDepth = 0
+      }
+
+      if (insideKeyframes) {
+        braceDepth += (line.match(/\{/g) || []).length
+        braceDepth -= (line.match(/\}/g) || []).length
+        if (braceDepth <= 0) insideKeyframes = false
+        continue
+      }
+
+      // Only look at lines that contain '{' (potential rule-opening selector lines)
+      if (!line.includes('{')) continue
+
+      // Skip @media, @supports, other at-rules
+      if (line.startsWith('@')) continue
+
+      // Skip CSS property declarations: lines where a bare identifier precedes ':' before '{'
+      // e.g. "color: red {" — not a real case but guard anyway
+      const braceIdx = line.indexOf('{')
+      const colonIdx = line.indexOf(':')
+      if (colonIdx !== -1 && colonIdx < braceIdx) {
+        const beforeColon = line.slice(0, colonIdx).trim()
+        // Pure property name = lowercase letters and hyphens only, no dots or spaces
         if (/^[a-z-]+$/.test(beforeColon)) continue
       }
 
@@ -110,9 +127,12 @@ describe('CSS-04: No bare block element selectors', () => {
   it('does not contain a .jeeby-cms-block selector (blocks get no styles from this file)', () => {
     // Strip comment blocks
     const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '')
+    // Match the exact class .jeeby-cms-block as a standalone selector token
+    // (not as a prefix of .jeeby-cms-block-canvas, .jeeby-cms-block-spacing, etc.)
+    const bareBlockClass = /\.jeeby-cms-block(?![-\w])/
     assert.ok(
-      !stripped.includes('.jeeby-cms-block'),
-      'styles/cms.css must not target .jeeby-cms-block class'
+      !bareBlockClass.test(stripped),
+      'styles/cms.css must not target the exact .jeeby-cms-block class (block elements get no styles from this file)'
     )
   })
 })
