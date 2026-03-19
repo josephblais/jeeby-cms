@@ -52,24 +52,17 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
             keyboard reorder is not implemented in Phase 6. Keyboard alternative: delete + re-add block.
           */}
           <button
+            className="jeeby-cms-drag-handle"
             aria-label={'Drag to reorder ' + displayName(block.type) + ' block'}
             aria-hidden="true"
             onPointerDown={(e) => { e.preventDefault(); controls.start(e) }}
-            style={{
-              cursor: 'grab', touchAction: 'none', background: 'none', border: 'none',
-              minHeight: '44px', minWidth: '44px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
-            }}
           >⠿</button>
           <button
             type="button"
+            className="jeeby-cms-btn-ghost"
             aria-label={'Delete ' + displayName(block.type) + ' block'}
             onClick={() => onDelete(block)}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              minHeight: '44px', minWidth: '44px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
-            }}
+            style={{ minWidth: '44px', padding: 0 }}
           >×</button>
         </div>
 
@@ -89,7 +82,7 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
 export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
   if (blocks.length === 0) {
     return (
-      <div className="jeeby-cms-block-canvas" style={{ maxWidth: '720px', margin: '0 auto' }}>
+      <div className="jeeby-cms-block-canvas">
         <div>
           <p>No blocks yet</p>
           <p>Click + to add your first block.</p>
@@ -100,7 +93,7 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
   }
 
   return (
-    <div className="jeeby-cms-block-canvas" style={{ maxWidth: '720px', margin: '0 auto' }}>
+    <div className="jeeby-cms-block-canvas">
       <AddBlockButton onAdd={(type) => onAddBlock(type, -1)} insertIndex={-1} />
       <Reorder.Group
         as="ol"
@@ -108,7 +101,6 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
         values={blocks}
         onReorder={onReorder}
         aria-label="Page blocks"
-        style={{ listStyle: 'none', padding: 0, margin: 0 }}
       >
         {blocks.map((block, index) => (
           <BlockCard

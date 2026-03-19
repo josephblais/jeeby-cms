@@ -40,10 +40,11 @@ test('Delete button has aria-label with Delete', () => {
   assert.ok(/aria-label=.*Delete/.test(src), 'Delete button must have aria-label containing Delete')
 })
 
-test('Delete button has minHeight 44px', () => {
+test('Delete button has 44px touch target (CSS class or inline)', () => {
+  // Touch target provided by .jeeby-cms-btn-ghost CSS (min-height: 44px) or inline style
   assert.ok(
-    src.includes("minHeight: '44px'") || src.includes('minHeight: 44'),
-    'Delete button must have minHeight 44px for touch target'
+    src.includes('jeeby-cms-btn-ghost') || src.includes("minHeight: '44px'") || src.includes('minHeight: 44'),
+    'Delete button must have 44px touch target via CSS class or inline style'
   )
 })
 

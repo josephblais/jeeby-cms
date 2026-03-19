@@ -201,10 +201,7 @@ export function PageEditor({ slug }) {
     return (
       <div className="jeeby-cms-page-editor">
         <div role="status" aria-label="Loading editor" style={{ display: 'flex', justifyContent: 'center' }}>
-          <div aria-hidden="true" style={{
-            width: '32px', height: '32px',
-            animation: 'jeeby-spin 0.75s linear infinite'
-          }} />
+          <div className="jeeby-cms-spinner" aria-hidden="true" />
         </div>
       </div>
     )
@@ -225,7 +222,7 @@ export function PageEditor({ slug }) {
         publishStatus={publishStatus}
         publishBtnRef={publishBtnRef}
       />
-      <div className="jeeby-cms-editor-main" style={{ minHeight: 'calc(100vh - 120px)' }}>
+      <div className="jeeby-cms-editor-main">
         <BlockCanvas
           blocks={blocks}
           onReorder={handleReorder}

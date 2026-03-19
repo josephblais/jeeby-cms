@@ -34,20 +34,17 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
   }
 
   return (
-    <header className="jeeby-cms-editor-header" style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-    }}>
+    <header className="jeeby-cms-editor-header">
       <a
         href="/admin"
         onClick={onBackClick}
         aria-label="Back to Pages"
-        style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}
       >
         ← Pages
       </a>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-        <h1 className="jeeby-cms-editor-title" style={{ margin: 0 }}>{pageName || slug}</h1>
+        <h1 className="jeeby-cms-editor-title">{pageName || slug}</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="jeeby-cms-slug-prefix" aria-hidden="true">/</span>
           <input
@@ -59,7 +56,6 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
             onChange={handleSlugChange}
             onBlur={commitSlug}
             onKeyDown={handleSlugKeyDown}
-            style={{ minHeight: '44px' }}
           />
           {slugDirty && (
             <span className="jeeby-cms-slug-hint" aria-live="polite">
@@ -69,9 +65,7 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
         </div>
       </div>
 
-      <div className="jeeby-cms-publish-controls" style={{
-        display: 'flex', alignItems: 'center', gap: '16px'
-      }}>
+      <div className="jeeby-cms-publish-controls">
         <span className="jeeby-cms-publish-status">
           Last published: {formatDate(lastPublishedAt)}
         </span>
@@ -93,8 +87,8 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
               Save failed.{' '}
               <button
                 type="button"
+                className="jeeby-cms-btn-ghost"
                 onClick={onRetry}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px' }}
               >Retry?</button>
             </span>
           )}
@@ -106,7 +100,7 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
           onClick={onPublish}
           aria-disabled={publishStatus === 'publishing' || saveStatus === 'saving' ? 'true' : undefined}
           aria-busy={publishStatus === 'publishing' ? 'true' : undefined}
-          style={{ minHeight: '44px', cursor: publishStatus === 'publishing' || saveStatus === 'saving' ? 'not-allowed' : 'pointer', pointerEvents: publishStatus === 'publishing' || saveStatus === 'saving' ? 'none' : undefined }}
+          style={{ cursor: publishStatus === 'publishing' || saveStatus === 'saving' ? 'not-allowed' : 'pointer', pointerEvents: publishStatus === 'publishing' || saveStatus === 'saving' ? 'none' : undefined }}
         >
           {publishStatus === 'publishing' ? 'Publishing\u2026' : 'Publish'}
         </button>
