@@ -165,6 +165,13 @@ Plans:
 
 **Requirements:** CSS-01, CSS-02, CSS-03, CSS-04
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — CSS test scaffold + complete styles/cms.css admin stylesheet
+- [ ] 08-02-PLAN.md — Inline style migration: core layout components (index.js, AdminNav, LoginPage, PageManager, EditorHeader, PageEditor, BlockCanvas)
+- [ ] 08-03-PLAN.md — Inline style migration: modals, toasts, editors, pickers + README theming docs
+
 **Success Criteria:**
 1. `dist/styles.css` is produced by the build and importable via `jeeby-cms/dist/styles.css`
 2. All admin panel UI elements are visually styled and scoped under `.jeeby-cms-admin` (no style leaks to consumer pages)
@@ -188,6 +195,16 @@ Plans:
 5. Upload progress is visible in the UI during Firebase Storage uploads
 
 ---
+
+### Phase 09.1: Page Collections and Index Pattern (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 9
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 09.1 to break down)
 
 ## Phase 10: Polish & Publish
 
@@ -244,3 +261,4 @@ Plans:
 *Phase 5 plans added: 2026-03-18*
 *Phase 6 plans added: 2026-03-18*
 *Phase 7 plans added: 2026-03-18*
+*Phase 8 plans added: 2026-03-19*
