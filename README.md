@@ -179,7 +179,7 @@ All admin UI styles are controlled by CSS custom properties declared under `.jee
 | `--jeeby-cms-text-primary` | `#e8e6e1` | Main admin UI text color |
 | `--jeeby-cms-max-width` | `720px` | Maximum width of content blocks |
 | `--jeeby-cms-block-spacing` | `1.5rem` | Vertical spacing between blocks |
-| `--jeeby-cms-gallery-columns` | `3` | Number of columns in gallery grid |
+| `--jeeby-cms-gallery-columns` | `3` | Number of columns in gallery grid (consumer-side — use in your own gallery styles, see example below) |
 
 ### Overriding variables
 
@@ -189,6 +189,18 @@ Target `.jeeby-cms-admin` in your own stylesheet:
 .jeeby-cms-admin {
   --jeeby-cms-accent: #e74c3c;
   --jeeby-cms-bg-surface: #1a1a2e;
+}
+```
+
+### Using --jeeby-cms-gallery-columns
+
+The `--jeeby-cms-gallery-columns` variable is a consumer-side token. It is declared in the admin stylesheet so you can override it in one place, but you apply it in your own gallery styles:
+
+```css
+.my-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--jeeby-cms-gallery-columns), 1fr);
+  gap: 1rem;
 }
 ```
 
