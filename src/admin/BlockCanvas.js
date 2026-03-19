@@ -6,10 +6,11 @@ import { TextEditor } from './editors/TextEditor.js'
 import { ImageEditor } from './editors/ImageEditor.js'
 import { VideoEditor } from './editors/VideoEditor.js'
 import { GalleryEditor } from './editors/GalleryEditor.js'
+import { ListEditor } from './editors/ListEditor.js'
 import { AddBlockButton } from './AddBlockButton.js'
 
 // Display name helper
-const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery' }
+const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery', list: 'List' }
 function displayName(type) { return DISPLAY_NAMES[type] || type }
 
 // EDITOR_MAP maps block types to editor components.
@@ -19,6 +20,7 @@ const EDITOR_MAP = {
   image: ImageEditor,
   video: VideoEditor,
   gallery: GalleryEditor,
+  list: ListEditor,
 }
 
 // BlockCard: internal component — not exported
@@ -75,7 +77,7 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
           })()}
         </div>
       </article>
-      <AddBlockButton onAdd={(type) => onAddBlock(type, index)} insertIndex={index} />
+      <AddBlockButton onAdd={(type, initialData) => onAddBlock(type, index, initialData)} insertIndex={index} />
     </Reorder.Item>
   )
 }
@@ -89,7 +91,7 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
           <p className="jeeby-cms-canvas-empty-body">
             Start by adding content — try a <strong>Title</strong> for the page heading, or <strong>Text</strong> for a paragraph.
           </p>
-          <AddBlockButton onAdd={(type) => onAddBlock(type, -1)} insertIndex={-1} />
+          <AddBlockButton onAdd={(type, initialData) => onAddBlock(type, -1, initialData)} insertIndex={-1} />
         </div>
       </div>
     )

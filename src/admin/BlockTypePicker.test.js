@@ -12,9 +12,11 @@ test('BlockTypePicker has aria-label="Choose block type"', () => {
   assert.ok(src.includes('aria-label="Choose block type"'), 'BlockTypePicker must have aria-label="Choose block type"')
 })
 
-test('BlockTypePicker lists all 5 display names', () => {
-  assert.ok(src.includes('Title'), 'Must list Title block type')
+test('BlockTypePicker lists all block type labels', () => {
+  assert.ok(src.includes('Heading'), 'Must list Heading block type')
   assert.ok(src.includes('Text'), 'Must list Text block type')
+  assert.ok(src.includes('Bullet List'), 'Must list Bullet List block type')
+  assert.ok(src.includes('Numbered List'), 'Must list Numbered List block type')
   assert.ok(src.includes('Image'), 'Must list Image block type')
   assert.ok(src.includes('Video'), 'Must list Video block type')
   assert.ok(src.includes('Gallery'), 'Must list Gallery block type')

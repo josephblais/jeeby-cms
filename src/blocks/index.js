@@ -16,6 +16,7 @@ import { RichText } from './RichText.js'
 import { Image } from './Image.js'
 import { Video } from './Video.js'
 import { Gallery } from './Gallery.js'
+import { List } from './List.js'
 
 export const BLOCK_REGISTRY = {
   title: Title,
@@ -24,6 +25,7 @@ export const BLOCK_REGISTRY = {
   image: Image,
   video: Video,
   gallery: Gallery,
+  list: List,
 }
 
 // Block wrapper — applied to every block by <Blocks>.

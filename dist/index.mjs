@@ -193,6 +193,16 @@ function Gallery({ data, className }) {
     )
   );
 }
+function List({ data, className }) {
+  const items = (data == null ? void 0 : data.items) ?? [];
+  if (!items.length) return null;
+  const tag = (data == null ? void 0 : data.ordered) ? "ol" : "ul";
+  return createElement(
+    tag,
+    { className },
+    ...items.map((item, i) => createElement("li", { key: i }, item))
+  );
+}
 
 // src/blocks/index.js
 var BLOCK_REGISTRY = {
@@ -201,7 +211,8 @@ var BLOCK_REGISTRY = {
   richtext: RichText,
   image: Image,
   video: Video,
-  gallery: Gallery
+  gallery: Gallery,
+  list: List
 };
 function Block({ id, className, children }) {
   return createElement(

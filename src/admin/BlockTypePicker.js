@@ -61,12 +61,50 @@ function IconGallery() {
   )
 }
 
+function IconBulletList() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <circle cx="2.5" cy="3.5" r="1.2" />
+        <rect x="5" y="2.5" width="9" height="2" rx="0.7" />
+        <circle cx="2.5" cy="8" r="1.2" />
+        <rect x="5" y="7" width="9" height="2" rx="0.7" />
+        <circle cx="2.5" cy="12.5" r="1.2" />
+        <rect x="5" y="11.5" width="9" height="2" rx="0.7" />
+      </svg>
+    </span>
+  )
+}
+
+function IconOrderedList() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        {/* "1" — single vertical bar */}
+        <rect x="2.5" y="1.5" width="1.5" height="4" rx="0.5" />
+        <rect x="5" y="2.5" width="9" height="2" rx="0.7" />
+        {/* "2" — two stacked bars */}
+        <rect x="1.5" y="6.5" width="3.5" height="1.4" rx="0.4" />
+        <rect x="1.5" y="8.5" width="3.5" height="1.4" rx="0.4" />
+        <rect x="5" y="7" width="9" height="2" rx="0.7" />
+        {/* "3" — three stacked bars */}
+        <rect x="1.5" y="11.2" width="3.5" height="1.2" rx="0.4" />
+        <rect x="1.5" y="12.6" width="3.5" height="1.2" rx="0.4" />
+        <rect x="1.5" y="14" width="3.5" height="1.2" rx="0.4" />
+        <rect x="5" y="11.5" width="9" height="2" rx="0.7" />
+      </svg>
+    </span>
+  )
+}
+
 const BLOCK_TYPES = [
-  { type: 'title',    label: 'Heading', icon: <IconHeading /> },
-  { type: 'richtext', label: 'Text',    icon: <IconText /> },
-  { type: 'image',    label: 'Image',   icon: <IconImage /> },
-  { type: 'video',    label: 'Video',   icon: <IconVideo /> },
-  { type: 'gallery',  label: 'Gallery', icon: <IconGallery /> },
+  { type: 'title',    label: 'Heading',       icon: <IconHeading />,     initialData: undefined },
+  { type: 'richtext', label: 'Text',          icon: <IconText />,        initialData: undefined },
+  { type: 'list',     label: 'Bullet List',   icon: <IconBulletList />,  initialData: { ordered: false, items: [''] } },
+  { type: 'list',     label: 'Numbered List', icon: <IconOrderedList />, initialData: { ordered: true,  items: [''] } },
+  { type: 'image',    label: 'Image',         icon: <IconImage />,       initialData: undefined },
+  { type: 'video',    label: 'Video',         icon: <IconVideo />,       initialData: undefined },
+  { type: 'gallery',  label: 'Gallery',       icon: <IconGallery />,     initialData: undefined },
 ]
 
 export function BlockTypePicker({ onSelect, onClose }) {
@@ -103,7 +141,8 @@ export function BlockTypePicker({ onSelect, onClose }) {
       listRef.current?.querySelectorAll('[role="option"]')[prev]?.focus()
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      onSelect(BLOCK_TYPES[activeIndex].type)
+      const bt = BLOCK_TYPES[activeIndex]
+      onSelect(bt.type, bt.initialData)
     } else if (e.key === 'Escape') {
       e.preventDefault()
       onClose()
@@ -120,11 +159,11 @@ export function BlockTypePicker({ onSelect, onClose }) {
     >
       {BLOCK_TYPES.map((bt, index) => (
         <li
-          key={bt.type}
+          key={bt.label}
           role="option"
           tabIndex={0}
           aria-selected={index === activeIndex}
-          onClick={() => onSelect(bt.type)}
+          onClick={() => onSelect(bt.type, bt.initialData)}
           onMouseEnter={() => setActiveIndex(index)}
         >
           {bt.icon}

@@ -101,18 +101,19 @@ export function PageEditor({ slug }) {
       .catch(() => { setSaveStatus('error'); pendingSaveRef.current = false })
   }
 
-  function handleAddBlock(type, insertIndex) {
+  function handleAddBlock(type, insertIndex, initialData) {
     const DEFAULT_DATA = {
       title:    { level: 'h2', text: '' },
       richtext: { html: '' },
       image:    { src: '', alt: '' },
       video:    { url: '' },
       gallery:  { items: [] },
+      list:     { ordered: false, items: [''] },
     }
     const newBlock = {
       id: crypto.randomUUID(),
       type,
-      data: { ...DEFAULT_DATA[type] },
+      data: initialData ? { ...initialData } : { ...DEFAULT_DATA[type] },
     }
     const next = [...blocks]
     next.splice(insertIndex + 1, 0, newBlock)

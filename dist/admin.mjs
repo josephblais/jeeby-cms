@@ -24193,6 +24193,114 @@ function GalleryEditor({ data, onChange, blockId }) {
     )
   ] });
 }
+function ListEditor({ data, onChange, blockId }) {
+  var _a;
+  const items = ((_a = data == null ? void 0 : data.items) == null ? void 0 : _a.length) ? data.items : [""];
+  const ordered = (data == null ? void 0 : data.ordered) ?? false;
+  const inputRefs = useRef([]);
+  function update(patch) {
+    onChange({ items, ordered, ...patch });
+  }
+  function updateItem2(index, value) {
+    const next = items.slice();
+    next[index] = value;
+    update({ items: next });
+  }
+  function addItem(afterIndex) {
+    const next = items.slice();
+    next.splice(afterIndex + 1, 0, "");
+    update({ items: next });
+    requestAnimationFrame(() => {
+      var _a2;
+      return (_a2 = inputRefs.current[afterIndex + 1]) == null ? void 0 : _a2.focus();
+    });
+  }
+  function removeItem(index) {
+    if (items.length === 1) {
+      update({ items: [""] });
+      return;
+    }
+    const next = items.slice();
+    next.splice(index, 1);
+    update({ items: next });
+    requestAnimationFrame(() => {
+      var _a2;
+      return (_a2 = inputRefs.current[Math.max(0, index - 1)]) == null ? void 0 : _a2.focus();
+    });
+  }
+  function handleKeyDown2(e, index) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addItem(index);
+    } else if (e.key === "Backspace" && items[index] === "") {
+      e.preventDefault();
+      removeItem(index);
+    }
+  }
+  return /* @__PURE__ */ jsxs("div", { children: [
+    /* @__PURE__ */ jsxs("div", { role: "group", "aria-label": "List type", className: "jeeby-cms-toolbar", children: [
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          "aria-pressed": !ordered,
+          className: "jeeby-cms-toolbar-btn",
+          onClick: () => update({ ordered: false }),
+          children: "Bulleted"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          "aria-pressed": ordered,
+          className: "jeeby-cms-toolbar-btn",
+          onClick: () => update({ ordered: true }),
+          children: "Numbered"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-list-items", children: items.map((item, index) => /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-list-item-row", children: [
+      /* @__PURE__ */ jsx("span", { className: "jeeby-cms-list-item-marker", "aria-hidden": "true", children: ordered ? `${index + 1}.` : "\u2022" }),
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          ref: (el) => {
+            inputRefs.current[index] = el;
+          },
+          id: index === 0 ? "block-input-" + blockId : void 0,
+          type: "text",
+          value: item,
+          "aria-label": `Item ${index + 1}`,
+          onChange: (e) => updateItem2(index, e.target.value),
+          onKeyDown: (e) => handleKeyDown2(e, index),
+          className: "jeeby-cms-list-item-input",
+          placeholder: "List item"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          "aria-label": `Remove item ${index + 1}`,
+          onClick: () => removeItem(index),
+          disabled: items.length === 1 && items[0] === "",
+          className: "jeeby-cms-btn-ghost jeeby-cms-list-item-remove",
+          children: "\xD7"
+        }
+      )
+    ] }, index)) }),
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        className: "jeeby-cms-btn-ghost jeeby-cms-list-add-btn",
+        onClick: () => addItem(items.length - 1),
+        children: "+ Add item"
+      }
+    )
+  ] });
+}
 function IconText() {
   return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
     /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "12", height: "3", rx: "0.7" }),
@@ -24228,12 +24336,37 @@ function IconGallery() {
     /* @__PURE__ */ jsx("rect", { x: "7.5", y: "7.5", width: "5.5", height: "5.5", rx: "1" })
   ] }) });
 }
+function IconBulletList2() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx("circle", { cx: "2", cy: "3", r: "1.1" }),
+    /* @__PURE__ */ jsx("rect", { x: "4.5", y: "2", width: "8.5", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("circle", { cx: "2", cy: "7", r: "1.1" }),
+    /* @__PURE__ */ jsx("rect", { x: "4.5", y: "6", width: "8.5", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("circle", { cx: "2", cy: "11", r: "1.1" }),
+    /* @__PURE__ */ jsx("rect", { x: "4.5", y: "10", width: "8.5", height: "2", rx: "0.7" })
+  ] }) });
+}
+function IconOrderedList2() {
+  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "1.5", width: "1.5", height: "3.5", rx: "0.5" }),
+    /* @__PURE__ */ jsx("rect", { x: "4.5", y: "2", width: "8.5", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "6", width: "3", height: "1.3", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "7.7", width: "3", height: "1.3", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "4.5", y: "6", width: "8.5", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "10.2", width: "3", height: "1.1", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "11.5", width: "3", height: "1.1", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "12.8", width: "3", height: "1.1", rx: "0.4" }),
+    /* @__PURE__ */ jsx("rect", { x: "4.5", y: "10", width: "8.5", height: "2", rx: "0.7" })
+  ] }) });
+}
 var BLOCK_TYPES = [
-  { type: "title", label: "Heading", icon: /* @__PURE__ */ jsx(IconHeading, {}) },
-  { type: "richtext", label: "Text", icon: /* @__PURE__ */ jsx(IconText, {}) },
-  { type: "image", label: "Image", icon: /* @__PURE__ */ jsx(IconImage, {}) },
-  { type: "video", label: "Video", icon: /* @__PURE__ */ jsx(IconVideo, {}) },
-  { type: "gallery", label: "Gallery", icon: /* @__PURE__ */ jsx(IconGallery, {}) }
+  { type: "title", label: "Heading", icon: /* @__PURE__ */ jsx(IconHeading, {}), initialData: void 0 },
+  { type: "richtext", label: "Text", icon: /* @__PURE__ */ jsx(IconText, {}), initialData: void 0 },
+  { type: "list", label: "Bullet List", icon: /* @__PURE__ */ jsx(IconBulletList2, {}), initialData: { ordered: false, items: [""] } },
+  { type: "list", label: "Numbered List", icon: /* @__PURE__ */ jsx(IconOrderedList2, {}), initialData: { ordered: true, items: [""] } },
+  { type: "image", label: "Image", icon: /* @__PURE__ */ jsx(IconImage, {}), initialData: void 0 },
+  { type: "video", label: "Video", icon: /* @__PURE__ */ jsx(IconVideo, {}), initialData: void 0 },
+  { type: "gallery", label: "Gallery", icon: /* @__PURE__ */ jsx(IconGallery, {}), initialData: void 0 }
 ];
 function BlockTypePicker({ onSelect, onClose }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -24266,7 +24399,8 @@ function BlockTypePicker({ onSelect, onClose }) {
       (_d = (_c = listRef.current) == null ? void 0 : _c.querySelectorAll('[role="option"]')[prev]) == null ? void 0 : _d.focus();
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onSelect(BLOCK_TYPES[activeIndex].type);
+      const bt = BLOCK_TYPES[activeIndex];
+      onSelect(bt.type, bt.initialData);
     } else if (e.key === "Escape") {
       e.preventDefault();
       onClose();
@@ -24286,7 +24420,7 @@ function BlockTypePicker({ onSelect, onClose }) {
           role: "option",
           tabIndex: 0,
           "aria-selected": index === activeIndex,
-          onClick: () => onSelect(bt.type),
+          onClick: () => onSelect(bt.type, bt.initialData),
           onMouseEnter: () => setActiveIndex(index),
           children: [
             bt.icon,
@@ -24319,8 +24453,8 @@ function AddBlockButton({ onAdd, insertIndex }) {
     isOpen && /* @__PURE__ */ jsx(
       BlockTypePicker,
       {
-        onSelect: (type) => {
-          onAdd(type);
+        onSelect: (type, initialData) => {
+          onAdd(type, initialData);
           setIsOpen(false);
         },
         onClose: () => {
@@ -24332,7 +24466,7 @@ function AddBlockButton({ onAdd, insertIndex }) {
     )
   ] });
 }
-var DISPLAY_NAMES = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery" };
+var DISPLAY_NAMES = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List" };
 function displayName(type) {
   return DISPLAY_NAMES[type] || type;
 }
@@ -24341,7 +24475,8 @@ var EDITOR_MAP = {
   richtext: TextEditor,
   image: ImageEditor,
   video: VideoEditor,
-  gallery: GalleryEditor
+  gallery: GalleryEditor,
+  list: ListEditor
 };
 function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
   const controls = useDragControls();
@@ -24407,7 +24542,7 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
             ]
           }
         ),
-        /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type) => onAddBlock(type, index), insertIndex: index })
+        /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, index, initialData), insertIndex: index })
       ]
     }
   );
@@ -24423,7 +24558,7 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
         /* @__PURE__ */ jsx("strong", { children: "Text" }),
         " for a paragraph."
       ] }),
-      /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type) => onAddBlock(type, -1), insertIndex: -1 })
+      /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, -1, initialData), insertIndex: -1 })
     ] }) });
   }
   return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-canvas", children: [
@@ -24724,18 +24859,19 @@ function PageEditor({ slug }) {
       pendingSaveRef.current = false;
     });
   }
-  function handleAddBlock(type, insertIndex) {
+  function handleAddBlock(type, insertIndex, initialData) {
     const DEFAULT_DATA = {
       title: { level: "h2", text: "" },
       richtext: { html: "" },
       image: { src: "", alt: "" },
       video: { url: "" },
-      gallery: { items: [] }
+      gallery: { items: [] },
+      list: { ordered: false, items: [""] }
     };
     const newBlock = {
       id: crypto.randomUUID(),
       type,
-      data: { ...DEFAULT_DATA[type] }
+      data: initialData ? { ...initialData } : { ...DEFAULT_DATA[type] }
     };
     const next = [...blocks];
     next.splice(insertIndex + 1, 0, newBlock);
@@ -25435,7 +25571,7 @@ function PageManager() {
               onBlur: commitEdit,
               autoFocus: true
             }
-          ) : /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
+          ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
             /* @__PURE__ */ jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
             /* @__PURE__ */ jsx(
               "button",
@@ -25464,7 +25600,7 @@ function PageManager() {
               onBlur: commitEdit,
               autoFocus: true
             }
-          ) : /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
+          ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
             /* @__PURE__ */ jsx("span", { children: page.slug }),
             /* @__PURE__ */ jsx(
               "button",

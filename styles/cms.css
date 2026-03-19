@@ -313,6 +313,15 @@
   background: var(--jeeby-cms-bg-hover);
 }
 
+/* Inline-editable cell read state — matches the input's min-height so the row never shifts
+   when toggling between read and edit modes. */
+.jeeby-cms-admin .jeeby-cms-cell-read {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
 /* Edit affordance buttons — faintly visible at rest, full opacity on row hover or focus.
    Ensures content editors can discover rename actions without requiring pointer exploration. */
 .jeeby-cms-admin .jeeby-cms-edit-affordance {
@@ -791,12 +800,125 @@
   border: 1px solid var(--jeeby-cms-border);
   border-radius: 6px;
   color: var(--jeeby-cms-text-primary);
+  cursor: text;
+}
+
+/* Expand the Tiptap contenteditable to fill the container so clicks anywhere
+   in the field activate the editor — not just the text-height area. */
+.jeeby-cms-admin .jeeby-cms-text-editor-content .tiptap {
+  min-height: calc(120px - 24px); /* container min-height minus 12px top + 12px bottom */
+}
+
+/* Move the focus indicator to the outer container (via :focus-within) so it
+   never overlaps content inside the editor. Suppress the ring on the
+   contenteditable itself — the global :focus-visible rule would otherwise
+   place it 2px outside .tiptap, inside the container's padding area. */
+.jeeby-cms-admin .jeeby-cms-text-editor-content .tiptap:focus-visible {
+  outline: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-text-editor-content:focus-within {
+  border-color: var(--jeeby-cms-accent);
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Restore list rendering inside the rich-text area.
+   .jeeby-cms-block-canvas ol strips display/list-style/padding/margin for the
+   block list UI — same specificity, so source order matters. These rules come
+   later and win, restoring proper indentation and markers for content lists.
+   Also guards against consumer CSS resets that zero ul/ol padding. */
+.jeeby-cms-admin .jeeby-cms-text-editor-content ul,
+.jeeby-cms-admin .jeeby-cms-text-editor-content ol {
+  display: block;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-text-editor-content ul {
+  list-style: disc;
+}
+
+.jeeby-cms-admin .jeeby-cms-text-editor-content ol {
+  list-style: decimal;
 }
 
 .jeeby-cms-admin .jeeby-cms-text-editor-content a {
   color: var(--jeeby-cms-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ─── List Editor ───────────────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Fixed-width marker so inputs stay left-aligned regardless of item count */
+.jeeby-cms-admin .jeeby-cms-list-item-marker {
+  width: 1.75em;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: var(--jeeby-cms-text-sm);
+  user-select: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-item-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  background: var(--jeeby-cms-bg-input);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 4px;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-base);
+  font-family: inherit;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-item-input:focus {
+  border-color: var(--jeeby-cms-accent);
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: -1px;
+}
+
+/* Kept small — secondary action, should not compete with the input */
+.jeeby-cms-admin .jeeby-cms-list-item-remove {
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.4;
+  transition: opacity 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-item-remove:hover:not(:disabled),
+.jeeby-cms-admin .jeeby-cms-list-item-remove:focus-visible {
+  opacity: 1;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-add-btn {
+  margin-top: 8px;
+  font-size: var(--jeeby-cms-text-sm);
+  color: var(--jeeby-cms-text-secondary);
+  padding: 4px 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-add-btn:hover {
+  color: var(--jeeby-cms-text-primary);
 }
 
 .jeeby-cms-admin .jeeby-cms-gallery-preview {

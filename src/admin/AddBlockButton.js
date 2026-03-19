@@ -23,8 +23,8 @@ export function AddBlockButton({ onAdd, insertIndex }) {
 
       {isOpen && (
         <BlockTypePicker
-          onSelect={(type) => {
-            onAdd(type)
+          onSelect={(type, initialData) => {
+            onAdd(type, initialData)
             setIsOpen(false)
           }}
           onClose={() => {

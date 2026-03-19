@@ -289,7 +289,7 @@ export function PageManager() {
                       autoFocus
                     />
                   ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="jeeby-cms-cell-read">
                       <a href={'/admin/pages/' + encodeURIComponent(page.slug)}>{page.name || page.slug}</a>
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
@@ -317,7 +317,7 @@ export function PageManager() {
                       autoFocus
                     />
                   ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="jeeby-cms-cell-read">
                       <span>{page.slug}</span>
                       <button
                         ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
