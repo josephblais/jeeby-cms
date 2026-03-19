@@ -146,7 +146,7 @@ Plans:
 
 **Requirements:** PUB-01, PUB-02, PUB-03
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 07-01-PLAN.md — Firestore hasDraftChanges flag + Wave 0 test scaffolds + PUB-03 contract tests
@@ -220,8 +220,7 @@ Plans:
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 | 2/2 | Complete   | 2026-03-18 | 4 |
 | 3 | FRONT-01 through FRONT-10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
-| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete    | 2026-03-18 | 7 | PUB-01, PUB-02, PUB-03 | 3 |
-| 8 | CSS-01–04 | 4 |
+| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete    | 2026-03-18 | 7 | 2/2 | Complete   | 2026-03-19 | 8 | CSS-01–04 | 4 |
 | 9 | MEDIA-01–04 | 4 |
 | 10 | Polish/publish | — |
 | **Total** | | **44** |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-18T23:51:42.294Z"
+last_updated: "2026-03-19T01:15:40.336Z"
 progress:
   total_phases: 11
-  completed_phases: 6
-  total_plans: 23
-  completed_plans: 23
+  completed_phases: 7
+  total_plans: 25
+  completed_plans: 25
 ---
 
 # Project State: jeeby-cms
@@ -18,8 +18,8 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Developers can drop a fully functional CMS into any Next.js project in minutes, with zero lock-in to a specific design system
-**Current focus:** Phase 7 — Draft / Publish (next)
-**Last completed:** Phase 6, Plan 04 — AddBlockButton, BlockTypePicker, UndoToast, UnsavedChangesWarning, all Phase 6 components wired; PageEditor exported from admin entry (2026-03-18)
+**Current focus:** Phase 8 — CSS & Theming (next)
+**Last completed:** Phase 7, Plan 02 — PublishConfirmModal, PublishToast, EditorHeader publish controls, PageEditor publish state management; all Wave 0 Phase 7 tests green (2026-03-19)
 
 ## Phase Status
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | 4 | Admin Auth | ◑ In Progress | 2/? complete |
 | 5 | Page Manager | ● Complete | 3/3 complete |
 | 6 | Block Editor | ● Complete | 4/4 complete |
-| 7 | Draft / Publish | ○ Pending | — |
+| 7 | Draft / Publish | ● Complete | 2/2 complete |
 | 8 | CSS & Theming | ○ Pending | — |
 | 9 | Media Handling | ○ Pending | — |
 | 10 | Polish & Publish | ○ Pending | — |
@@ -89,6 +89,10 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 | Wave 0 Nyquist scaffolding for Phase 6 | 6 | 11 test files written before source files exist — intentional red state until Plans 02-04 |
 | AddBlockButton inside Reorder.Item | 6 | Framer Motion Reorder.Group only allows Reorder.Item as direct children — AddBlockButton goes after article inside Reorder.Item |
 | Dynamic aria-live for save status | 6 | assertive on error, polite otherwise — correct WCAG practice; source-inspection tests updated to accept JSX expression pattern |
+| publishBtnRef passed as prop through EditorHeader | 7 | Avoids forwardRef complexity; matches existing codebase prop-passing pattern |
+| Re-read getPage after publishPage | 7 | serverTimestamp() sentinel not available locally — must round-trip to Firestore to resolve lastPublishedAt |
+| Publish button disabled during auto-save | 7 | Prevents publishing while debounced save in-flight (RESEARCH.md Pitfall 3) |
+| openPublishModal clears stale error state | 7 | Prevents ghost error from prior failed publish attempt appearing in next modal open |
 
 ## Accumulated Context
 

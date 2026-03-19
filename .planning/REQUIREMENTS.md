@@ -58,8 +58,8 @@
 
 ### Draft / Publish
 
-- [ ] **PUB-01**: `PublishBar` shows last published date and unsaved indicator
-- [ ] **PUB-02**: Admin can publish a page (copies `draft` → `published`, updates `lastPublishedAt`)
+- [x] **PUB-01**: `PublishBar` shows last published date and unsaved indicator
+- [x] **PUB-02**: Admin can publish a page (copies `draft` → `published`, updates `lastPublishedAt`)
 - [ ] **PUB-03**: Front-end always reads from `published.blocks`; live site is unaffected until publish
 
 ### Media Handling
@@ -145,8 +145,8 @@
 | EDIT-04 | Phase 6 | Complete |
 | EDIT-05 | Phase 6 | Complete |
 | EDIT-06 | Phase 6 | Complete |
-| PUB-01 | Phase 7 | Pending |
-| PUB-02 | Phase 7 | Pending |
+| PUB-01 | Phase 7 | Complete |
+| PUB-02 | Phase 7 | Complete |
 | PUB-03 | Phase 7 | Pending |
 | CSS-01 | Phase 8 | Pending |
 | CSS-02 | Phase 8 | Pending |
