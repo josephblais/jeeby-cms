@@ -1,16 +1,18 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import { useCMSFirebase } from '../index.js'
-import { getPage, saveDraft, renamePage, publishPage } from '../firebase/firestore.js'
+import { getPage, saveDraft, renamePage, publishPage, savePage } from '../firebase/firestore.js'
 import { EditorHeader } from './EditorHeader.js'
 import { BlockCanvas } from './BlockCanvas.js'
 import { UndoToast } from './UndoToast.js'
 import { UnsavedChangesWarning } from './UnsavedChangesWarning.js'
 import { PublishConfirmModal } from './PublishConfirmModal.js'
 import { PublishToast } from './PublishToast.js'
+import { useSignOutGuard } from './SignOutGuardContext.js'
 
 export function PageEditor({ slug }) {
   const { db } = useCMSFirebase()
+  const signOutGuard = useSignOutGuard()
 
   const [blocks, setBlocks] = useState([])
   const [pageName, setPageName] = useState('')
@@ -30,6 +32,7 @@ export function PageEditor({ slug }) {
   const blocksRef = useRef(blocks)
   const pendingSaveRef = useRef(false)
   const publishBtnRef = useRef(null)
+  const containerRef = useRef(null)
 
   // Mirror blocks into ref to avoid stale closures in setTimeout
   useEffect(() => { blocksRef.current = blocks }, [blocks])
@@ -60,6 +63,46 @@ export function PageEditor({ slug }) {
     clearTimeout(debounceRef.current)
     clearTimeout(deleteTimerRef.current)
   }, [])
+
+  // Hide nav on scroll down, reveal on scroll up.
+  // Listens on .jeeby-cms-admin which is the single scroll container.
+  // Depends on `loading`: the containerRef div only exists in the non-loading
+  // render branch, so the effect must re-run once loading becomes false.
+  useEffect(() => {
+    if (loading) return
+    const el = containerRef.current
+    if (!el) return
+    const admin = el.closest('.jeeby-cms-admin')
+    if (!admin) return
+    let lastY = 0
+    function onScroll() {
+      const y = admin.scrollTop
+      const delta = y - lastY
+      if (delta > 8 && y > 56) {
+        admin.classList.add('jeeby-cms-nav-hidden')
+      } else if (delta < -8) {
+        admin.classList.remove('jeeby-cms-nav-hidden')
+      }
+      lastY = y
+    }
+    admin.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      admin.removeEventListener('scroll', onScroll)
+      admin.classList.remove('jeeby-cms-nav-hidden')
+    }
+  }, [loading])
+
+  // Register pending-changes guard with AdminPanel so sign-out can prompt.
+  // Re-registers whenever hasDraftChanges or pageName changes.
+  useEffect(() => {
+    if (!signOutGuard) return
+    signOutGuard.setGuard({
+      hasPending: () => hasDraftChanges || pendingSaveRef.current,
+      pageName: pageName || slug,
+      onPublish: handlePublish,
+    })
+    return () => { signOutGuard.clearGuard() }
+  }, [signOutGuard, hasDraftChanges, pageName, slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-dismiss publish toast after 3 seconds
   useEffect(() => {
@@ -182,6 +225,15 @@ export function PageEditor({ slug }) {
     setShowPublishModal(true)
   }
 
+  async function handleRenameName(newName) {
+    try {
+      await savePage(db, slug, { name: newName })
+      setPageName(newName)
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
   async function handleRenameSlug(newSlug) {
     try {
       await renamePage(db, slug, newSlug)
@@ -209,13 +261,14 @@ export function PageEditor({ slug }) {
   }
 
   return (
-    <div className="jeeby-cms-page-editor">
+    <div className="jeeby-cms-page-editor" ref={containerRef}>
       <EditorHeader
         pageName={pageName}
         slug={slug}
         saveStatus={saveStatus}
         onRetry={handleRetry}
         onBackClick={handleBackClick}
+        onRenameName={handleRenameName}
         onRenameSlug={handleRenameSlug}
         lastPublishedAt={lastPublishedAt}
         hasDraftChanges={hasDraftChanges}

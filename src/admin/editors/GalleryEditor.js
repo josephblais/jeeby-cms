@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useRef } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
 
 // GalleryEditor — ordered list of { src, alt } gallery items with add/remove/reorder controls.
@@ -28,14 +29,13 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
       as="li"
       style={{ listStyle: 'none' }}
     >
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', paddingBottom: '8px' }}>
+      <div className="jeeby-cms-gallery-item-row">
         {/* Drag handle — same pattern as BlockCanvas */}
         <button
           className="jeeby-cms-drag-handle"
           aria-label={'Drag to reorder gallery image ' + (index + 1)}
           aria-hidden="true"
           onPointerDown={(e) => { e.preventDefault(); controls.start(e) }}
-          style={{ alignSelf: 'center' }}
         >⠿</button>
 
         {item.src && (
@@ -46,7 +46,7 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
           />
         )}
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="jeeby-cms-gallery-item-inputs">
           <input
             id={index === 0 ? 'block-input-' + blockId : undefined}
             type="url"
@@ -57,7 +57,6 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
               ...data,
               items: updateItem(items, index, 'src', e.target.value),
             })}
-            style={{ width: '100%', minHeight: '44px' }}
           />
           <input
             type="text"
@@ -68,7 +67,6 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
               ...data,
               items: updateItem(items, index, 'alt', e.target.value),
             })}
-            style={{ width: '100%', minHeight: '44px' }}
           />
         </div>
 
@@ -79,19 +77,66 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
             ...data,
             items: items.filter((_, i) => i !== index),
           })}
-          className="jeeby-cms-btn-ghost"
-          style={{ minWidth: '44px', padding: 0, alignSelf: 'center' }}
-        >Remove</button>
+          className="jeeby-cms-btn-ghost jeeby-cms-gallery-remove-btn"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+            <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
     </Reorder.Item>
   )
 }
 
 export function GalleryEditor({ data, onChange, blockId }) {
+  const [isEditing, setIsEditing] = useState(false)
   const items = data?.items ?? []
+  const containerRef = useRef(null)
 
+  function handleContainerBlur() {
+    // Defer so focus can settle after React re-renders. relatedTarget is unreliable
+    // when transitioning from view→edit (the unmounting view div's blur fires before
+    // focus reaches any child of the edit container), so check activeElement instead.
+    setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        setIsEditing(false)
+      }
+    }, 0)
+  }
+
+  // View mode — thumbnail strip, click to edit
+  if (!isEditing) {
+    const itemsWithSrc = items.filter(item => item.src)
+    return (
+      <div
+        ref={containerRef}
+        className="jeeby-cms-gallery-view"
+        role="button"
+        tabIndex={0}
+        id={'block-input-' + blockId}
+        aria-label={'Gallery — ' + items.length + ' image' + (items.length !== 1 ? 's' : '') + '. Click to edit'}
+        onClick={() => setIsEditing(true)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditing(true) } }}
+      >
+        {itemsWithSrc.length > 0 ? (
+          <div className="jeeby-cms-gallery-thumb-strip">
+            {itemsWithSrc.map((item, i) => (
+              <img key={i} src={item.src} alt={item.alt || ''} className="jeeby-cms-gallery-thumb" />
+            ))}
+          </div>
+        ) : (
+          <p className="jeeby-cms-gallery-empty-hint">
+            {items.length > 0 ? 'Gallery — click to add image URLs' : 'Empty gallery — click to add images'}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // Edit mode — full controls with blur-to-dismiss
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div ref={containerRef} onBlur={handleContainerBlur} className="jeeby-cms-gallery-editor">
       <Reorder.Group
         axis="y"
         values={items}
@@ -102,7 +147,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
       >
         {items.map((item, index) => (
           <GalleryItem
-            key={item.src + index}
+            key={item.id ?? item.src + '-' + index}
             item={item}
             index={index}
             items={items}
@@ -115,12 +160,11 @@ export function GalleryEditor({ data, onChange, blockId }) {
 
       <button
         type="button"
-        className="jeeby-cms-btn-ghost"
+        className="jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn"
         onClick={() => onChange({
           ...data,
-          items: [...items, { src: '', alt: '' }],
+          items: [...items, { src: '', alt: '', id: crypto.randomUUID() }],
         })}
-        style={{ width: '100%' }}
       >+ Add image</button>
     </div>
   )

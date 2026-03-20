@@ -35,31 +35,62 @@ function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
   return { label: 'Not yet live', tone: 'muted', retry: false }
 }
 
-export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
-  const [editingSlug, setEditingSlug] = useState(slug)
+export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
+  const displayName = pageName || slug
+
+  // Title inline edit
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleValue, setTitleValue] = useState(displayName)
+
+  // Slug inline edit
+  const [editingSlug, setEditingSlug] = useState(false)
+  const [slugValue, setSlugValue] = useState(slug)
   const [slugDirty, setSlugDirty] = useState(false)
+
   const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt })
 
-  useEffect(() => { setEditingSlug(slug); setSlugDirty(false) }, [slug])
+  // Sync from props after external rename
+  useEffect(() => { setTitleValue(pageName || slug) }, [pageName, slug])
+  useEffect(() => { setSlugValue(slug); setSlugDirty(false) }, [slug])
 
-  function handleSlugChange(e) {
-    setEditingSlug(e.target.value)
-    setSlugDirty(e.target.value !== slug)
+  // ── Title handlers ──────────────────────────────────────────────
+
+  function commitTitle() {
+    const trimmed = titleValue.trim()
+    if (trimmed && trimmed !== displayName) {
+      onRenameName(trimmed)
+    } else {
+      setTitleValue(displayName)
+    }
+    setEditingTitle(false)
   }
 
+  function handleTitleKeyDown(e) {
+    if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
+    if (e.key === 'Escape') { setTitleValue(displayName); setEditingTitle(false) }
+  }
+
+  // ── Slug handlers ───────────────────────────────────────────────
+
   function commitSlug() {
-    const trimmed = editingSlug.trim()
+    const trimmed = slugValue.trim()
     if (trimmed && trimmed !== slug) {
       onRenameSlug(trimmed)
     } else {
-      setEditingSlug(slug)
+      setSlugValue(slug)
       setSlugDirty(false)
     }
+    setEditingSlug(false)
+  }
+
+  function handleSlugChange(e) {
+    setSlugValue(e.target.value)
+    setSlugDirty(e.target.value !== slug)
   }
 
   function handleSlugKeyDown(e) {
     if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
-    if (e.key === 'Escape') { setEditingSlug(slug); setSlugDirty(false); e.target.blur() }
+    if (e.key === 'Escape') { setSlugValue(slug); setSlugDirty(false); setEditingSlug(false) }
   }
 
   return (
@@ -77,25 +108,66 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
         </a>
       </div>
 
-      {/* Center zone: page identity — title + slug editor */}
+      {/* Center zone: page identity — editable title + editable slug */}
       <div className="jeeby-cms-editor-zone-center">
-        <h1 className="jeeby-cms-editor-title">{pageName || slug}</h1>
+        {editingTitle ? (
+          <input
+            type="text"
+            className="jeeby-cms-editor-title-input"
+            value={titleValue}
+            aria-label="Page name"
+            onChange={e => setTitleValue(e.target.value)}
+            onBlur={commitTitle}
+            onKeyDown={handleTitleKeyDown}
+            autoFocus
+          />
+        ) : (
+          /*
+           * <button> inside <h1>: valid HTML5. The heading provides document structure;
+           * the button provides the native interactive semantics (keyboard operable,
+           * announced as "button" by screen readers). WCAG 4.1.2 satisfied.
+           */
+          <h1 className="jeeby-cms-editor-title">
+            <button
+              className="jeeby-cms-editor-title-btn"
+              onClick={() => setEditingTitle(true)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditingTitle(true) } }}
+              aria-label={`Page name: ${displayName}. Click to edit`}
+            >
+              {displayName}
+            </button>
+          </h1>
+        )}
+
         <div className="jeeby-cms-slug-row">
           <span className="jeeby-cms-slug-prefix" aria-hidden="true">/</span>
-          <input
-            id="jeeby-slug-input"
-            className="jeeby-cms-slug-input"
-            type="text"
-            value={editingSlug}
-            aria-label="Page slug"
-            onChange={handleSlugChange}
-            onBlur={commitSlug}
-            onKeyDown={handleSlugKeyDown}
-          />
-          {slugDirty && (
-            <span className="jeeby-cms-slug-hint" aria-live="polite">
-              Enter to save
-            </span>
+          {editingSlug ? (
+            <>
+              <input
+                type="text"
+                className="jeeby-cms-slug-input"
+                value={slugValue}
+                aria-label="Page slug"
+                onChange={handleSlugChange}
+                onBlur={commitSlug}
+                onKeyDown={handleSlugKeyDown}
+                autoFocus
+              />
+              {slugDirty && (
+                <span className="jeeby-cms-slug-hint" aria-live="polite">
+                  Enter to save
+                </span>
+              )}
+            </>
+          ) : (
+            <button
+              className="jeeby-cms-slug-read-btn"
+              onClick={() => setEditingSlug(true)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditingSlug(true) } }}
+              aria-label={`Page slug: ${slug}. Click to edit`}
+            >
+              {slug}
+            </button>
           )}
         </div>
       </div>

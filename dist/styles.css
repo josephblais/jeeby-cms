@@ -25,12 +25,19 @@
   --jeeby-cms-bg-hover: rgba(255, 255, 255, 0.06);
   --jeeby-cms-bg-input: color-mix(in oklch, #1f1f1d 97%, oklch(80% 0.05 70));
   --jeeby-cms-error: #e74c3c;
+  --jeeby-cms-success: #4d9e4d;
+  --jeeby-cms-danger: #c0392b;
+  --jeeby-cms-btn-fg: #fff;        /* text on accent-filled buttons — override if your accent is light */
 
   /* Layout tokens */
   --jeeby-cms-nav-height: 56px;
   --jeeby-cms-max-width: 720px;
   --jeeby-cms-block-spacing: 1.5rem;
   --jeeby-cms-gallery-columns: 3;
+
+  /* Effect tokens */
+  --jeeby-cms-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);   /* toasts, small popovers */
+  --jeeby-cms-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);   /* dropdowns, dialogs */
 
   /* Typography tokens — override to adjust the type scale */
   --jeeby-cms-font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -43,8 +50,10 @@
   --jeeby-cms-leading-tight: 1.2;    /* headings */
   --jeeby-cms-leading-base:  1.55;   /* body — slightly open for dark bg readability */
 
-  /* Shell */
-  min-height: 100vh;
+  /* Shell — single scroll container for the whole admin panel.
+     Fixes double-scrollbar when page-editor has its own overflow. */
+  height: 100vh;
+  overflow-y: auto;
   background-color: var(--jeeby-cms-bg-surface);
   color: var(--jeeby-cms-text-primary);
   font-family: var(--jeeby-cms-font-family);
@@ -80,6 +89,15 @@
   padding: 0 16px;
   border-bottom: 1px solid var(--jeeby-cms-border);
   background: var(--jeeby-cms-bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  transition: transform 220ms ease;
+}
+
+.jeeby-cms-admin.jeeby-cms-nav-hidden .jeeby-cms-nav {
+  transform: translateY(-100%);
+  pointer-events: none; /* nav is off-screen — don't intercept clicks on editor header */
 }
 
 .jeeby-cms-admin .jeeby-cms-nav-brand {
@@ -101,7 +119,7 @@
   top: 0;
   z-index: 1000;
   background: var(--jeeby-cms-accent);
-  color: #fff;
+  color: var(--jeeby-cms-btn-fg);
   padding: 8px 16px;
   text-decoration: none;
   font-size: var(--jeeby-cms-text-base);
@@ -121,6 +139,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: calc(100vh - var(--jeeby-cms-nav-height));
 }
 
 /* WCAG 2.5.8: 44px minimum touch target */
@@ -141,25 +160,50 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  padding: 24px 16px;
 }
 
+/* Two-column grid: brand panel | form panel.
+   overflow: hidden clips both panels to the card's border-radius. */
 .jeeby-cms-admin .jeeby-cms-login-card {
-  max-width: 400px;
-  min-width: 320px;
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  max-width: 760px;
   width: 100%;
-  background: var(--jeeby-cms-bg-card);
-  padding: 32px;
   border-radius: 8px;
   border: 1px solid var(--jeeby-cms-border);
+  overflow: hidden;
+}
+
+/* Brand panel — site name anchored to the bottom.
+   The generous dead space above creates intentional poster-like weight. */
+.jeeby-cms-admin .jeeby-cms-login-brand {
+  background: var(--jeeby-cms-bg-card);
+  border-right: 1px solid var(--jeeby-cms-border);
+  padding: 48px 36px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 280px;
 }
 
 .jeeby-cms-admin .jeeby-cms-login-heading {
-  font-size: var(--jeeby-cms-text-2xl);
+  font-size: clamp(1.375rem, 2.5vw, 1.875rem);
   font-weight: 600;
-  line-height: var(--jeeby-cms-leading-tight);
-  margin: 0 0 28px;
-  text-align: center;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
   color: var(--jeeby-cms-text-primary);
+}
+
+/* Form panel — pure function, no decoration. Same bg as the page surface
+   so it visually recedes, letting the brand panel carry the weight. */
+.jeeby-cms-admin .jeeby-cms-login-form-pane {
+  background: var(--jeeby-cms-bg-surface);
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .jeeby-cms-admin .jeeby-cms-login-form {
@@ -172,6 +216,31 @@
   color: var(--jeeby-cms-error);
   font-size: var(--jeeby-cms-text-sm);
   margin: 8px 0 0;
+}
+
+/* Narrow viewports: stack vertically. Brand pane compresses to a header strip;
+   heading left-aligns and shrinks. Form pane fills below. */
+@media (max-width: 540px) {
+  .jeeby-cms-admin .jeeby-cms-login-card {
+    grid-template-columns: 1fr;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-login-brand {
+    border-right: none;
+    border-bottom: 1px solid var(--jeeby-cms-border);
+    padding: 24px 24px 20px;
+    min-height: 0;
+    justify-content: flex-start;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-login-heading {
+    font-size: var(--jeeby-cms-text-lg);
+  }
+
+  .jeeby-cms-admin .jeeby-cms-login-form-pane {
+    padding: 28px 24px;
+    justify-content: flex-start;
+  }
 }
 
 /* ─── Section 8: Form Elements ───────────────────────────────────── */
@@ -338,8 +407,15 @@
 
 /* ─── Section 10: Page Editor / Editor Header ────────────────────── */
 
+/* Page editor — normal flow inside the admin scroll container. */
 .jeeby-cms-admin .jeeby-cms-page-editor {
   position: relative;
+}
+
+/* Shell padding would offset the editor from the nav — remove it in editor context.
+   :has() is baseline-supported in all modern browsers (Chrome 105, FF 121, Safari 15.4). */
+.jeeby-cms-admin:has(.jeeby-cms-page-editor) .jeeby-cms-shell-content {
+  padding: 0;
 }
 
 /* 3-column grid: left (nav) | center (identity) | right (status + action).
@@ -352,6 +428,18 @@
   gap: 16px;
   padding: 12px 24px;
   border-bottom: 1px solid var(--jeeby-cms-border);
+  position: sticky;
+  top: var(--jeeby-cms-nav-height); /* sticks below the nav */
+  z-index: 10;
+  background: var(--jeeby-cms-bg-surface);
+  transition: transform 220ms ease;
+}
+
+/* When the nav hides (transform: translateY(-100%)), the nav's layout space remains.
+   Translating the editor header up by the same amount makes it visually fill that
+   space — appearing at top:0 in the viewport while still sticky within its container. */
+.jeeby-cms-admin.jeeby-cms-nav-hidden .jeeby-cms-editor-header {
+  transform: translateY(calc(-1 * var(--jeeby-cms-nav-height)));
 }
 
 .jeeby-cms-admin .jeeby-cms-editor-zone-left {
@@ -399,6 +487,51 @@
   max-width: 32ch;
 }
 
+/* Button inside h1: inherits heading styles, adds interaction affordance.
+   cursor:text signals the field is editable inline. */
+.jeeby-cms-admin .jeeby-cms-editor-title-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: text;
+  display: block;
+  min-height: 44px; /* WCAG 2.5.8 */
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+  transition: border-color 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-title-btn:hover {
+  border-bottom-color: var(--jeeby-cms-border);
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-title-btn:focus-visible {
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Title input: matches h1 typographic weight and size, no box — just accent underline */
+.jeeby-cms-admin .jeeby-cms-editor-title-input {
+  font-size: var(--jeeby-cms-text-xl);
+  font-weight: 600;
+  line-height: var(--jeeby-cms-leading-tight);
+  color: var(--jeeby-cms-text-primary);
+  font-family: inherit;
+  text-align: center;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--jeeby-cms-accent);
+  border-radius: 0;
+  padding: 0 4px 2px;
+  max-width: 32ch;
+  width: 100%;
+  outline: none;
+}
+
 .jeeby-cms-admin .jeeby-cms-slug-row {
   display: flex;
   align-items: center;
@@ -410,6 +543,34 @@
   font-size: var(--jeeby-cms-text-sm);
 }
 
+/* Slug read-state: button styled as plain text, cursor:text signals editability */
+.jeeby-cms-admin .jeeby-cms-slug-read-btn {
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  padding: 4px 2px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-sm);
+  font-family: inherit;
+  cursor: text;
+  transition: border-color 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-slug-read-btn:hover {
+  border-bottom-color: var(--jeeby-cms-border);
+}
+
+.jeeby-cms-admin .jeeby-cms-slug-read-btn:focus-visible {
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Slug input — edit mode only */
 .jeeby-cms-admin .jeeby-cms-slug-input {
   background: var(--jeeby-cms-bg-input);
   color: var(--jeeby-cms-text-primary);
@@ -458,11 +619,18 @@
     font-size: var(--jeeby-cms-text-lg);
   }
 
+  .jeeby-cms-admin .jeeby-cms-editor-title-input {
+    font-size: var(--jeeby-cms-text-lg);
+    max-width: none;
+    text-align: left;
+  }
+
   .jeeby-cms-admin .jeeby-cms-slug-row {
     width: 100%;
   }
 
-  .jeeby-cms-admin .jeeby-cms-slug-input {
+  .jeeby-cms-admin .jeeby-cms-slug-input,
+  .jeeby-cms-admin .jeeby-cms-slug-read-btn {
     flex: 1;
     min-width: 0;
   }
@@ -494,15 +662,15 @@
 }
 
 .jeeby-cms-admin .jeeby-cms-doc-status--published {
-  color: #4d9e4d;
-  background: rgba(77, 158, 77, 0.08);
-  border-color: rgba(77, 158, 77, 0.18);
+  color: var(--jeeby-cms-success);
+  background: color-mix(in srgb, var(--jeeby-cms-success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--jeeby-cms-success) 20%, transparent);
 }
 
 .jeeby-cms-admin .jeeby-cms-doc-status--error {
   color: var(--jeeby-cms-error);
-  background: rgba(231, 76, 60, 0.08);
-  border-color: rgba(231, 76, 60, 0.18);
+  background: color-mix(in srgb, var(--jeeby-cms-error) 10%, transparent);
+  border-color: color-mix(in srgb, var(--jeeby-cms-error) 20%, transparent);
 }
 
 /* WCAG 2.5.8: retry button inside error chip needs 44px touch target */
@@ -538,8 +706,9 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--jeeby-cms-block-spacing);
+  gap: var(--jeeby-cms-block-spacing); /* seam buttons are zero-height; gap controls all block spacing */
 }
+
 
 /* WCAG 2.5.8: 44px minimum touch target for drag handle */
 .jeeby-cms-admin .jeeby-cms-drag-handle {
@@ -556,22 +725,57 @@
   color: var(--jeeby-cms-text-muted);
 }
 
-/* ─── Section 12: Add Block Button / Block Type Picker ───────────── */
+/* ─── Section 12: Add Block Seam / Block Type Picker ─────────────── */
 
-.jeeby-cms-admin .jeeby-cms-add-block-wrapper {
-  display: flex;
-  justify-content: center;
+/* Zero-height seam container — sits between blocks without creating layout space.
+   The ol's gap: var(--jeeby-cms-block-spacing) provides all vertical spacing. */
+.jeeby-cms-admin .jeeby-cms-add-block-seam {
+  height: 0;
   position: relative;
-  padding: 8px 0;
+  overflow: visible;
 }
 
-/* WCAG 2.5.8: 44px minimum touch target */
+/* Invisible hover zone — spans the full gap height so the mouse can enter from anywhere
+   in the gutter column between two blocks, not just by hitting the small button. */
+.jeeby-cms-admin .jeeby-cms-add-block-hover-zone {
+  position: absolute;
+  top: 0;
+  height: var(--jeeby-cms-block-spacing);
+  left: 0;
+  width: 160px; /* covers gutter + enough content area to feel responsive */
+  pointer-events: all;
+}
+
+/* UI container: button + bar, centered vertically within the gap, gutter-aligned.
+   Semi-opaque at rest so the button is always discoverable — full opacity on hover/focus.
+   Note: transform: translateY(-50%) creates a stacking context here, so the picker is
+   rendered as a sibling (not inside this div) to keep its z-index in the page context. */
+.jeeby-cms-admin .jeeby-cms-add-block-ui {
+  position: absolute;
+  top: calc(var(--jeeby-cms-block-spacing) / 2);
+  left: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none; /* click events handled by children */
+  opacity: 0.5;
+  transition: opacity 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-add-block-seam:hover .jeeby-cms-add-block-ui,
+.jeeby-cms-admin .jeeby-cms-add-block-seam:focus-within .jeeby-cms-add-block-ui {
+  opacity: 1;
+}
+
+/* Button — WCAG 2.5.8: 44px minimum touch target */
 .jeeby-cms-admin .jeeby-cms-add-block-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 1;
+  pointer-events: all; /* re-enables clicks; parent UI container has pointer-events: none */
   min-height: 44px;
   min-width: 44px;
   padding: 0;
@@ -584,21 +788,40 @@
   line-height: 1;
 }
 
-.jeeby-cms-admin .jeeby-cms-add-block-btn:hover {
+.jeeby-cms-admin .jeeby-cms-add-block-btn:hover,
+.jeeby-cms-admin .jeeby-cms-add-block-btn:focus-visible {
   border-color: var(--jeeby-cms-accent);
   color: var(--jeeby-cms-accent);
+}
+
+/* Insertion indicator bar — pill shape, accent color.
+   Width is animated by Framer Motion (0 → 96px) when seam is hovered. */
+.jeeby-cms-admin .jeeby-cms-add-block-bar {
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--jeeby-cms-accent);
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+/* When the picker is a direct child of the seam (add-block context), override the default
+   top: 100% (which would be 0 on a height:0 element) with the correct vertical position.
+   z-index: 5 keeps it above block content but below sticky headers (z-index: 10) and nav (20). */
+.jeeby-cms-admin .jeeby-cms-add-block-seam > .jeeby-cms-block-type-picker {
+  top: calc(var(--jeeby-cms-block-spacing) / 2 + 26px); /* gap center + half button height (22px) + 4px margin */
+  left: 0;
+  z-index: 5;
 }
 
 .jeeby-cms-admin .jeeby-cms-block-type-picker {
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   z-index: 100;
   list-style: none;
   padding: 4px 0;
   margin: 4px 0 0;
-  min-width: 160px;
+  min-width: 210px;
   background: var(--jeeby-cms-bg-card);
   border: 1px solid var(--jeeby-cms-border);
   border-radius: 6px;
@@ -608,10 +831,29 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
+  padding: 7px 10px;
   cursor: pointer;
   font-size: var(--jeeby-cms-text-base);
   color: var(--jeeby-cms-text-primary);
+}
+
+/* Two-line label + hint layout */
+.jeeby-cms-admin .jeeby-cms-block-type-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-label {
+  font-size: var(--jeeby-cms-text-base);
+  color: var(--jeeby-cms-text-primary);
+  line-height: var(--jeeby-cms-leading-tight);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-hint {
+  font-size: var(--jeeby-cms-text-xs);
+  color: var(--jeeby-cms-text-muted);
+  line-height: var(--jeeby-cms-leading-tight);
 }
 
 .jeeby-cms-admin .jeeby-cms-block-type-picker li:hover,
@@ -637,6 +879,30 @@
   background: rgba(255, 255, 255, 0.06);
   color: var(--jeeby-cms-text-secondary);
   flex-shrink: 0;
+}
+
+/* Per-category icon tints in the block type picker.
+   All chroma values ≤ 0.10 — low-saturation, matching the "quiet" brand.
+   heading: blue (reuses accent hue) | text: barely-warm neutral (default = quietest)
+   list: muted teal | media: muted amber */
+.jeeby-cms-admin .jeeby-cms-block-type-picker li[data-color-key="heading"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(55% 0.09 235) 14%, transparent);
+  color: oklch(68% 0.09 235);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker li[data-color-key="text"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(65% 0.04 70) 10%, transparent);
+  color: oklch(72% 0.04 70);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker li[data-color-key="list"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(60% 0.08 168) 12%, transparent);
+  color: oklch(68% 0.08 168);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-type-picker li[data-color-key="media"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(65% 0.10 48) 12%, transparent);
+  color: oklch(72% 0.10 48);
 }
 
 /* Heading icon: H + subscript number */
@@ -690,12 +956,29 @@
   line-height: 1;
 }
 
-/* Override centered positioning from block-type-picker */
-.jeeby-cms-admin .jeeby-cms-heading-picker-dropdown {
-  left: 0;
-  transform: none;
-  min-width: 148px;
+/* Wrapper positions both the listbox and the note as one floating unit */
+.jeeby-cms-admin .jeeby-cms-heading-picker-dropdown-wrap {
+  /* position: fixed so the dropdown escapes overflow:hidden on .jeeby-cms-block-aux.
+     top/left are set via inline style computed from the trigger's getBoundingClientRect(). */
+  position: fixed;
+  z-index: 100;
+  background: var(--jeeby-cms-bg-card);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  box-shadow: var(--jeeby-cms-shadow-md);
+  width: max-content;
 }
+
+/* Override base block-type-picker positioning — now handled by the wrapper */
+.jeeby-cms-admin .jeeby-cms-heading-picker-dropdown {
+  position: static;
+  border: none;
+  box-shadow: none;
+  border-radius: 6px;
+  min-width: 0;
+  margin: 0; /* base class adds margin: 4px 0 0 — wrapper handles offset instead */
+}
+
 
 /* ─── Section 13: Editor Forms (toolbar, text editor, gallery) ───── */
 
@@ -796,11 +1079,12 @@
 .jeeby-cms-admin .jeeby-cms-text-editor-content {
   min-height: 120px;
   padding: 12px;
-  background: var(--jeeby-cms-bg-input);
-  border: 1px solid var(--jeeby-cms-border);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 6px;
   color: var(--jeeby-cms-text-primary);
   cursor: text;
+  transition: background 150ms, border-color 150ms;
 }
 
 /* Expand the Tiptap contenteditable to fill the container so clicks anywhere
@@ -818,6 +1102,7 @@
 }
 
 .jeeby-cms-admin .jeeby-cms-text-editor-content:focus-within {
+  background: var(--jeeby-cms-bg-input);
   border-color: var(--jeeby-cms-accent);
   outline: 2px solid var(--jeeby-cms-focus-ring);
   outline-offset: 2px;
@@ -849,6 +1134,56 @@
   text-underline-offset: 2px;
 }
 
+/* Placeholder for empty TextEditor at rest.
+   Tiptap adds .is-editor-empty when content is empty.
+   float: left / height: 0 is the standard Tiptap placeholder technique — the
+   pseudo-element sits in content flow without pushing subsequent text down.
+   ACCESSIBILITY: ::before content is not in the accessibility tree; the field
+   is already identified by aria-label="Text content" on the wrapper div. */
+.jeeby-cms-admin .jeeby-cms-text-editor-content .tiptap.is-editor-empty p:first-child::before {
+  content: 'Click to add text\2026';
+  color: var(--jeeby-cms-text-secondary); /* #a8a8a0 — ~5.6:1 against card bg, passes AA */
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* Hide placeholder once editing starts */
+.jeeby-cms-admin .jeeby-cms-text-editor-content:focus-within .tiptap.is-editor-empty p:first-child::before {
+  content: none;
+}
+
+/* ── Text editor wrapper — document-like canvas layout ───────────── */
+
+/* Flex column so toolbar-reveal can be visually repositioned above the editor
+   via CSS order while remaining DOM-after (correct tab order). */
+.jeeby-cms-admin .jeeby-cms-text-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar reveal container — DOM after EditorContent, visual above via order: -1.
+   Grid collapses to 0fr when wrapper is not focused, eliminating layout space
+   for the toolbar at rest. On :focus-within the editor is already focused,
+   so the toolbar expands before the user can Tab to any toolbar button.
+   WCAG 2.4.3 (Focus Order): content → toolbar is the correct sequence. */
+.jeeby-cms-admin .jeeby-cms-text-editor-toolbar-reveal {
+  order: -1;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 150ms ease;
+}
+
+.jeeby-cms-admin .jeeby-cms-text-editor-wrapper:focus-within .jeeby-cms-text-editor-toolbar-reveal {
+  grid-template-rows: 1fr;
+}
+
+/* Inner wrapper clips overflow during the grid expand/collapse transition */
+.jeeby-cms-admin .jeeby-cms-text-editor-toolbar-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
 /* ─── List Editor ───────────────────────────────────────────────── */
 
 .jeeby-cms-admin .jeeby-cms-list-items {
@@ -877,17 +1212,19 @@
 .jeeby-cms-admin .jeeby-cms-list-item-input {
   flex: 1;
   min-width: 0;
-  height: 36px;
+  min-height: 44px; /* WCAG 2.5.8 — was 36px */
   padding: 0 10px;
-  background: var(--jeeby-cms-bg-input);
-  border: 1px solid var(--jeeby-cms-border);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 4px;
   color: var(--jeeby-cms-text-primary);
   font-size: var(--jeeby-cms-text-base);
   font-family: inherit;
+  transition: background 150ms, border-color 150ms;
 }
 
 .jeeby-cms-admin .jeeby-cms-list-item-input:focus {
+  background: var(--jeeby-cms-bg-input);
   border-color: var(--jeeby-cms-accent);
   outline: 2px solid var(--jeeby-cms-focus-ring);
   outline-offset: -1px;
@@ -910,6 +1247,15 @@
   opacity: 1;
 }
 
+/* Hidden at rest — revealed when the block row is hovered or any descendant is focused.
+   :focus-within fires the moment any list item input is focused, so the remove buttons
+   are visible before the user can Tab to them. pointer-events: none at rest prevents
+   accidental clicks without removing buttons from the tab order. */
+.jeeby-cms-admin .jeeby-cms-block-row:not(:hover):not(:focus-within) .jeeby-cms-list-item-remove {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .jeeby-cms-admin .jeeby-cms-list-add-btn {
   margin-top: 8px;
   font-size: var(--jeeby-cms-text-sm);
@@ -921,6 +1267,159 @@
   color: var(--jeeby-cms-text-primary);
 }
 
+/* List view mode — rendered list, click to edit */
+.jeeby-cms-admin .jeeby-cms-list-view {
+  cursor: text;
+  border-radius: 4px;
+  outline: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-view:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+/* Restore list rendering for both ul and ol preview.
+   .jeeby-cms-block-canvas ol strips list-style/padding/display for the block
+   ordering UI — same specificity pattern as .jeeby-cms-text-editor-content override above.
+   ol.jeeby-cms-list-preview (0-3-1) beats .jeeby-cms-block-canvas ol (0-2-1). */
+.jeeby-cms-admin .jeeby-cms-list-preview {
+  margin: 0;
+  padding-left: 1.5em;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-base);
+  line-height: 1.6;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-canvas ol.jeeby-cms-list-preview {
+  list-style: decimal;
+  padding-left: 1.5em;
+  margin: 0;
+  display: block;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-preview li + li {
+  margin-top: 4px;
+}
+
+.jeeby-cms-admin .jeeby-cms-list-empty-hint {
+  margin: 0;
+  color: var(--jeeby-cms-text-muted);
+  font-size: var(--jeeby-cms-text-base);
+  font-style: italic;
+}
+
+/* ── Image Editor empty state ─────────────────────────────────────── */
+
+/* Visible label above an input — used in empty states where block-aux is bypassed */
+.jeeby-cms-admin .jeeby-cms-field-label {
+  display: block;
+  font-size: var(--jeeby-cms-text-sm);
+  color: var(--jeeby-cms-text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Empty state: placeholder area + always-visible URL input */
+.jeeby-cms-admin .jeeby-cms-image-empty {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-empty-area {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border: 1px dashed var(--jeeby-cms-border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--jeeby-cms-text-muted);
+  background: var(--jeeby-cms-bg-input);
+}
+
+.jeeby-cms-admin .jeeby-cms-image-empty-inputs {
+  flex: 1;
+  min-width: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-url-input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+/* ── Video Editor empty state — mirrors ImageEditor empty-state layout ── */
+
+.jeeby-cms-admin .jeeby-cms-video-empty {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.jeeby-cms-admin .jeeby-cms-video-empty-area {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border: 1px dashed var(--jeeby-cms-border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--jeeby-cms-text-muted);
+  background: var(--jeeby-cms-bg-input);
+}
+
+.jeeby-cms-admin .jeeby-cms-video-empty-inputs {
+  flex: 1;
+  min-width: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-video-url-input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+/* ── Login page password visibility toggle ── */
+
+/* Wrapper provides the relative positioning anchor for the toggle button */
+.jeeby-cms-admin .jeeby-cms-password-wrapper {
+  position: relative;
+}
+
+/* Shift input text away from the toggle button — avoids text running under the icon */
+.jeeby-cms-admin .jeeby-cms-password-wrapper input {
+  padding-right: 48px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* WCAG 2.5.8: 44×44px touch target, positioned flush to the input's right edge */
+.jeeby-cms-admin .jeeby-cms-password-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--jeeby-cms-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 6px 6px 0;
+  transition: color 120ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-password-toggle:hover {
+  color: var(--jeeby-cms-text-secondary);
+}
+
 .jeeby-cms-admin .jeeby-cms-gallery-preview {
   width: 80px;
   height: 80px;
@@ -929,27 +1428,187 @@
   border-radius: 4px;
 }
 
-/* ─── Section 14: Block Cards ───────────────────────────────────── */
-
-/* Card container — visual separation between blocks */
-.jeeby-cms-admin .jeeby-cms-block-card {
-  background: var(--jeeby-cms-bg-card);
-  border: 1px solid var(--jeeby-cms-border);
-  border-radius: 8px;
-  padding: 16px;
+/* Gallery view mode — thumbnail grid, click to edit (mirrors .jeeby-cms-list-view pattern) */
+.jeeby-cms-admin .jeeby-cms-gallery-view {
+  cursor: text;
+  border-radius: 4px;
+  outline: none;
 }
 
-/* Controls strip (drag handle | delete) — flush to card edges, separated from editor */
-.jeeby-cms-admin .jeeby-cms-block-card-controls {
-  margin: -16px -16px 12px;
-  padding: 2px 8px;
-  border-bottom: 1px solid var(--jeeby-cms-border);
+.jeeby-cms-admin .jeeby-cms-gallery-view:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+/* --jeeby-cms-gallery-columns controls the thumbnail grid column count (default: 3).
+   Consumers override via: .jeeby-cms-admin { --jeeby-cms-gallery-columns: 4; } */
+.jeeby-cms-admin .jeeby-cms-gallery-thumb-strip {
+  display: grid;
+  grid-template-columns: repeat(var(--jeeby-cms-gallery-columns), 56px);
+  grid-auto-rows: 56px;
+  gap: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-empty-hint {
+  margin: 0;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: var(--jeeby-cms-text-base);
+  font-style: italic;
+}
+
+/* Gallery edit mode — layout classes replacing inline styles */
+.jeeby-cms-admin .jeeby-cms-gallery-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-item-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding-bottom: 8px;
+}
+
+/* Center the drag handle vertically — gallery items are taller than list items due to preview */
+.jeeby-cms-admin .jeeby-cms-gallery-item-row .jeeby-cms-drag-handle {
+  align-self: center;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-item-inputs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-add-btn {
+  width: 100%;
+}
+
+/* Remove button — mirrors .jeeby-cms-list-item-remove opacity pattern, sized for 44px touch target */
+.jeeby-cms-admin .jeeby-cms-gallery-remove-btn {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  align-self: center;
+  opacity: 0.4;
+  transition: opacity 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-remove-btn:hover:not(:disabled),
+.jeeby-cms-admin .jeeby-cms-gallery-remove-btn:focus-visible {
+  opacity: 1;
+}
+
+/* ─── Section 14: Block Layout (document-flow, Notion-style) ──────── */
+
+/* Block row — document-flow container with left gutter space */
+.jeeby-cms-admin .jeeby-cms-block-row {
+  position: relative;
+  padding-left: 44px; /* 28px gutter + 16px gap to content */
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-radius: 4px;
+  transition: background 100ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-row:hover {
+  background: var(--jeeby-cms-bg-hover);
+}
+
+/* Left gutter — drag handle stacked above delete button, fades in on hover/focus */
+.jeeby-cms-admin .jeeby-cms-block-gutter {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-row:hover .jeeby-cms-block-gutter,
+.jeeby-cms-admin .jeeby-cms-block-row:focus-within .jeeby-cms-block-gutter {
+  opacity: 1;
+}
+
+/* Override drag handle size in the gutter — compact icon, not full 44px block */
+.jeeby-cms-admin .jeeby-cms-block-gutter .jeeby-cms-drag-handle {
+  min-height: 28px;
+  min-width: 28px;
+}
+
+/* Delete icon button — small, muted at rest */
+.jeeby-cms-admin .jeeby-cms-block-delete-btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--jeeby-cms-text-muted);
+}
+
+.jeeby-cms-admin .jeeby-cms-block-delete-btn:hover {
+  color: var(--jeeby-cms-error);
+}
+
+/* Block content — the editor itself */
+.jeeby-cms-admin .jeeby-cms-block-content {
+  display: block; /* article is block by default but be explicit */
+}
+
+/* Aux editing controls — collapsed and invisible at rest, revealed on hover/focus.
+   max-height approach avoids layout shift: collapsed controls take no space. */
+.jeeby-cms-admin .jeeby-cms-block-aux {
+  overflow: hidden;
+  max-height: 200px;
+  padding-top: 8px;
+  transition: max-height 220ms ease, opacity 180ms ease, padding-top 220ms ease;
+}
+
+.jeeby-cms-admin .jeeby-cms-block-row:not(:hover):not(:focus-within) .jeeby-cms-block-aux {
+  max-height: 0;
+  padding-top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Block canvas mobile adaptation ──────────────────────────────────
+   Matches the 680px breakpoint used by the editor header.
+   On narrow viewports the 64px gutter indent eats ~17% of usable width.
+   Strategy: reduce indent to 36px (delete button only) and hide the drag
+   handle — touch drag is unreliable in a scrollable container anyway. */
+@media (max-width: 680px) {
+  /* Tighter indent on mobile — gutter stays 28px but gap to content shrinks */
+  .jeeby-cms-admin .jeeby-cms-block-row {
+    padding-left: 36px;
+  }
+
+  /* Drag handle is pointer-only — not usable on touch. Remove it from
+     the gutter; delete button remains centred in the column. */
+  .jeeby-cms-admin .jeeby-cms-block-gutter .jeeby-cms-drag-handle {
+    display: none;
+  }
 }
 
 /* All text/url inputs and textareas inside block editors share the styled-input look */
-.jeeby-cms-admin .jeeby-cms-block-card input[type="text"],
-.jeeby-cms-admin .jeeby-cms-block-card input[type="url"],
-.jeeby-cms-admin .jeeby-cms-block-card textarea {
+.jeeby-cms-admin .jeeby-cms-block-content input[type="text"],
+.jeeby-cms-admin .jeeby-cms-block-content input[type="url"],
+.jeeby-cms-admin .jeeby-cms-block-content textarea {
   display: block;
   width: 100%;
   min-height: 44px;
@@ -963,33 +1622,21 @@
   box-sizing: border-box;
 }
 
-.jeeby-cms-admin .jeeby-cms-block-card input[type="text"]:focus,
-.jeeby-cms-admin .jeeby-cms-block-card input[type="url"]:focus,
-.jeeby-cms-admin .jeeby-cms-block-card textarea:focus {
+.jeeby-cms-admin .jeeby-cms-block-content input[type="text"]:focus,
+.jeeby-cms-admin .jeeby-cms-block-content input[type="url"]:focus,
+.jeeby-cms-admin .jeeby-cms-block-content textarea:focus {
   border-color: var(--jeeby-cms-accent);
 }
 
-/* Select elements (heading level picker etc.) */
-.jeeby-cms-admin .jeeby-cms-block-card select {
-  min-height: 36px;
-  padding: 4px 8px;
-  background: var(--jeeby-cms-bg-input);
-  color: var(--jeeby-cms-text-primary);
-  border: 1px solid var(--jeeby-cms-border);
-  border-radius: 6px;
-  font-size: var(--jeeby-cms-text-sm);
-  font-family: inherit;
-}
-
 /* Contenteditable (TitleEditor heading text) */
-.jeeby-cms-admin .jeeby-cms-block-card [contenteditable] {
-  padding: 8px;
+.jeeby-cms-admin .jeeby-cms-block-content [contenteditable] {
+  padding: 4px 0;
   color: var(--jeeby-cms-text-primary);
   line-height: var(--jeeby-cms-leading-tight);
 }
 
 /* Placeholder shown when contenteditable is empty via data-placeholder attribute */
-.jeeby-cms-admin .jeeby-cms-block-card [contenteditable]:empty::before {
+.jeeby-cms-admin .jeeby-cms-block-content [contenteditable]:empty::before {
   content: attr(data-placeholder);
   color: var(--jeeby-cms-text-muted);
   pointer-events: none;
@@ -1062,7 +1709,7 @@
   border-radius: 6px;
   padding: 10px 16px;
   font-size: var(--jeeby-cms-text-base);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--jeeby-cms-shadow-sm);
 }
 
 /* ─── Section 16: Buttons ────────────────────────────────────────── */
@@ -1075,17 +1722,18 @@
   min-height: 44px;
   padding: 0 16px;
   background: var(--jeeby-cms-accent);
-  color: #fff;
+  color: var(--jeeby-cms-btn-fg);
   border: none;
   border-radius: 6px;
   font-size: var(--jeeby-cms-text-base);
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+  transition: background 120ms ease;
 }
 
 .jeeby-cms-admin .jeeby-cms-btn-primary:hover {
-  filter: brightness(1.1);
+  background: color-mix(in oklch, var(--jeeby-cms-accent) 82%, black);
 }
 
 .jeeby-cms-admin .jeeby-cms-btn-primary:disabled,
@@ -1120,18 +1768,19 @@
   justify-content: center;
   min-height: 44px;
   padding: 0 16px;
-  background: #c0392b;
-  color: #fff;
+  background: var(--jeeby-cms-danger);
+  color: var(--jeeby-cms-btn-fg);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: var(--jeeby-cms-text-base);
   font-weight: 500;
   font-family: inherit;
+  transition: background 120ms ease;
 }
 
 .jeeby-cms-admin .jeeby-cms-btn-destructive:hover {
-  filter: brightness(1.1);
+  background: color-mix(in oklch, var(--jeeby-cms-danger) 82%, black);
 }
 
 /* ─── Section 17: Skeleton Loading ──────────────────────────────── */
@@ -1160,13 +1809,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 48px 16px;
   text-align: center;
 }
 
+/* Block type preview sketches — decorative illustrations, aria-hidden */
+.jeeby-cms-admin .jeeby-cms-canvas-empty-previews {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px; /* extra separation between sketches and headline */
+}
+
+.jeeby-cms-admin .jeeby-cms-canvas-empty-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-canvas-empty-preview-card {
+  padding: 10px 12px;
+  background: var(--jeeby-cms-bg-card);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  color: var(--jeeby-cms-text-secondary);
+  line-height: 0; /* prevents extra space below the inline SVG */
+}
+
+.jeeby-cms-admin .jeeby-cms-canvas-empty-preview-label {
+  font-size: var(--jeeby-cms-text-xs);
+  color: var(--jeeby-cms-text-muted);
+}
+
 .jeeby-cms-admin .jeeby-cms-canvas-empty-headline {
-  font-size: var(--jeeby-cms-text-base);
+  font-size: var(--jeeby-cms-text-lg);
   font-weight: 600;
   color: var(--jeeby-cms-text-primary);
   margin: 0;
@@ -1180,6 +1857,27 @@
   line-height: var(--jeeby-cms-leading-base);
 }
 
+/* ─── Section 19: Canvas Width Hint ─────────────────────────────── */
+
+/* Developer-facing hint surfacing the canvas width config.
+   aria-hidden on the element — informational metadata, not page content. */
+.jeeby-cms-admin .jeeby-cms-canvas-width-hint {
+  margin: 24px 0 0;
+  text-align: center;
+  font-size: var(--jeeby-cms-text-xs);
+  color: var(--jeeby-cms-text-muted);
+  font-family: ui-monospace, 'SF Mono', Menlo, 'Courier New', monospace;
+  opacity: 0.5;
+  user-select: none;
+  pointer-events: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-canvas-width-hint code {
+  font-family: inherit;
+  background: none;
+  color: inherit;
+}
+
 /* ─── Section 20: data-theme="light" stub ────────────────────────── */
 
 /* Future light mode — override color vars here when implemented */
@@ -1189,4 +1887,19 @@
   /* --jeeby-cms-bg-card: #ffffff; */
   /* --jeeby-cms-text-primary: #1a1918; */
   /* --jeeby-cms-border: rgba(0, 0, 0, 0.08); */
+}
+
+/* ─── Section 21: prefers-reduced-motion ─────────────────────────── */
+
+/* WCAG 2.3.3 (Animation from Interactions, AAA) / OS-level "Reduce Motion" setting.
+   All transitions and animations are suppressed. Static alternatives are
+   already defined — elements just snap to their final state. */
+@media (prefers-reduced-motion: reduce) {
+  .jeeby-cms-admin *,
+  .jeeby-cms-admin *::before,
+  .jeeby-cms-admin *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

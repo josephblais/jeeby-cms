@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 
-// Canvas fidelity font sizes (WYSIWYG content sizes, not UI chrome).
-// Matches UI-SPEC heading sizes so admin sees exactly what front end renders.
+// Admin preview sizes — rough approximations only.
+// The Title block renders unstyled <h2>/<h3> etc. on the front end; actual size
+// is controlled entirely by the consumer's CSS and will differ from these values.
 const HEADING_SIZES = { h2: '28px', h3: '24px', h4: '20px', h5: '16px', h6: '14px' }
 
 const LEVELS = ['h2', 'h3', 'h4', 'h5', 'h6']
@@ -22,10 +23,22 @@ function HeadingLevelIcon({ level }) {
 
 function HeadingLevelPicker({ value, onChange }) {
   const [open, setOpen] = useState(false)
+  const [dropdownStyle, setDropdownStyle] = useState({})
   const [hoverIndex, setHoverIndex] = useState(LEVELS.indexOf(value))
   const wrapperRef = useRef(null)
   const triggerRef = useRef(null)
   const listRef = useRef(null)
+
+  function computeDropdownStyle() {
+    if (!triggerRef.current) return {}
+    const rect = triggerRef.current.getBoundingClientRect()
+    return { top: rect.bottom + 4, left: rect.left }
+  }
+
+  function openPicker() {
+    setDropdownStyle(computeDropdownStyle())
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!open) return
@@ -34,8 +47,15 @@ function HeadingLevelPicker({ value, onChange }) {
         setOpen(false)
       }
     }
+    // Close on scroll — fixed dropdown stays put while content moves
+    const scrollEl = triggerRef.current?.closest('.jeeby-cms-admin')
+    function handleScroll() { setOpen(false) }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    scrollEl?.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      scrollEl?.removeEventListener('scroll', handleScroll)
+    }
   }, [open])
 
   useEffect(() => {
@@ -49,7 +69,7 @@ function HeadingLevelPicker({ value, onChange }) {
   function handleTriggerKeyDown(e) {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
       e.preventDefault()
-      setOpen(true)
+      openPicker()
     }
   }
 
@@ -85,7 +105,7 @@ function HeadingLevelPicker({ value, onChange }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Heading level: ${LEVEL_LABELS[value]}`}
-        onClick={() => setOpen(o => !o)}
+        onClick={() => open ? setOpen(false) : openPicker()}
         onKeyDown={handleTriggerKeyDown}
       >
         <HeadingLevelIcon level={value} />
@@ -93,27 +113,29 @@ function HeadingLevelPicker({ value, onChange }) {
       </button>
 
       {open && (
-        <ul
-          ref={listRef}
-          role="listbox"
-          aria-label="Choose heading level"
-          onKeyDown={handleListKeyDown}
-          className="jeeby-cms-block-type-picker jeeby-cms-heading-picker-dropdown"
-        >
-          {LEVELS.map((l, i) => (
-            <li
-              key={l}
-              role="option"
-              tabIndex={0}
-              aria-selected={l === value}
-              onMouseEnter={() => setHoverIndex(i)}
-              onClick={() => { onChange(l); setOpen(false); triggerRef.current?.focus() }}
-            >
-              <HeadingLevelIcon level={l} />
-              <span>{LEVEL_LABELS[l]}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="jeeby-cms-heading-picker-dropdown-wrap" style={dropdownStyle}>
+          <ul
+            ref={listRef}
+            role="listbox"
+            aria-label="Choose heading level"
+            onKeyDown={handleListKeyDown}
+            className="jeeby-cms-block-type-picker jeeby-cms-heading-picker-dropdown"
+          >
+            {LEVELS.map((l, i) => (
+              <li
+                key={l}
+                role="option"
+                tabIndex={0}
+                aria-selected={l === value}
+                onMouseEnter={() => setHoverIndex(i)}
+                onClick={() => { onChange(l); setOpen(false); triggerRef.current?.focus() }}
+              >
+                <HeadingLevelIcon level={l} />
+                <span>{LEVEL_LABELS[l]}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )
@@ -146,12 +168,7 @@ export function TitleEditor({ data, onChange, blockId }) {
   }, [data?.text]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <HeadingLevelPicker
-        value={data?.level ?? 'h2'}
-        onChange={(level) => onChange({ ...data, level })}
-      />
-
+    <div>
       {/* Contenteditable text input — WCAG 4.1.2: explicit role/aria attributes required */}
       <div
         ref={divRef}
@@ -169,6 +186,14 @@ export function TitleEditor({ data, onChange, blockId }) {
         }}
         data-placeholder="Enter title..."
       />
+
+      {/* Heading level picker — aux control, revealed on block hover/focus */}
+      <div className="jeeby-cms-block-aux">
+        <HeadingLevelPicker
+          value={data?.level ?? 'h2'}
+          onChange={(level) => onChange({ ...data, level })}
+        />
+      </div>
     </div>
   )
 }

@@ -12,6 +12,18 @@ function formatDate(ts) {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function pageStatus(page) {
+  if (!page.lastPublishedAt) return 'draft'
+  if (page.hasDraftChanges) return 'changes'
+  return 'published'
+}
+
+const STATUS_PROPS = {
+  published: { label: 'Published', cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--published' },
+  draft:     { label: 'Draft',     cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--draft' },
+  changes:   { label: 'Changes',   cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--draft' },
+}
+
 export function PageManager() {
   const { db, templates } = useCMSFirebase()
 
@@ -193,6 +205,7 @@ export function PageManager() {
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Slug</th>
+                <th scope="col">Status</th>
                 <th scope="col">Last Published</th>
                 <th scope="col">Actions</th>
               </tr>
@@ -202,6 +215,7 @@ export function PageManager() {
                 <tr key={i}>
                   <td><span className="jeeby-cms-skeleton" style={{ width: '120px', height: '14px' }} /></td>
                   <td><span className="jeeby-cms-skeleton" style={{ width: '80px', height: '14px' }} /></td>
+                  <td><span className="jeeby-cms-skeleton" style={{ width: '72px', height: '22px', borderRadius: '999px' }} /></td>
                   <td><span className="jeeby-cms-skeleton" style={{ width: '90px', height: '14px' }} /></td>
                   <td><span className="jeeby-cms-skeleton" style={{ width: '60px', height: '14px' }} /></td>
                 </tr>
@@ -266,6 +280,7 @@ export function PageManager() {
           <tr>
             <th scope="col">Name</th>
             <th scope="col">Slug</th>
+            <th scope="col">Status</th>
             <th scope="col">Last Published</th>
             <th scope="col">Actions</th>
           </tr>
@@ -328,6 +343,14 @@ export function PageManager() {
                       >Edit</button>
                     </span>
                   )}
+                </td>
+
+                {/* Status cell */}
+                <td>
+                  {(() => {
+                    const { label, cls } = STATUS_PROPS[pageStatus(page)]
+                    return <span className={cls}>{label}</span>
+                  })()}
                 </td>
 
                 {/* Last Published cell */}

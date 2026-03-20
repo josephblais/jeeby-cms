@@ -98,13 +98,13 @@ function IconOrderedList() {
 }
 
 const BLOCK_TYPES = [
-  { type: 'title',    label: 'Heading',       icon: <IconHeading />,     initialData: undefined },
-  { type: 'richtext', label: 'Text',          icon: <IconText />,        initialData: undefined },
-  { type: 'list',     label: 'Bullet List',   icon: <IconBulletList />,  initialData: { ordered: false, items: [''] } },
-  { type: 'list',     label: 'Numbered List', icon: <IconOrderedList />, initialData: { ordered: true,  items: [''] } },
-  { type: 'image',    label: 'Image',         icon: <IconImage />,       initialData: undefined },
-  { type: 'video',    label: 'Video',         icon: <IconVideo />,       initialData: undefined },
-  { type: 'gallery',  label: 'Gallery',       icon: <IconGallery />,     initialData: undefined },
+  { type: 'title',    colorKey: 'heading', label: 'Heading',       hint: 'title or subtitle',          icon: <IconHeading />,     initialData: undefined },
+  { type: 'richtext', colorKey: 'text',    label: 'Text',          hint: 'paragraphs with formatting', icon: <IconText />,        initialData: undefined },
+  { type: 'list',     colorKey: 'list',    label: 'Bullet List',   hint: 'points without ranking',     icon: <IconBulletList />,  initialData: { ordered: false, items: [''] } },
+  { type: 'list',     colorKey: 'list',    label: 'Numbered List', hint: 'steps or ranked items',      icon: <IconOrderedList />, initialData: { ordered: true,  items: [''] } },
+  { type: 'image',    colorKey: 'media',   label: 'Image',         hint: 'photo or graphic',           icon: <IconImage />,       initialData: undefined },
+  { type: 'video',    colorKey: 'media',   label: 'Video',         hint: 'YouTube or Vimeo link',      icon: <IconVideo />,       initialData: undefined },
+  { type: 'gallery',  colorKey: 'media',   label: 'Gallery',       hint: 'photo grid',                 icon: <IconGallery />,     initialData: undefined },
 ]
 
 export function BlockTypePicker({ onSelect, onClose }) {
@@ -163,11 +163,15 @@ export function BlockTypePicker({ onSelect, onClose }) {
           role="option"
           tabIndex={0}
           aria-selected={index === activeIndex}
+          data-color-key={bt.colorKey}
           onClick={() => onSelect(bt.type, bt.initialData)}
           onMouseEnter={() => setActiveIndex(index)}
         >
           {bt.icon}
-          <span>{bt.label}</span>
+          <span className="jeeby-cms-block-type-info">
+            <span className="jeeby-cms-block-type-label">{bt.label}</span>
+            <span className="jeeby-cms-block-type-hint">{bt.hint}</span>
+          </span>
         </li>
       ))}
     </ul>

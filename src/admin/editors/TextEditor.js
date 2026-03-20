@@ -93,6 +93,12 @@ const ToolbarSeparator = () => (
 // TextEditor — Tiptap WYSIWYG editor outputting data.html.
 // Props: { data: { html }, onChange, blockId }
 // ACCESSIBILITY: WCAG 1.3.1 (toolbar role), 2.1.1 (keyboard nav), 4.1.2 (aria-label on wrapper)
+//
+// DOM ORDER NOTE: EditorContent renders before the toolbar intentionally.
+// The toolbar is logically secondary to the content (it formats selected text),
+// so correct tab order is: contenteditable → Bold → Italic → Link → lists.
+// The toolbar is visually repositioned above the editor via CSS order: -1.
+// WCAG 1.3.2 (Meaningful Sequence), 2.4.3 (Focus Order).
 export function TextEditor({ data, onChange, blockId }) {
   const [linkInputOpen, setLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
@@ -150,79 +156,10 @@ export function TextEditor({ data, onChange, blockId }) {
   }
 
   return (
-    <div>
-      {editor && (
-        <div
-          role="toolbar"
-          aria-label="Text formatting"
-          className="jeeby-cms-toolbar"
-        >
-          <ToolbarButton
-            label="Bold"
-            icon={<IconBold />}
-            isActive={editor.isActive('bold')}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-          />
-          <ToolbarButton
-            label="Italic"
-            icon={<IconItalic />}
-            isActive={editor.isActive('italic')}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-          />
-          <ToolbarButton
-            label={editor.isActive('link') ? 'Remove link' : 'Add link'}
-            icon={<IconLink />}
-            isActive={editor.isActive('link') || linkInputOpen}
-            onClick={handleLinkClick}
-          />
-          <ToolbarSeparator />
-          <ToolbarButton
-            label="Bullet list"
-            icon={<IconBulletList />}
-            isActive={editor.isActive('bulletList')}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-          />
-          <ToolbarButton
-            label="Ordered list"
-            icon={<IconOrderedList />}
-            isActive={editor.isActive('orderedList')}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          />
-        </div>
-      )}
-
-      {linkInputOpen && (
-        <div className="jeeby-cms-link-input-row">
-          <input
-            ref={linkInputRef}
-            type="url"
-            className="jeeby-cms-link-input"
-            value={linkUrl}
-            onChange={e => setLinkUrl(e.target.value)}
-            placeholder="https://"
-            aria-label="Link URL"
-            onKeyDown={e => {
-              if (e.key === 'Enter') { e.preventDefault(); commitLink() }
-              if (e.key === 'Escape') { e.preventDefault(); cancelLink() }
-            }}
-          />
-          <button
-            type="button"
-            className="jeeby-cms-btn-primary jeeby-cms-link-apply-btn"
-            onClick={commitLink}
-          >
-            Apply
-          </button>
-          <button
-            type="button"
-            className="jeeby-cms-btn-ghost"
-            onClick={cancelLink}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
+    <div className="jeeby-cms-text-editor-wrapper">
+      {/* Editor content FIRST — correct tab order.
+          The toolbar is DOM-after but visually-above via CSS order: -1 on the reveal container.
+          This ensures keyboard users encounter the text field before toolbar buttons. */}
       <div
         id={'block-input-' + blockId}
         aria-label="Text content"
@@ -230,6 +167,87 @@ export function TextEditor({ data, onChange, blockId }) {
       >
         <EditorContent editor={editor} />
       </div>
+
+      {/* Toolbar reveal container — DOM after editor, visual above via CSS order: -1.
+          Grid collapses to 0fr when wrapper is unfocused (no layout space at rest).
+          Expanding on :focus-within is triggered the moment the contenteditable receives
+          focus, so the toolbar is always visible before the user can Tab to it.
+          WCAG 2.4.3 (Focus Order): user must focus editor before toolbar is reachable. */}
+      {editor && (
+        <div className="jeeby-cms-text-editor-toolbar-reveal">
+          <div className="jeeby-cms-text-editor-toolbar-inner">
+            <div
+              role="toolbar"
+              aria-label="Text formatting"
+              className="jeeby-cms-toolbar"
+            >
+              <ToolbarButton
+                label="Bold"
+                icon={<IconBold />}
+                isActive={editor.isActive('bold')}
+                onClick={() => editor.chain().focus().toggleBold().run()}
+              />
+              <ToolbarButton
+                label="Italic"
+                icon={<IconItalic />}
+                isActive={editor.isActive('italic')}
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+              />
+              <ToolbarButton
+                label={editor.isActive('link') ? 'Remove link' : 'Add link'}
+                icon={<IconLink />}
+                isActive={editor.isActive('link') || linkInputOpen}
+                onClick={handleLinkClick}
+              />
+              <ToolbarSeparator />
+              <ToolbarButton
+                label="Bullet list"
+                icon={<IconBulletList />}
+                isActive={editor.isActive('bulletList')}
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+              />
+              <ToolbarButton
+                label="Ordered list"
+                icon={<IconOrderedList />}
+                isActive={editor.isActive('orderedList')}
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              />
+            </div>
+
+            {linkInputOpen && (
+              <div className="jeeby-cms-link-input-row">
+                <input
+                  ref={linkInputRef}
+                  type="url"
+                  className="jeeby-cms-link-input"
+                  value={linkUrl}
+                  onChange={e => setLinkUrl(e.target.value)}
+                  placeholder="https://"
+                  aria-label="Link URL"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitLink() }
+                    if (e.key === 'Escape') { e.preventDefault(); cancelLink() }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="jeeby-cms-btn-primary jeeby-cms-link-apply-btn"
+                  onClick={commitLink}
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  className="jeeby-cms-btn-ghost"
+                  onClick={cancelLink}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

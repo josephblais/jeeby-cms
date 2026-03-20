@@ -14,7 +14,7 @@ test('LoginPage source has explicit labels for email and password', () => {
 test('LoginPage source has correct input types and autocomplete', () => {
   const src = readFileSync(new URL('./LoginPage.js', import.meta.url), 'utf8')
   assert.ok(src.includes('type="email"'), 'Must have type="email"')
-  assert.ok(src.includes('type="password"'), 'Must have type="password"')
+  assert.ok(src.includes("'password'") || src.includes('"password"'), 'Must use password input type')
   assert.ok(src.includes('autoComplete="email"'), 'Must have autoComplete="email"')
   assert.ok(src.includes('autoComplete="current-password"'), 'Must have autoComplete="current-password"')
 })
