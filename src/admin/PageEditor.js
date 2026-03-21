@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useCMSFirebase } from '../index.js'
 import { getPage, saveDraft, renamePage, publishPage, savePage } from '../firebase/firestore.js'
 import { EditorHeader } from './EditorHeader.js'
@@ -10,6 +10,15 @@ import { PublishConfirmModal } from './PublishConfirmModal.js'
 import { PublishToast } from './PublishToast.js'
 import { useSignOutGuard } from './SignOutGuardContext.js'
 
+const DEFAULT_BLOCK_DATA = {
+  title:    { level: 'h2', text: '' },
+  richtext: { html: '' },
+  image:    { src: '', alt: '' },
+  video:    { url: '' },
+  gallery:  { items: [] },
+  list:     { ordered: false, items: [''] },
+}
+
 export function PageEditor({ slug }) {
   const { db } = useCMSFirebase()
   const signOutGuard = useSignOutGuard()
@@ -17,6 +26,7 @@ export function PageEditor({ slug }) {
   const [blocks, setBlocks] = useState([])
   const [pageName, setPageName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [saveStatus, setSaveStatus] = useState(null)
   const [deletedBlock, setDeletedBlock] = useState(null)
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
@@ -51,7 +61,7 @@ export function PageEditor({ slug }) {
           setLoading(false)
         }
       } catch {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) { setLoading(false); setLoadError(true) }
       }
     }
     load()
@@ -111,7 +121,7 @@ export function PageEditor({ slug }) {
     return () => clearTimeout(t)
   }, [showPublishToast])
 
-  function scheduleSave(updatedBlocks) {
+  const scheduleSave = useCallback((updatedBlocks) => {
     pendingSaveRef.current = true
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
@@ -126,15 +136,15 @@ export function PageEditor({ slug }) {
         pendingSaveRef.current = false
       }
     }, 1000)
-  }
+  }, [db, slug])
 
-  function handleBlockChange(id, newData) {
-    const updated = blocks.map(b => b.id === id ? { ...b, data: newData } : b)
+  const handleBlockChange = useCallback((id, newData) => {
+    const updated = blocksRef.current.map(b => b.id === id ? { ...b, data: newData } : b)
     setBlocks(updated)
     scheduleSave(updated)
-  }
+  }, [scheduleSave])
 
-  function handleReorder(newOrder) {
+  const handleReorder = useCallback((newOrder) => {
     setBlocks(newOrder)
     // Reorder fires once on drop — save immediately, no debounce
     pendingSaveRef.current = true
@@ -142,23 +152,15 @@ export function PageEditor({ slug }) {
     saveDraft(db, slug, newOrder)
       .then(() => { setSaveStatus('saved'); pendingSaveRef.current = false })
       .catch(() => { setSaveStatus('error'); pendingSaveRef.current = false })
-  }
+  }, [db, slug])
 
-  function handleAddBlock(type, insertIndex, initialData) {
-    const DEFAULT_DATA = {
-      title:    { level: 'h2', text: '' },
-      richtext: { html: '' },
-      image:    { src: '', alt: '' },
-      video:    { url: '' },
-      gallery:  { items: [] },
-      list:     { ordered: false, items: [''] },
-    }
+  const handleAddBlock = useCallback((type, insertIndex, initialData) => {
     const newBlock = {
       id: crypto.randomUUID(),
       type,
-      data: initialData ? { ...initialData } : { ...DEFAULT_DATA[type] },
+      data: initialData ? { ...initialData } : { ...(DEFAULT_BLOCK_DATA[type] ?? DEFAULT_BLOCK_DATA.richtext) },
     }
-    const next = [...blocks]
+    const next = [...blocksRef.current]
     next.splice(insertIndex + 1, 0, newBlock)
     setBlocks(next)
     scheduleSave(next)
@@ -166,20 +168,25 @@ export function PageEditor({ slug }) {
     requestAnimationFrame(() => {
       document.getElementById('block-input-' + newBlock.id)?.focus()
     })
-  }
+  }, [scheduleSave])
 
-  function handleDelete(block) {
-    const index = blocks.findIndex(b => b.id === block.id)
-    const afterDelete = blocks.filter(b => b.id !== block.id)
+  const handleDelete = useCallback((block) => {
+    const index = blocksRef.current.findIndex(b => b.id === block.id)
+    const afterDelete = blocksRef.current.filter(b => b.id !== block.id)
     setBlocks(afterDelete)
     setDeletedBlock({ block, index })
     clearTimeout(deleteTimerRef.current)
-    deleteTimerRef.current = setTimeout(() => {
-      saveDraft(db, slug, blocksRef.current.filter(b => b.id !== block.id))
-        .catch(() => setSaveStatus('error'))
+    deleteTimerRef.current = setTimeout(async () => {
+      setSaveStatus('saving')
+      try {
+        await saveDraft(db, slug, blocksRef.current.filter(b => b.id !== block.id))
+        setSaveStatus('saved')
+      } catch {
+        setSaveStatus('error')
+      }
       setDeletedBlock(null)
     }, 5000)
-  }
+  }, [db, slug])
 
   function handleUndo() {
     if (!deletedBlock) return
@@ -207,12 +214,14 @@ export function PageEditor({ slug }) {
     setPublishError(null)
     try {
       await publishPage(db, slug)
-      const updated = await getPage(db, slug)
-      setLastPublishedAt(updated?.lastPublishedAt ?? null)
       setHasDraftChanges(false)
       setPublishStatus('idle')
       setShowPublishModal(false)
       setShowPublishToast(true)
+      // Best-effort refresh of lastPublishedAt — don't block publish success on this read
+      getPage(db, slug)
+        .then(updated => { if (updated?.lastPublishedAt) setLastPublishedAt(updated.lastPublishedAt) })
+        .catch(() => {})
     } catch {
       setPublishStatus('error')
       setPublishError(true)
@@ -237,8 +246,11 @@ export function PageEditor({ slug }) {
   async function handleRenameSlug(newSlug) {
     try {
       await renamePage(db, slug, newSlug)
-      window.location.href = '/admin/pages/' + newSlug
-    } catch (err) {
+      // Cancel any pending debounced save — the old slug is gone after rename
+      clearTimeout(debounceRef.current)
+      pendingSaveRef.current = false
+      window.location.href = '/admin/pages/' + encodeURIComponent(newSlug)
+    } catch {
       setSaveStatus('error')
     }
   }
@@ -253,8 +265,22 @@ export function PageEditor({ slug }) {
   if (loading) {
     return (
       <div className="jeeby-cms-page-editor">
-        <div role="status" aria-label="Loading editor" style={{ display: 'flex', justifyContent: 'center' }}>
+        <div role="status" aria-label="Loading editor" className="jeeby-cms-loading">
           <div className="jeeby-cms-spinner" aria-hidden="true" />
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="jeeby-cms-page-editor">
+        <div className="jeeby-cms-editor-load-error" role="alert">
+          <p className="jeeby-cms-editor-load-error-title">This page couldn&rsquo;t be loaded</p>
+          <p className="jeeby-cms-editor-load-error-body">Check your connection and try again.</p>
+          <a href={'/admin/pages/' + encodeURIComponent(slug)} className="jeeby-cms-btn-primary">
+            Reload
+          </a>
         </div>
       </div>
     )

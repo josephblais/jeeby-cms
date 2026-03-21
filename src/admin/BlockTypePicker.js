@@ -61,6 +61,21 @@ function IconGallery() {
   )
 }
 
+function IconPullQuote() {
+  return (
+    <span className="jeeby-cms-block-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        {/* Left accent bar */}
+        <rect x="0.5" y="2" width="2" height="10" rx="0.7" />
+        {/* Quote text lines */}
+        <rect x="4" y="3" width="9" height="2" rx="0.7" opacity="0.9" />
+        <rect x="4" y="6.5" width="9" height="2" rx="0.7" opacity="0.7" />
+        <rect x="4" y="10" width="6" height="2" rx="0.7" opacity="0.5" />
+      </svg>
+    </span>
+  )
+}
+
 function IconBulletList() {
   return (
     <span className="jeeby-cms-block-icon" aria-hidden="true">
@@ -102,6 +117,7 @@ const BLOCK_TYPES = [
   { type: 'richtext', colorKey: 'text',    label: 'Text',          hint: 'paragraphs with formatting', icon: <IconText />,        initialData: undefined },
   { type: 'list',     colorKey: 'list',    label: 'Bullet List',   hint: 'points without ranking',     icon: <IconBulletList />,  initialData: { ordered: false, items: [''] } },
   { type: 'list',     colorKey: 'list',    label: 'Numbered List', hint: 'steps or ranked items',      icon: <IconOrderedList />, initialData: { ordered: true,  items: [''] } },
+  { type: 'pullquote', colorKey: 'text',    label: 'Pull Quote',  hint: 'highlighted quote or callout',  icon: <IconPullQuote />,  initialData: { quote: '', attribution: '' } },
   { type: 'image',    colorKey: 'media',   label: 'Image',         hint: 'photo or graphic',           icon: <IconImage />,       initialData: undefined },
   { type: 'video',    colorKey: 'media',   label: 'Video',         hint: 'YouTube or Vimeo link',      icon: <IconVideo />,       initialData: undefined },
   { type: 'gallery',  colorKey: 'media',   label: 'Gallery',       hint: 'photo grid',                 icon: <IconGallery />,     initialData: undefined },

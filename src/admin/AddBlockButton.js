@@ -13,7 +13,7 @@ export function AddBlockButton({ onAdd, insertIndex }) {
 
   function handleMouseLeave(e) {
     // Stay visible when focus moves to a descendant (e.g. the picker listbox)
-    if (!e.currentTarget.contains(e.relatedTarget)) {
+    if (!(e.relatedTarget instanceof Node) || !e.currentTarget.contains(e.relatedTarget)) {
       setIsHovered(false)
     }
   }

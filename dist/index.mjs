@@ -203,6 +203,17 @@ function List({ data, className }) {
     ...items.map((item, i) => createElement("li", { key: i }, item))
   );
 }
+function PullQuote({ data, className }) {
+  const quote = (data == null ? void 0 : data.quote) ?? "";
+  const attribution = (data == null ? void 0 : data.attribution) ?? "";
+  if (!quote) return null;
+  return createElement(
+    "figure",
+    { className },
+    createElement("blockquote", null, createElement("p", null, quote)),
+    attribution ? createElement("figcaption", null, attribution) : null
+  );
+}
 
 // src/blocks/index.js
 var BLOCK_REGISTRY = {
@@ -212,7 +223,8 @@ var BLOCK_REGISTRY = {
   image: Image,
   video: Video,
   gallery: Gallery,
-  list: List
+  list: List,
+  pullquote: PullQuote
 };
 function Block({ id, className, children }) {
   return createElement(

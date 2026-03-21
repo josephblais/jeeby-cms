@@ -142,7 +142,6 @@
   min-height: calc(100vh - var(--jeeby-cms-nav-height));
 }
 
-/* WCAG 2.5.8: 44px minimum touch target */
 .jeeby-cms-admin .jeeby-cms-spinner {
   display: inline-block;
   width: 32px;
@@ -418,6 +417,29 @@
   padding: 0;
 }
 
+/* Load error state — shown when getPage() throws on mount. */
+.jeeby-cms-admin .jeeby-cms-editor-load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-load-error-title {
+  margin: 0;
+  font-size: var(--jeeby-cms-text-base);
+  font-weight: 500;
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-editor-load-error-body {
+  margin: 0;
+  font-size: var(--jeeby-cms-text-sm);
+  color: var(--jeeby-cms-text-muted);
+}
+
 /* 3-column grid: left (nav) | center (identity) | right (status + action).
    1fr on each side ensures the center is always visually centered regardless
    of asymmetric content widths. */
@@ -496,10 +518,9 @@
   font: inherit;
   color: inherit;
   cursor: text;
-  display: block;
-  min-height: 44px; /* WCAG 2.5.8 */
   display: flex;
   align-items: center;
+  min-height: 44px; /* WCAG 2.5.8 */
   border-bottom: 1px solid transparent;
   transition: border-color 150ms;
 }
@@ -703,8 +724,10 @@
   align-items: center;
 }
 
+/* min-height: 120px = nav (56px) + editor header (~64px).
+   Ensures the canvas fills the remaining viewport so the page never feels short. */
 .jeeby-cms-admin .jeeby-cms-editor-main {
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - var(--jeeby-cms-nav-height) - 64px);
   padding: 24px 16px;
 }
 
@@ -1590,8 +1613,10 @@
 }
 
 /* Block content — the editor itself */
+/* min-height matches the full gutter stack: 4px padding-top + 28px drag + 2px gap + 28px delete */
 .jeeby-cms-admin .jeeby-cms-block-content {
   display: block; /* article is block by default but be explicit */
+  min-height: 62px;
 }
 
 /* Aux editing controls — collapsed and invisible at rest, revealed on hover/focus.
@@ -1882,6 +1907,104 @@
 
 /* ─── Section 19: Canvas Width Hint ─────────────────────────────── */
 
+
+/* ─── Pull Quote Editor ──────────────────────────────────────────── */
+
+/* View mode — the click-to-edit container */
+.jeeby-cms-admin .jeeby-cms-pullquote-view {
+  cursor: text;
+  border-radius: 4px;
+  outline: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-view:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+/* Preview figure — left accent bar via border-left */
+.jeeby-cms-admin .jeeby-cms-pullquote-figure {
+  margin: 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--jeeby-cms-accent);
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-blockquote {
+  margin: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-blockquote p {
+  margin: 0;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-base);
+  line-height: 1.6;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-figcaption {
+  margin-top: 6px;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: var(--jeeby-cms-text-sm);
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-empty-hint {
+  margin: 0;
+  color: var(--jeeby-cms-text-muted);
+  font-size: var(--jeeby-cms-text-base);
+  font-style: italic;
+}
+
+/* Edit mode */
+.jeeby-cms-admin .jeeby-cms-pullquote-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 10px;
+  background: var(--jeeby-cms-bg-input);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 4px;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-base);
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 150ms;
+  box-sizing: border-box;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-textarea:focus {
+  border-color: var(--jeeby-cms-accent);
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: -1px;
+}
+
+/* Attribution label gets a top margin to separate it from the textarea */
+.jeeby-cms-admin .jeeby-cms-pullquote-attr-label {
+  margin-top: 10px;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-attr-input {
+  width: 100%;
+  min-height: 44px; /* WCAG 2.5.8 */
+  padding: 0 10px;
+  background: var(--jeeby-cms-bg-input);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 4px;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-base);
+  font-family: inherit;
+  transition: border-color 150ms;
+  box-sizing: border-box;
+}
+
+.jeeby-cms-admin .jeeby-cms-pullquote-attr-input:focus {
+  border-color: var(--jeeby-cms-accent);
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: -1px;
+}
 
 /* ─── Section 20: data-theme="light" stub ────────────────────────── */
 

@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useDragControls, Reorder } from 'framer-motion'
 import { TitleEditor } from './editors/TitleEditor.js'
 import { TextEditor } from './editors/TextEditor.js'
@@ -7,11 +7,12 @@ import { ImageEditor } from './editors/ImageEditor.js'
 import { VideoEditor } from './editors/VideoEditor.js'
 import { GalleryEditor } from './editors/GalleryEditor.js'
 import { ListEditor } from './editors/ListEditor.js'
+import { PullQuoteEditor } from './editors/PullQuoteEditor.js'
 import { AddBlockButton } from './AddBlockButton.js'
 import { BlockGutter } from './BlockGutter.js'
 
 // Display name helper
-const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery', list: 'List' }
+const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery', list: 'List', pullquote: 'Pull Quote' }
 function displayName(type) { return DISPLAY_NAMES[type] || type }
 
 // EDITOR_MAP maps block types to editor components.
@@ -22,12 +23,15 @@ const EDITOR_MAP = {
   video: VideoEditor,
   gallery: GalleryEditor,
   list: ListEditor,
+  pullquote: PullQuoteEditor,
 }
 
 
-// BlockCard: internal component — not exported
-function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
+// BlockCard: memoised so unchanged blocks don't re-render when saveStatus changes.
+// Requires stable onChange/onDelete/onAddBlock references (useCallback in PageEditor).
+const BlockCard = memo(function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
   const controls = useDragControls()
+  const Editor = EDITOR_MAP[block.type] || EDITOR_MAP.richtext
 
   return (
     <Reorder.Item
@@ -46,20 +50,16 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
           className="jeeby-cms-block-content"
           aria-label={displayName(block.type) + ' block'}
         >
-          {(() => {
-            const Editor = EDITOR_MAP[block.type] || EDITOR_MAP.richtext
-            return <Editor data={block.data} onChange={(newData) => onChange(block.id, newData)} blockId={block.id} />
-          })()}
+          <Editor data={block.data} onChange={(newData) => onChange(block.id, newData)} blockId={block.id} />
         </article>
       </div>
       <AddBlockButton onAdd={(type, initialData) => onAddBlock(type, index, initialData)} insertIndex={index} />
     </Reorder.Item>
   )
-}
+})
 
-// Block preview sketches for the empty state — purely illustrative, aria-hidden.
-// Each gives a visual sense of what that block type produces on the page.
-function EmptyStatePreviews() {
+// Block preview sketches for the empty state — static SVG, never changes.
+const EmptyStatePreviews = memo(function EmptyStatePreviews() {
   return (
     <div className="jeeby-cms-canvas-empty-previews" aria-hidden="true">
       {/* Heading: thick heading bar + lighter body text lines */}
@@ -99,7 +99,7 @@ function EmptyStatePreviews() {
       </div>
     </div>
   )
-}
+})
 
 export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
   if (blocks.length === 0) {

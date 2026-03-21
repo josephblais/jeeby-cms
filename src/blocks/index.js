@@ -17,6 +17,7 @@ import { Image } from './Image.js'
 import { Video } from './Video.js'
 import { Gallery } from './Gallery.js'
 import { List } from './List.js'
+import { PullQuote } from './PullQuote.js'
 
 export const BLOCK_REGISTRY = {
   title: Title,
@@ -26,6 +27,7 @@ export const BLOCK_REGISTRY = {
   video: Video,
   gallery: Gallery,
   list: List,
+  pullquote: PullQuote,
 }
 
 // Block wrapper — applied to every block by <Blocks>.
