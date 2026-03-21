@@ -639,6 +639,21 @@
 /* ── Document status chip ─────────────────────────────────────────── */
 /* Collapses save status + draft/published state into one compound signal. */
 
+/* Container holds the pill + optional "Last published" sublabel stacked vertically. */
+.jeeby-cms-admin .jeeby-cms-doc-status-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* Sublabel shown when a published page has staged changes. */
+.jeeby-cms-admin .jeeby-cms-doc-status-sublabel {
+  font-size: var(--jeeby-cms-text-xs);
+  color: var(--jeeby-cms-text-muted);
+  white-space: nowrap;
+}
+
 .jeeby-cms-admin .jeeby-cms-doc-status {
   display: inline-flex;
   align-items: center;
@@ -747,7 +762,9 @@
 }
 
 /* UI container: button + bar, centered vertically within the gap, gutter-aligned.
-   Semi-opaque at rest so the button is always discoverable — full opacity on hover/focus.
+   left: 0 places the button in the same gutter column as the drag handle and delete button —
+   they don't conflict because the drag handle/delete live inside block rows while the add
+   button lives in the zero-height seam between rows.
    Note: transform: translateY(-50%) creates a stacking context here, so the picker is
    rendered as a sibling (not inside this div) to keep its z-index in the page context. */
 .jeeby-cms-admin .jeeby-cms-add-block-ui {
@@ -768,7 +785,10 @@
   opacity: 1;
 }
 
-/* Button — WCAG 2.5.8: 44px minimum touch target */
+/* Button — sized to sit within the 28px gutter column.
+   Visual size is 24px (12px SVG + 6px padding each side).
+   Touch target is covered by the 160px-wide hover zone on the seam.
+   No border at rest — fill on hover/focus avoids permanent chrome in the gutter. */
 .jeeby-cms-admin .jeeby-cms-add-block-btn {
   display: inline-flex;
   align-items: center;
@@ -776,21 +796,17 @@
   position: relative;
   z-index: 1;
   pointer-events: all; /* re-enables clicks; parent UI container has pointer-events: none */
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0;
+  padding: 6px;
   background: none;
-  border: 1px solid var(--jeeby-cms-border);
+  border: none;
   border-radius: 50%;
   cursor: pointer;
   color: var(--jeeby-cms-text-secondary);
-  font-size: 1.25rem;
-  line-height: 1;
 }
 
 .jeeby-cms-admin .jeeby-cms-add-block-btn:hover,
 .jeeby-cms-admin .jeeby-cms-add-block-btn:focus-visible {
-  border-color: var(--jeeby-cms-accent);
+  background: var(--jeeby-cms-bg-hover);
   color: var(--jeeby-cms-accent);
 }
 
@@ -808,7 +824,7 @@
    top: 100% (which would be 0 on a height:0 element) with the correct vertical position.
    z-index: 5 keeps it above block content but below sticky headers (z-index: 10) and nav (20). */
 .jeeby-cms-admin .jeeby-cms-add-block-seam > .jeeby-cms-block-type-picker {
-  top: calc(var(--jeeby-cms-block-spacing) / 2 + 26px); /* gap center + half button height (22px) + 4px margin */
+  top: calc(var(--jeeby-cms-block-spacing) / 2 + 16px); /* gap center + half button height (12px) + 4px margin */
   left: 0;
   z-index: 5;
 }
@@ -1552,17 +1568,24 @@
   min-width: 28px;
 }
 
-/* Delete icon button — small, muted at rest */
+/* Delete icon button — standalone styles, no btn-ghost dependency.
+   Constrained to gutter width (28px) so the hover background doesn't escape. */
 .jeeby-cms-admin .jeeby-cms-block-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 28px;
   min-height: 28px;
   padding: 0;
-  font-size: 1.1rem;
-  line-height: 1;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   color: var(--jeeby-cms-text-muted);
 }
 
 .jeeby-cms-admin .jeeby-cms-block-delete-btn:hover {
+  background: var(--jeeby-cms-bg-hover);
   color: var(--jeeby-cms-error);
 }
 
@@ -1859,24 +1882,6 @@
 
 /* ─── Section 19: Canvas Width Hint ─────────────────────────────── */
 
-/* Developer-facing hint surfacing the canvas width config.
-   aria-hidden on the element — informational metadata, not page content. */
-.jeeby-cms-admin .jeeby-cms-canvas-width-hint {
-  margin: 24px 0 0;
-  text-align: center;
-  font-size: var(--jeeby-cms-text-xs);
-  color: var(--jeeby-cms-text-muted);
-  font-family: ui-monospace, 'SF Mono', Menlo, 'Courier New', monospace;
-  opacity: 0.5;
-  user-select: none;
-  pointer-events: none;
-}
-
-.jeeby-cms-admin .jeeby-cms-canvas-width-hint code {
-  font-family: inherit;
-  background: none;
-  color: inherit;
-}
 
 /* ─── Section 20: data-theme="light" stub ────────────────────────── */
 

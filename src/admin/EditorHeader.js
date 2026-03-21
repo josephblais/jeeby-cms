@@ -12,27 +12,41 @@ function formatPublishedDate(ts) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+function formatLastPublished(ts) {
+  if (!ts) return null
+  const date = ts.toDate ? ts.toDate() : new Date(ts)
+  const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  if (date.toDateString() === new Date().toDateString()) {
+    return `Last published today at ${time}`
+  }
+  const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return `Last published ${dateStr} at ${time}`
+}
+
 // Derives a single compound status from all document signals.
 // Priority: error > saving > unpublished changes > published > idle.
 function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
   if (saveStatus === 'error') {
-    return { label: 'Save failed', tone: 'error', retry: true }
+    return { label: 'Save failed', tone: 'error', retry: true, sublabel: null }
   }
   if (saveStatus === 'saving') {
-    return { label: 'Saving\u2026', tone: 'muted', retry: false }
+    return { label: 'Saving\u2026', tone: 'muted', retry: false, sublabel: null }
   }
   if (hasDraftChanges) {
+    const wasPublished = !!lastPublishedAt
     return {
-      label: saveStatus === 'saved' ? 'Unpublished, saved' : 'Unsaved changes',
+      label: wasPublished && saveStatus === 'saved' ? 'Unpublished changes' :
+             saveStatus === 'saved' ? 'Unpublished, saved' : 'Unsaved changes',
       tone: 'draft',
       retry: false,
+      sublabel: wasPublished ? formatLastPublished(lastPublishedAt) : null,
     }
   }
   if (lastPublishedAt) {
     const date = formatPublishedDate(lastPublishedAt)
-    return { label: date ? `Published ${date}` : 'Published', tone: 'published', retry: false }
+    return { label: date ? `Published ${date}` : 'Published', tone: 'published', retry: false, sublabel: null }
   }
-  return { label: 'Not yet live', tone: 'muted', retry: false }
+  return { label: 'Not yet live', tone: 'muted', retry: false, sublabel: null }
 }
 
 export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
@@ -178,17 +192,22 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
           role="status"
           aria-live={saveStatus === 'error' ? 'assertive' : 'polite'}
           aria-atomic="true"
-          className={`jeeby-cms-doc-status jeeby-cms-doc-status--${status.tone}`}
+          className="jeeby-cms-doc-status-container"
         >
-          <span>{status.label}</span>
-          {status.retry && (
-            <button
-              type="button"
-              className="jeeby-cms-status-retry"
-              onClick={onRetry}
-            >
-              Try again
-            </button>
+          <div className={`jeeby-cms-doc-status jeeby-cms-doc-status--${status.tone}`}>
+            <span>{status.label}</span>
+            {status.retry && (
+              <button
+                type="button"
+                className="jeeby-cms-status-retry"
+                onClick={onRetry}
+              >
+                Try again
+              </button>
+            )}
+          </div>
+          {status.sublabel && (
+            <span className="jeeby-cms-doc-status-sublabel">{status.sublabel}</span>
           )}
         </div>
         <button

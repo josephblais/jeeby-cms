@@ -89,9 +89,9 @@ function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
   return { label: "Not yet live", tone: "muted", retry: false };
 }
 function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
-  const displayName2 = pageName || slug;
+  const displayName3 = pageName || slug;
   const [editingTitle, setEditingTitle] = useState(false);
-  const [titleValue, setTitleValue] = useState(displayName2);
+  const [titleValue, setTitleValue] = useState(displayName3);
   const [editingSlug, setEditingSlug] = useState(false);
   const [slugValue, setSlugValue] = useState(slug);
   const [slugDirty, setSlugDirty] = useState(false);
@@ -105,10 +105,10 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
   }, [slug]);
   function commitTitle() {
     const trimmed = titleValue.trim();
-    if (trimmed && trimmed !== displayName2) {
+    if (trimmed && trimmed !== displayName3) {
       onRenameName(trimmed);
     } else {
-      setTitleValue(displayName2);
+      setTitleValue(displayName3);
     }
     setEditingTitle(false);
   }
@@ -118,7 +118,7 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
       e.target.blur();
     }
     if (e.key === "Escape") {
-      setTitleValue(displayName2);
+      setTitleValue(displayName3);
       setEditingTitle(false);
     }
   }
@@ -188,8 +188,8 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
                 setEditingTitle(true);
               }
             },
-            "aria-label": `Page name: ${displayName2}. Click to edit`,
-            children: displayName2
+            "aria-label": `Page name: ${displayName3}. Click to edit`,
+            children: displayName3
           }
         ) })
       ),
@@ -24716,7 +24716,10 @@ function AddBlockButton({ onAdd, insertIndex }) {
               "aria-haspopup": "listbox",
               onClick: () => setIsOpen((v) => !v),
               className: "jeeby-cms-add-block-btn",
-              children: "+"
+              children: /* @__PURE__ */ jsxs("svg", { width: "12", height: "12", viewBox: "0 0 12 12", "aria-hidden": "true", focusable: "false", children: [
+                /* @__PURE__ */ jsx("line", { x1: "6", y1: "0", x2: "6", y2: "12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+                /* @__PURE__ */ jsx("line", { x1: "0", y1: "6", x2: "12", y2: "6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+              ] })
             }
           ),
           /* @__PURE__ */ jsx(
@@ -24752,6 +24755,47 @@ function AddBlockButton({ onAdd, insertIndex }) {
 var DISPLAY_NAMES = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List" };
 function displayName(type) {
   return DISPLAY_NAMES[type] || type;
+}
+function BlockGutter({ block, onDelete, dragControls }) {
+  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-gutter", children: [
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        className: "jeeby-cms-drag-handle",
+        "aria-label": "Drag to reorder " + displayName(block.type) + " block",
+        "aria-hidden": "true",
+        onPointerDown: (e) => {
+          e.preventDefault();
+          dragControls.start(e);
+        },
+        children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "14", viewBox: "0 0 10 14", "aria-hidden": "true", focusable: "false", children: [
+          /* @__PURE__ */ jsx("circle", { cx: "2", cy: "2", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx("circle", { cx: "8", cy: "2", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx("circle", { cx: "2", cy: "7", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx("circle", { cx: "8", cy: "7", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx("circle", { cx: "2", cy: "12", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx("circle", { cx: "8", cy: "12", r: "1.25", fill: "currentColor" })
+        ] })
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        className: "jeeby-cms-block-delete-btn",
+        "aria-label": "Delete " + displayName(block.type) + " block",
+        onClick: () => onDelete(block),
+        children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+          /* @__PURE__ */ jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+          /* @__PURE__ */ jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+        ] })
+      }
+    )
+  ] });
+}
+var DISPLAY_NAMES2 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List" };
+function displayName2(type) {
+  return DISPLAY_NAMES2[type] || type;
 }
 var EDITOR_MAP = {
   title: TitleEditor,
@@ -24791,46 +24835,12 @@ function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
       whileDrag: { scale: 1.01, opacity: 0.9 },
       children: [
         /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-row", children: [
-          /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-gutter", children: [
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                className: "jeeby-cms-drag-handle",
-                "aria-label": "Drag to reorder " + displayName(block.type) + " block",
-                "aria-hidden": "true",
-                onPointerDown: (e) => {
-                  e.preventDefault();
-                  controls.start(e);
-                },
-                children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "14", viewBox: "0 0 10 14", "aria-hidden": "true", focusable: "false", children: [
-                  /* @__PURE__ */ jsx("circle", { cx: "2", cy: "2", r: "1.25", fill: "currentColor" }),
-                  /* @__PURE__ */ jsx("circle", { cx: "8", cy: "2", r: "1.25", fill: "currentColor" }),
-                  /* @__PURE__ */ jsx("circle", { cx: "2", cy: "7", r: "1.25", fill: "currentColor" }),
-                  /* @__PURE__ */ jsx("circle", { cx: "8", cy: "7", r: "1.25", fill: "currentColor" }),
-                  /* @__PURE__ */ jsx("circle", { cx: "2", cy: "12", r: "1.25", fill: "currentColor" }),
-                  /* @__PURE__ */ jsx("circle", { cx: "8", cy: "12", r: "1.25", fill: "currentColor" })
-                ] })
-              }
-            ),
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                type: "button",
-                className: "jeeby-cms-btn-ghost jeeby-cms-block-delete-btn",
-                "aria-label": "Delete " + displayName(block.type) + " block",
-                onClick: () => onDelete(block),
-                children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-                  /* @__PURE__ */ jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-                  /* @__PURE__ */ jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
-                ] })
-              }
-            )
-          ] }),
+          /* @__PURE__ */ jsx(BlockGutter, { block, onDelete, dragControls: controls }),
           /* @__PURE__ */ jsx(
             "article",
             {
               className: "jeeby-cms-block-content",
-              "aria-label": displayName(block.type) + " block",
+              "aria-label": displayName2(block.type) + " block",
               children: (() => {
                 const Editor2 = EDITOR_MAP[block.type] || EDITOR_MAP.richtext;
                 return /* @__PURE__ */ jsx(Editor2, { data: block.data, onChange: (newData) => onChange(block.id, newData), blockId: block.id });
@@ -24919,7 +24929,7 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
     /* @__PURE__ */ jsx(CanvasWidthHint, {})
   ] });
 }
-var DISPLAY_NAMES2 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery" };
+var DISPLAY_NAMES3 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery" };
 function UndoToast({ blockType, onUndo }) {
   return /* @__PURE__ */ jsxs(
     "div",
@@ -24929,12 +24939,12 @@ function UndoToast({ blockType, onUndo }) {
       "aria-atomic": "true",
       className: "jeeby-cms-undo-toast",
       children: [
-        /* @__PURE__ */ jsx("span", { children: (DISPLAY_NAMES2[blockType] || blockType) + " block deleted." }),
+        /* @__PURE__ */ jsx("span", { children: (DISPLAY_NAMES3[blockType] || blockType) + " block deleted." }),
         /* @__PURE__ */ jsx(
           "button",
           {
             type: "button",
-            "aria-label": "Undo delete " + (DISPLAY_NAMES2[blockType] || blockType) + " block",
+            "aria-label": "Undo delete " + (DISPLAY_NAMES3[blockType] || blockType) + " block",
             onClick: onUndo,
             className: "jeeby-cms-btn-ghost",
             children: "Undo delete"
