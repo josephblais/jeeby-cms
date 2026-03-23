@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
+import { uploadFile } from '../../firebase/storage.js'
+import { useCMSFirebase } from '../../index.js'
 
 // GalleryEditor — ordered list of { src, alt } gallery items with add/remove/reorder controls.
 // Props: { data: { items: Array<{ src, alt }> }, onChange, blockId }
@@ -18,8 +20,34 @@ function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item)
 }
 
-function GalleryItem({ item, index, items, blockId, onChange, data }) {
+function GalleryItem({ item, index, items, blockId, onChange, data, storage }) {
   const controls = useDragControls()
+  const [uploadProgress, setUploadProgress] = useState(null) // null | 0-100 | 'error'
+  const fileInputRef = useRef(null)
+  const pendingFileRef = useRef(null)
+
+  async function handleItemUpload(file) {
+    pendingFileRef.current = file
+    const ext = file.name.split('.').pop().toLowerCase()
+    const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+    setUploadProgress(0)
+    try {
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct))
+      onChange({
+        ...data,
+        items: items.map((it, i) => i === index ? { ...it, src: url } : it),
+      })
+      setUploadProgress(null)
+    } catch {
+      setUploadProgress('error')
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  function handleItemRetry() {
+    if (pendingFileRef.current) handleItemUpload(pendingFileRef.current)
+  }
 
   return (
     <Reorder.Item
@@ -47,17 +75,51 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
         )}
 
         <div className="jeeby-cms-gallery-item-inputs">
+          <div className="jeeby-cms-image-url-row">
+            <input
+              id={index === 0 ? 'block-input-' + blockId : undefined}
+              type="url"
+              value={item.src ?? ''}
+              aria-label={'Image URL for item ' + (index + 1)}
+              placeholder="https://example.com/image.jpg"
+              onChange={(e) => onChange({
+                ...data,
+                items: updateItem(items, index, 'src', e.target.value),
+              })}
+            />
+            <button
+              type="button"
+              className="jeeby-cms-btn-ghost jeeby-cms-gallery-upload-btn"
+              aria-label={uploadProgress !== null && uploadProgress !== 'error' ? 'Uploading item ' + (index + 1) + '...' : 'Upload image for item ' + (index + 1)}
+              disabled={uploadProgress !== null && uploadProgress !== 'error'}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadProgress !== null && uploadProgress !== 'error' ? '...' : 'Upload'}
+            </button>
+          </div>
           <input
-            id={index === 0 ? 'block-input-' + blockId : undefined}
-            type="url"
-            value={item.src ?? ''}
-            aria-label={'Image URL for item ' + (index + 1)}
-            placeholder="https://example.com/image.jpg"
-            onChange={(e) => onChange({
-              ...data,
-              items: updateItem(items, index, 'src', e.target.value),
-            })}
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            style={{ display: 'none' }}
+            aria-hidden="true"
+            tabIndex={-1}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleItemUpload(file)
+            }}
           />
+          {uploadProgress !== null && uploadProgress !== 'error' && (
+            <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for item ' + (index + 1)}>
+              <div className="jeeby-cms-upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
+            </div>
+          )}
+          {uploadProgress === 'error' && (
+            <div className="jeeby-cms-upload-error-row">
+              <p role="alert" className="jeeby-cms-inline-error">Upload failed</p>
+              <button type="button" className="jeeby-cms-btn-ghost" onClick={handleItemRetry}>Retry</button>
+            </div>
+          )}
           <input
             type="text"
             value={item.alt ?? ''}
@@ -96,6 +158,8 @@ export function GalleryEditor({ data, onChange, blockId }) {
   const [isEditing, setIsEditing] = useState(items.length === 0)
   const containerRef = useRef(null)
   const addButtonRef = useRef(null)
+  const { storage } = useCMSFirebase()
+  const batchInputRef = useRef(null)
   // Entering edit mode unmounts the focused view div, whose blur fires before any
   // child of the edit container is focused. Suppress that one spurious blur so the
   // edit mode doesn't immediately close itself.
@@ -111,6 +175,24 @@ export function GalleryEditor({ data, onChange, blockId }) {
         setIsEditing(false)
       }
     }, 0)
+  }
+
+  async function handleBatchUpload(files) {
+    const fileArray = Array.from(files)
+    const results = await Promise.allSettled(
+      fileArray.map(file => {
+        const ext = file.name.split('.').pop().toLowerCase()
+        const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+        return uploadFile(storage, file, path)
+      })
+    )
+    const newItems = results
+      .filter(r => r.status === 'fulfilled')
+      .map(r => ({ src: r.value, alt: '', id: crypto.randomUUID() }))
+    if (newItems.length > 0) {
+      onChange({ ...data, items: [...items, ...newItems] })
+    }
+    if (batchInputRef.current) batchInputRef.current.value = ''
   }
 
   // View mode — thumbnail strip, click to edit
@@ -162,20 +244,40 @@ export function GalleryEditor({ data, onChange, blockId }) {
             blockId={blockId}
             onChange={onChange}
             data={data}
+            storage={storage}
           />
         ))}
       </Reorder.Group>
 
-      <button
-        ref={addButtonRef}
-        id={items.length === 0 ? 'block-input-' + blockId : undefined}
-        type="button"
-        className="jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn"
-        onClick={() => onChange({
-          ...data,
-          items: [...items, { src: '', alt: '', id: crypto.randomUUID() }],
-        })}
-      >+ Add image</button>
+      <div className="jeeby-cms-gallery-batch-row">
+        <button
+          ref={addButtonRef}
+          id={items.length === 0 ? 'block-input-' + blockId : undefined}
+          type="button"
+          className="jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn"
+          onClick={() => onChange({
+            ...data,
+            items: [...items, { src: '', alt: '', id: crypto.randomUUID() }],
+          })}
+        >+ Add image</button>
+        <button
+          type="button"
+          className="jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn"
+          onClick={() => batchInputRef.current?.click()}
+        >Upload multiple</button>
+      </div>
+      <input
+        ref={batchInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        multiple
+        style={{ display: 'none' }}
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={(e) => {
+          if (e.target.files?.length) handleBatchUpload(e.target.files)
+        }}
+      />
     </div>
   )
 }
