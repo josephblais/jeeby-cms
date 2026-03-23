@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 09-media-handling
-current_plan: 09-02 complete
+current_plan: 09-03 complete
 status: executing
-last_updated: "2026-03-23T18:55:43.762Z"
+last_updated: "2026-03-23T18:59:18.739Z"
 progress:
   total_phases: 12
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 32
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # Session State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 09-media-handling
-**Current plan:** 09-02 complete
-**Status:** In progress — 09-03 next
+**Current plan:** 09-03 complete
+**Status:** Phase 09-media-handling complete — all 3 plans done
 
 ## Decisions
 
@@ -43,6 +43,8 @@ See: .planning/PROJECT.md
 - [Phase 09-media-handling]: Wave 0 TDD stubs placed in existing test files; MEDIA-01 already verified by VideoEditor.test.js
 - [Phase 09-media-handling]: accept=image/jpeg,image/png,image/gif,image/webp excludes SVG (XSS risk) — covers four formats editors use
 - [Phase 09-media-handling]: Upload button label changes during upload for WCAG 2.5.3 compliance; uploadProgress guard prevents blur-dismiss during active upload
+- [Phase 09-media-handling]: Upload state local to GalleryItem (not GalleryEditor) — drag reorder cannot corrupt per-item progress
+- [Phase 09-media-handling]: Promise.allSettled for batch gallery uploads — partial success appends fulfilled URLs without blocking on a single failure
 
 ## Session Log
 
@@ -53,3 +55,4 @@ See: .planning/PROJECT.md
 - 2026-03-19: Completed 08-css-theming/08-04-PLAN.md — block-spacing wired to gap rule, gallery-columns documented as consumer-side token
 - 2026-03-23: Completed 09-media-handling/09-01-PLAN.md — wave 0 TDD stubs (12 failing) and 7 upload CSS classes added
 - 2026-03-23: Completed 09-media-handling/09-02-PLAN.md — ImageEditor Firebase Storage upload wired; all 13 tests pass; MEDIA-04 complete
+- 2026-03-23: Completed 09-media-handling/09-03-PLAN.md — GalleryEditor Firebase Storage upload wired; all 11 tests pass; MEDIA-03 complete
