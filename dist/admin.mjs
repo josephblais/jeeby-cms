@@ -3,7 +3,7 @@ import React, { forwardRef, createContext, memo, useContext, useMemo, useState, 
 import { useCMSFirebase, useAuth } from 'jeeby-cms';
 import { updateDoc, serverTimestamp, getDoc, setDoc, doc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { jsxs, Fragment, jsx } from 'react/jsx-runtime';
-import { useDragControls, Reorder, useReducedMotion, motion } from 'framer-motion';
+import { useDragControls, Reorder, useReducedMotion, motion, AnimatePresence } from 'framer-motion';
 import ReactDOM from 'react-dom';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/index.js';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js';
@@ -26063,7 +26063,7 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
   ) });
 }
 function formatDate(ts2) {
-  if (!ts2) return "Never";
+  if (!ts2) return "Not yet";
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
   return date.toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" });
 }
@@ -26077,6 +26077,148 @@ var STATUS_PROPS = {
   draft: { label: "Draft", cls: "jeeby-cms-doc-status jeeby-cms-doc-status--draft" },
   changes: { label: "Changes", cls: "jeeby-cms-doc-status jeeby-cms-doc-status--changes" }
 };
+var SORT_OPTIONS = [
+  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ jsx(IconRecent, {}) },
+  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ jsx(IconAlpha, {}) },
+  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ jsx(IconDraft, {}) },
+  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ jsx(IconChanges, {}) },
+  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ jsx(IconPublished, {}) }
+];
+function tsToMs(ts2) {
+  if (!ts2) return 0;
+  if (typeof ts2.toMillis === "function") return ts2.toMillis();
+  if (typeof ts2.seconds === "number") return ts2.seconds * 1e3;
+  if (ts2 instanceof Date) return ts2.getTime();
+  return 0;
+}
+function applySortFilter(pages, key) {
+  switch (key) {
+    case "alpha":
+      return [...pages].sort((a, b) => (a.name || a.slug).localeCompare(b.name || b.slug));
+    case "draft":
+      return pages.filter((p) => pageStatus(p) === "draft");
+    case "changes":
+      return pages.filter((p) => pageStatus(p) === "changes");
+    case "published":
+      return pages.filter((p) => pageStatus(p) === "published");
+    default:
+      return [...pages].sort((a, b) => tsToMs(b.updatedAt) - tsToMs(a.updatedAt));
+  }
+}
+function IconRecent() {
+  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx("circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ jsx("path", { d: "M7 4.5v2.7l1.8 1.8" })
+  ] });
+}
+function IconAlpha() {
+  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
+    /* @__PURE__ */ jsx("rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
+  ] });
+}
+function IconDraft() {
+  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx("rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
+    /* @__PURE__ */ jsx("line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
+    /* @__PURE__ */ jsx("line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
+  ] });
+}
+function IconChanges() {
+  return /* @__PURE__ */ jsx("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
+}
+function IconPublished() {
+  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx("circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ jsx("path", { d: "M4.5 7l2 2L9.5 5" })
+  ] });
+}
+function IconSortLines() {
+  return /* @__PURE__ */ jsxs("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx("rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ jsx("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
+  ] });
+}
+function IconChevronDown() {
+  return /* @__PURE__ */ jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M2 3.5l3 3 3-3" }) });
+}
+function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const idx = SORT_OPTIONS.findIndex((o) => o.key === sortMode);
+    return idx >= 0 ? idx : 0;
+  });
+  const listRef = useRef(null);
+  useEffect(() => {
+    var _a, _b;
+    (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[activeIndex]) == null ? void 0 : _b.focus();
+  }, []);
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (listRef.current && !listRef.current.contains(e.target) && (!triggerRef.current || !triggerRef.current.contains(e.target))) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose, triggerRef]);
+  function handleKeyDown2(e) {
+    var _a, _b, _c, _d, _e;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = (activeIndex + 1) % SORT_OPTIONS.length;
+      setActiveIndex(next);
+      (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[next]) == null ? void 0 : _b.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = (activeIndex - 1 + SORT_OPTIONS.length) % SORT_OPTIONS.length;
+      setActiveIndex(prev);
+      (_d = (_c = listRef.current) == null ? void 0 : _c.querySelectorAll('[role="menuitemradio"]')[prev]) == null ? void 0 : _d.focus();
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(SORT_OPTIONS[activeIndex].key);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+      (_e = triggerRef.current) == null ? void 0 : _e.focus();
+    }
+  }
+  return /* @__PURE__ */ jsx(
+    "ul",
+    {
+      ref: listRef,
+      role: "menu",
+      "aria-label": "Sort and filter pages",
+      onKeyDown: handleKeyDown2,
+      className: "jeeby-cms-sort-picker",
+      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ jsxs(
+        "li",
+        {
+          role: "menuitemradio",
+          "aria-checked": opt.key === sortMode,
+          tabIndex: activeIndex === index ? 0 : -1,
+          "data-color-key": opt.colorKey,
+          onClick: () => onSelect(opt.key),
+          onMouseEnter: () => {
+            var _a, _b;
+            setActiveIndex(index);
+            (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[index]) == null ? void 0 : _b.focus();
+          },
+          children: [
+            /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
+            /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-block-type-info", children: [
+              /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-type-label", children: opt.label }),
+              /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
+            ] }),
+            opt.key === sortMode && /* @__PURE__ */ jsx("svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
+          ]
+        },
+        opt.key
+      ))
+    }
+  );
+}
 function PageManager() {
   const { db, templates } = useCMSFirebase();
   const [pages, setPages] = useState([]);
@@ -26093,6 +26235,10 @@ function PageManager() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const deleteBtnRef = useRef(null);
+  const [sortMode, setSortMode] = useState("recent");
+  const [sortPickerOpen, setSortPickerOpen] = useState(false);
+  const sortTriggerRef = useRef(null);
+  const prefersReducedMotion = useReducedMotion();
   const loadPages = useCallback(async () => {
     setLoading(true);
     try {
@@ -26204,6 +26350,21 @@ function PageManager() {
       cancelEdit();
     }
   }
+  function handleSortSelect(key) {
+    var _a;
+    setSortMode(key);
+    setSortPickerOpen(false);
+    (_a = sortTriggerRef.current) == null ? void 0 : _a.focus();
+    const opt = SORT_OPTIONS.find((o) => o.key === key);
+    const result = applySortFilter(pages, key);
+    if (opt.isFilter) {
+      setAnnouncement(
+        result.length === 0 ? `${opt.label} \u2014 no pages match.` : `${opt.label} \u2014 showing ${result.length} page${result.length !== 1 ? "s" : ""}.`
+      );
+    } else {
+      setAnnouncement(key === "alpha" ? "Sorted alphabetically." : "Sorted by most recently edited.");
+    }
+  }
   if (loading && pages.length === 0) {
     return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-manager", children: [
       /* @__PURE__ */ jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
@@ -26274,126 +26435,195 @@ function PageManager() {
     }, children: announcement }),
     /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-list-header", children: [
       /* @__PURE__ */ jsx("h2", { children: "Pages" }),
-      /* @__PURE__ */ jsx(
-        "button",
-        {
-          ref: newPageBtnRef,
-          type: "button",
-          className: "jeeby-cms-btn-primary",
-          onClick: () => setShowCreateModal(true),
-          children: "New Page"
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", children: [
-      /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
-        /* @__PURE__ */ jsx("th", { scope: "col", children: "Name" }),
-        /* @__PURE__ */ jsx("th", { scope: "col", children: "Slug" }),
-        /* @__PURE__ */ jsx("th", { scope: "col", children: "Status" }),
-        /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
-        /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
-      ] }) }),
-      /* @__PURE__ */ jsx("tbody", { children: pages.map((page) => /* @__PURE__ */ jsxs(Fragment$1, { children: [
-        /* @__PURE__ */ jsxs("tr", { children: [
-          /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx(
-            "input",
-            {
-              type: "text",
-              className: "jeeby-cms-inline-edit-input",
-              value: editValue,
-              "aria-label": `Rename: ${page.name || page.slug}`,
-              "aria-describedby": `cms-rename-error-${page.slug}`,
-              onChange: (e) => handleEditChange(e.target.value),
-              onKeyDown: handleEditKeyDown,
-              onBlur: commitEdit,
-              autoFocus: true
-            }
-          ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
-            /* @__PURE__ */ jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
-            /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-list-controls", children: [
+        (() => {
+          const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode) || SORT_OPTIONS[0];
+          return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-sort-anchor", children: [
+            /* @__PURE__ */ jsxs(
               "button",
               {
-                ref: (el) => {
-                  editTriggerRefs.current[`${page.slug}-name`] = el;
-                },
+                ref: sortTriggerRef,
                 type: "button",
-                className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
-                "aria-label": `Rename ${page.name || page.slug}`,
-                onClick: () => startEdit(page.slug, "name", page.name || ""),
-                children: "Rename"
-              }
-            )
-          ] }) }),
-          /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsx(
-            "input",
-            {
-              type: "text",
-              className: "jeeby-cms-inline-edit-input",
-              value: editValue,
-              "aria-label": `Rename slug: ${page.name || page.slug}`,
-              "aria-describedby": `cms-rename-error-${page.slug}`,
-              onChange: (e) => handleEditChange(e.target.value),
-              onKeyDown: handleEditKeyDown,
-              onBlur: commitEdit,
-              autoFocus: true
-            }
-          ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
-            /* @__PURE__ */ jsx("span", { children: page.slug }),
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                ref: (el) => {
-                  editTriggerRefs.current[`${page.slug}-slug`] = el;
-                },
-                type: "button",
-                className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
-                "aria-label": `Rename slug for ${page.name || page.slug}`,
-                onClick: () => startEdit(page.slug, "slug", page.slug),
-                children: "Rename"
-              }
-            )
-          ] }) }),
-          /* @__PURE__ */ jsx("td", { children: (() => {
-            const { label, cls } = STATUS_PROPS[pageStatus(page)];
-            return /* @__PURE__ */ jsx("span", { className: cls, children: label });
-          })() }),
-          /* @__PURE__ */ jsx("td", { children: formatDate(page.lastPublishedAt) }),
-          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-table-actions", children: [
-            /* @__PURE__ */ jsx(
-              "a",
-              {
-                href: "/admin/pages/" + encodeURIComponent(page.slug),
-                "aria-label": "Edit blocks for " + page.slug,
-                className: "jeeby-cms-btn-primary",
-                children: "Edit"
+                className: "jeeby-cms-sort-trigger",
+                "aria-haspopup": "menu",
+                "aria-expanded": sortPickerOpen,
+                "aria-label": currentOpt.isFilter ? `Filter active: ${currentOpt.label}` : `Sort: ${currentOpt.label}`,
+                "data-filter-active": currentOpt.isFilter ? "true" : void 0,
+                onClick: () => setSortPickerOpen((v) => !v),
+                children: [
+                  /* @__PURE__ */ jsx(IconSortLines, {}),
+                  currentOpt.label,
+                  /* @__PURE__ */ jsx(IconChevronDown, {})
+                ]
               }
             ),
-            /* @__PURE__ */ jsx(
-              "button",
+            sortPickerOpen && /* @__PURE__ */ jsx(
+              SortPicker,
               {
-                type: "button",
-                className: "jeeby-cms-btn-ghost",
-                "aria-label": `Delete ${page.slug}`,
-                onClick: (e) => {
-                  deleteBtnRef.current = e.currentTarget;
-                  setDeleteTarget(page);
+                sortMode,
+                onSelect: handleSortSelect,
+                onClose: () => {
+                  var _a;
+                  setSortPickerOpen(false);
+                  (_a = sortTriggerRef.current) == null ? void 0 : _a.focus();
                 },
-                children: "Delete"
+                triggerRef: sortTriggerRef
               }
             )
-          ] }) })
-        ] }),
-        editError && editingSlug === page.slug && /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 5, children: /* @__PURE__ */ jsx(
-          "p",
+          ] });
+        })(),
+        /* @__PURE__ */ jsx(
+          "button",
           {
-            id: `cms-rename-error-${page.slug}`,
-            role: "alert",
-            className: "jeeby-cms-inline-error",
-            children: editError
+            ref: newPageBtnRef,
+            type: "button",
+            className: "jeeby-cms-btn-primary",
+            onClick: () => setShowCreateModal(true),
+            children: "New Page"
           }
-        ) }) })
-      ] }, page.slug)) })
-    ] }) }),
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx(AnimatePresence, { mode: "wait", initial: false, children: /* @__PURE__ */ jsx(
+      motion.div,
+      {
+        className: "jeeby-cms-pages-table-wrap",
+        initial: { opacity: 0, y: prefersReducedMotion ? 0 : 5 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, transition: { duration: prefersReducedMotion ? 0 : 0.16 } },
+        transition: { duration: prefersReducedMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] },
+        children: /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", children: [
+          /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
+            /* @__PURE__ */ jsx("th", { scope: "col", children: "Name" }),
+            /* @__PURE__ */ jsx("th", { scope: "col", children: "Slug" }),
+            /* @__PURE__ */ jsx("th", { scope: "col", children: "Status" }),
+            /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
+            /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
+          ] }) }),
+          /* @__PURE__ */ jsx("tbody", { children: (() => {
+            const displayedPages = applySortFilter(pages, sortMode);
+            if (displayedPages.length === 0) {
+              return /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsxs("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
+                /* @__PURE__ */ jsx("span", { children: "No pages match this filter." }),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    className: "jeeby-cms-btn-ghost",
+                    onClick: () => {
+                      setSortMode("recent");
+                      setAnnouncement("Filter cleared. Showing all pages.");
+                    },
+                    children: "Show all pages"
+                  }
+                )
+              ] }) });
+            }
+            return displayedPages.map((page) => /* @__PURE__ */ jsxs(Fragment$1, { children: [
+              /* @__PURE__ */ jsxs("tr", { children: [
+                /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    type: "text",
+                    className: "jeeby-cms-inline-edit-input",
+                    value: editValue,
+                    "aria-label": `Rename: ${page.name || page.slug}`,
+                    "aria-describedby": `cms-rename-error-${page.slug}`,
+                    onChange: (e) => handleEditChange(e.target.value),
+                    onKeyDown: handleEditKeyDown,
+                    onBlur: commitEdit,
+                    autoFocus: true
+                  }
+                ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
+                  /* @__PURE__ */ jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      ref: (el) => {
+                        editTriggerRefs.current[`${page.slug}-name`] = el;
+                      },
+                      type: "button",
+                      className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                      "aria-label": `Rename ${page.name || page.slug}`,
+                      onClick: () => startEdit(page.slug, "name", page.name || ""),
+                      children: "Rename"
+                    }
+                  )
+                ] }) }),
+                /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    type: "text",
+                    className: "jeeby-cms-inline-edit-input",
+                    value: editValue,
+                    "aria-label": `Rename slug: ${page.name || page.slug}`,
+                    "aria-describedby": `cms-rename-error-${page.slug}`,
+                    onChange: (e) => handleEditChange(e.target.value),
+                    onKeyDown: handleEditKeyDown,
+                    onBlur: commitEdit,
+                    autoFocus: true
+                  }
+                ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
+                  /* @__PURE__ */ jsx("span", { children: page.slug }),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      ref: (el) => {
+                        editTriggerRefs.current[`${page.slug}-slug`] = el;
+                      },
+                      type: "button",
+                      className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                      "aria-label": `Rename slug for ${page.name || page.slug}`,
+                      onClick: () => startEdit(page.slug, "slug", page.slug),
+                      children: "Rename"
+                    }
+                  )
+                ] }) }),
+                /* @__PURE__ */ jsx("td", { children: (() => {
+                  const { label, cls } = STATUS_PROPS[pageStatus(page)];
+                  return /* @__PURE__ */ jsx("span", { className: cls, children: label });
+                })() }),
+                /* @__PURE__ */ jsx("td", { children: formatDate(page.lastPublishedAt) }),
+                /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-table-actions", children: [
+                  /* @__PURE__ */ jsx(
+                    "a",
+                    {
+                      href: "/admin/pages/" + encodeURIComponent(page.slug),
+                      "aria-label": "Edit blocks for " + page.slug,
+                      className: "jeeby-cms-btn-primary",
+                      children: "Edit"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      className: "jeeby-cms-btn-ghost",
+                      "aria-label": `Delete ${page.slug}`,
+                      onClick: (e) => {
+                        deleteBtnRef.current = e.currentTarget;
+                        setDeleteTarget(page);
+                      },
+                      children: "Delete"
+                    }
+                  )
+                ] }) })
+              ] }),
+              editError && editingSlug === page.slug && /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 5, children: /* @__PURE__ */ jsx(
+                "p",
+                {
+                  id: `cms-rename-error-${page.slug}`,
+                  role: "alert",
+                  className: "jeeby-cms-inline-error",
+                  children: editError
+                }
+              ) }) })
+            ] }, page.slug));
+          })() })
+        ] })
+      },
+      sortMode
+    ) }),
     /* @__PURE__ */ jsx(
       CreatePageModal,
       {

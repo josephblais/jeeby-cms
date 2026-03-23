@@ -304,6 +304,122 @@
   color: var(--jeeby-cms-text-primary);
 }
 
+/* Right-side controls wrapper: sort trigger + New Page button */
+.jeeby-cms-admin .jeeby-cms-page-list-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Sort anchor — positions the picker below the trigger */
+.jeeby-cms-admin .jeeby-cms-sort-anchor {
+  position: relative;
+}
+
+/* Sort trigger button */
+.jeeby-cms-admin .jeeby-cms-sort-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 5px;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: var(--jeeby-cms-text-sm);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: var(--jeeby-cms-leading-tight);
+}
+
+.jeeby-cms-admin .jeeby-cms-sort-trigger:hover {
+  background: var(--jeeby-cms-bg-hover);
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-sort-trigger:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+/* Filter-active state — accent border + brighter text to signal reduced results */
+.jeeby-cms-admin .jeeby-cms-sort-trigger[data-filter-active="true"] {
+  border-color: var(--jeeby-cms-accent);
+  color: var(--jeeby-cms-text-primary);
+}
+
+/* Sort picker dropdown */
+.jeeby-cms-admin .jeeby-cms-sort-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+  min-width: 220px;
+  background: var(--jeeby-cms-bg-card);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-sort-picker li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: var(--jeeby-cms-text-base);
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-sort-picker li:hover,
+.jeeby-cms-admin .jeeby-cms-sort-picker li:focus {
+  background: var(--jeeby-cms-bg-hover);
+  outline: none;
+}
+
+/* Checkmark for currently selected option */
+.jeeby-cms-admin .jeeby-cms-sort-check {
+  margin-left: auto;
+  color: var(--jeeby-cms-text-muted);
+  flex-shrink: 0;
+}
+
+/* Icon chip colors for sort options */
+.jeeby-cms-admin .jeeby-cms-sort-picker li[data-color-key="time"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(55% 0.09 235) 14%, transparent);
+  color: oklch(68% 0.09 235);
+}
+.jeeby-cms-admin .jeeby-cms-sort-picker li[data-color-key="alpha"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(65% 0.04 70) 10%, transparent);
+  color: oklch(72% 0.04 70);
+}
+.jeeby-cms-admin .jeeby-cms-sort-picker li[data-color-key="draft"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(65% 0.08 80) 12%, transparent);
+  color: oklch(72% 0.08 80);
+}
+.jeeby-cms-admin .jeeby-cms-sort-picker li[data-color-key="changes"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(63% 0.10 55) 12%, transparent);
+  color: oklch(70% 0.10 55);
+}
+.jeeby-cms-admin .jeeby-cms-sort-picker li[data-color-key="published"] .jeeby-cms-block-icon {
+  background: color-mix(in oklch, oklch(60% 0.08 168) 12%, transparent);
+  color: oklch(68% 0.08 168);
+}
+
+/* Empty filter state inside the table */
+.jeeby-cms-admin .jeeby-cms-filter-empty {
+  padding: 20px 12px;
+  color: var(--jeeby-cms-text-muted);
+  font-size: var(--jeeby-cms-text-sm);
+}
+
+.jeeby-cms-admin .jeeby-cms-filter-empty span {
+  margin-right: 12px;
+}
+
 .jeeby-cms-admin .jeeby-cms-pages-empty {
   display: flex;
   flex-direction: column;

@@ -64,8 +64,9 @@ function RichText({ data, className }) {
   return createElement("div", { className, dangerouslySetInnerHTML: { __html: clean } });
 }
 function Image({ data, className }) {
+  if (!(data == null ? void 0 : data.src)) return null;
   const imgProps = {
-    src: data == null ? void 0 : data.src,
+    src: data.src,
     alt: (data == null ? void 0 : data.alt) ?? "",
     // empty string = decorative; never undefined/missing
     width: data == null ? void 0 : data.width,
