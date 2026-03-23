@@ -121,14 +121,49 @@ export function ImageEditor({ data, onChange, blockId }) {
         </div>
         <div className="jeeby-cms-image-empty-inputs">
           <label htmlFor={urlInputId} className="jeeby-cms-field-label">Image URL</label>
+          <div className="jeeby-cms-image-url-row">
+            <input
+              ref={urlInputRef}
+              id={urlInputId}
+              type="url"
+              value={data?.src ?? ''}
+              placeholder="https://example.com/image.jpg"
+              onChange={(e) => { setImgError(false); onChange({ ...data, src: e.target.value }) }}
+            />
+            <button
+              type="button"
+              className="jeeby-cms-btn-ghost jeeby-cms-upload-btn"
+              aria-label={uploadProgress !== null && uploadProgress !== 'error' ? 'Uploading image...' : 'Upload image from device'}
+              disabled={uploadProgress !== null && uploadProgress !== 'error'}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadProgress !== null && uploadProgress !== 'error' ? 'Uploading...' : 'Upload'}
+            </button>
+          </div>
           <input
-            ref={urlInputRef}
-            id={urlInputId}
-            type="url"
-            value={data?.src ?? ''}
-            placeholder="https://example.com/image.jpg"
-            onChange={(e) => { setImgError(false); onChange({ ...data, src: e.target.value }) }}
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            style={{ display: 'none' }}
+            aria-hidden="true"
+            tabIndex={-1}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleUpload(file)
+            }}
           />
+          {uploadProgress !== null && uploadProgress !== 'error' && (
+            <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100} aria-label="Upload progress">
+              <div className="jeeby-cms-upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
+            </div>
+          )}
+          {uploadProgress === 'error' && (
+            <div className="jeeby-cms-upload-error-row">
+              <p role="alert" className="jeeby-cms-inline-error">Upload failed — check Storage permissions</p>
+              <button type="button" className="jeeby-cms-btn-ghost" onClick={handleRetry}>Retry</button>
+            </div>
+          )}
+          <div className="jeeby-cms-upload-status" aria-live="polite" />
           {data?.src && imgError && (
             <p role="alert" className="jeeby-cms-inline-error">
               Image not found — check the URL is correct and publicly accessible.
@@ -192,14 +227,49 @@ export function ImageEditor({ data, onChange, blockId }) {
 
       <div className="jeeby-cms-image-fields">
         <label htmlFor={urlInputId} className="jeeby-cms-field-label">Image URL</label>
+        <div className="jeeby-cms-image-url-row">
+          <input
+            ref={urlInputRef}
+            id={urlInputId}
+            type="url"
+            value={data?.src ?? ''}
+            placeholder="https://example.com/image.jpg"
+            onChange={(e) => { setImgError(false); onChange({ ...data, src: e.target.value }) }}
+          />
+          <button
+            type="button"
+            className="jeeby-cms-btn-ghost jeeby-cms-upload-btn"
+            aria-label={uploadProgress !== null && uploadProgress !== 'error' ? 'Uploading image...' : 'Upload image from device'}
+            disabled={uploadProgress !== null && uploadProgress !== 'error'}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadProgress !== null && uploadProgress !== 'error' ? 'Uploading...' : 'Upload'}
+          </button>
+        </div>
         <input
-          ref={urlInputRef}
-          id={urlInputId}
-          type="url"
-          value={data?.src ?? ''}
-          placeholder="https://example.com/image.jpg"
-          onChange={(e) => { setImgError(false); onChange({ ...data, src: e.target.value }) }}
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          style={{ display: 'none' }}
+          aria-hidden="true"
+          tabIndex={-1}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleUpload(file)
+          }}
         />
+        {uploadProgress !== null && uploadProgress !== 'error' && (
+          <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100} aria-label="Upload progress">
+            <div className="jeeby-cms-upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        )}
+        {uploadProgress === 'error' && (
+          <div className="jeeby-cms-upload-error-row">
+            <p role="alert" className="jeeby-cms-inline-error">Upload failed — check Storage permissions</p>
+            <button type="button" className="jeeby-cms-btn-ghost" onClick={handleRetry}>Retry</button>
+          </div>
+        )}
+        <div className="jeeby-cms-upload-status" aria-live="polite" />
         {imgError && (
           <p role="alert" className="jeeby-cms-inline-error">
             Image not found — check the URL is correct and publicly accessible.
