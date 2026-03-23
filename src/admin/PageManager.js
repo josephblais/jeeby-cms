@@ -21,7 +21,7 @@ function pageStatus(page) {
 const STATUS_PROPS = {
   published: { label: 'Published', cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--published' },
   draft:     { label: 'Draft',     cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--draft' },
-  changes:   { label: 'Changes',   cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--draft' },
+  changes:   { label: 'Changes',   cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--changes' },
 }
 
 export function PageManager() {
@@ -200,6 +200,7 @@ export function PageManager() {
           <h2>Pages</h2>
         </div>
         <div role="status" aria-label="Loading pages">
+          <div className="jeeby-cms-pages-table-wrap">
           <table className="jeeby-cms-pages-table" aria-hidden="true">
             <thead>
               <tr>
@@ -222,6 +223,7 @@ export function PageManager() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     )
@@ -275,6 +277,7 @@ export function PageManager() {
         >New Page</button>
       </div>
 
+      <div className="jeeby-cms-pages-table-wrap">
       <table className="jeeby-cms-pages-table">
         <thead>
           <tr>
@@ -296,7 +299,7 @@ export function PageManager() {
                       type="text"
                       className="jeeby-cms-inline-edit-input"
                       value={editValue}
-                      aria-label={`Edit name for ${page.name || page.slug}`}
+                      aria-label={`Rename: ${page.name || page.slug}`}
                       aria-describedby={`cms-rename-error-${page.slug}`}
                       onChange={e => handleEditChange(e.target.value)}
                       onKeyDown={handleEditKeyDown}
@@ -310,9 +313,9 @@ export function PageManager() {
                         ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
                         type="button"
                         className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                        aria-label={`Edit name for ${page.name || page.slug}`}
+                        aria-label={`Rename ${page.name || page.slug}`}
                         onClick={() => startEdit(page.slug, 'name', page.name || '')}
-                      >Edit</button>
+                      >Rename</button>
                     </span>
                   )}
                 </td>
@@ -324,7 +327,7 @@ export function PageManager() {
                       type="text"
                       className="jeeby-cms-inline-edit-input"
                       value={editValue}
-                      aria-label={`Edit slug for ${page.name || page.slug}`}
+                      aria-label={`Rename slug: ${page.name || page.slug}`}
                       aria-describedby={`cms-rename-error-${page.slug}`}
                       onChange={e => handleEditChange(e.target.value)}
                       onKeyDown={handleEditKeyDown}
@@ -338,9 +341,9 @@ export function PageManager() {
                         ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
                         type="button"
                         className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                        aria-label={`Edit slug for ${page.name || page.slug}`}
+                        aria-label={`Rename slug for ${page.name || page.slug}`}
                         onClick={() => startEdit(page.slug, 'slug', page.slug)}
-                      >Edit</button>
+                      >Rename</button>
                     </span>
                   )}
                 </td>
@@ -360,24 +363,26 @@ export function PageManager() {
 
                 {/* Actions cell */}
                 <td>
-                  <a
-                    href={'/admin/pages/' + encodeURIComponent(page.slug)}
-                    aria-label={'Edit blocks for ' + page.slug}
-                    style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}
-                  >Edit</a>
-                  <button
-                    type="button"
-                    className="jeeby-cms-btn-ghost"
-                    aria-label={`Delete ${page.slug}`}
-                    onClick={(e) => { deleteBtnRef.current = e.currentTarget; setDeleteTarget(page) }}
-                  >Delete</button>
+                  <div className="jeeby-cms-table-actions">
+                    <a
+                      href={'/admin/pages/' + encodeURIComponent(page.slug)}
+                      aria-label={'Edit blocks for ' + page.slug}
+                      className="jeeby-cms-btn-primary"
+                    >Edit</a>
+                    <button
+                      type="button"
+                      className="jeeby-cms-btn-ghost"
+                      aria-label={`Delete ${page.slug}`}
+                      onClick={(e) => { deleteBtnRef.current = e.currentTarget; setDeleteTarget(page) }}
+                    >Delete</button>
+                  </div>
                 </td>
               </tr>
 
               {/* Inline error row — rendered below the row when there's an error for this page */}
               {editError && editingSlug === page.slug && (
                 <tr>
-                  <td colSpan={4}>
+                  <td colSpan={5}>
                     <p
                       id={`cms-rename-error-${page.slug}`}
                       role="alert"
@@ -390,6 +395,7 @@ export function PageManager() {
           ))}
         </tbody>
       </table>
+      </div>
 
       <CreatePageModal
         open={showCreateModal}

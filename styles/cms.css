@@ -329,9 +329,42 @@
   line-height: var(--jeeby-cms-leading-base);
 }
 
+/* Scroll wrapper — contains horizontal overflow on narrow viewports.
+   Negative margin extends the scroll area flush with the shell padding edges. */
+.jeeby-cms-admin .jeeby-cms-pages-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-inline: -16px;
+  padding-inline: 16px;
+  /* Firefox — thin scrollbar with theme-matched colors */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+/* Webkit — custom scrollbar scoped to the table scroll wrapper only */
+.jeeby-cms-admin .jeeby-cms-pages-table-wrap::-webkit-scrollbar {
+  height: 4px;
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  transition: background 150ms;
+}
+
+.jeeby-cms-admin .jeeby-cms-pages-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
 .jeeby-cms-admin .jeeby-cms-pages-table {
   width: 100%;
   border-collapse: collapse;
+  /* Prevent table from compressing below comfortable reading width on small screens */
+  min-width: 420px;
 }
 
 .jeeby-cms-admin .jeeby-cms-pages-table th {
@@ -352,13 +385,30 @@
   color: var(--jeeby-cms-text-primary);
 }
 
-.jeeby-cms-admin .jeeby-cms-pages-table a {
+/* Link styles scoped to non-button links — excludes <a> elements using button classes */
+.jeeby-cms-admin .jeeby-cms-pages-table a:not(.jeeby-cms-btn-primary):not(.jeeby-cms-btn-ghost) {
   color: var(--jeeby-cms-accent);
   text-decoration: none;
 }
 
-.jeeby-cms-admin .jeeby-cms-pages-table a:hover {
+.jeeby-cms-admin .jeeby-cms-pages-table a:not(.jeeby-cms-btn-primary):not(.jeeby-cms-btn-ghost):hover {
   text-decoration: underline;
+}
+
+/* Actions cell inner wrapper — flex row that fills the full td height so the row
+   border spans correctly even when sibling cells wrap to multiple lines. */
+.jeeby-cms-admin .jeeby-cms-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+/* Delete button in the table actions — danger color on hover to telegraph destructive intent
+   before the confirmation modal. Scoped here so it doesn't affect other ghost buttons. */
+.jeeby-cms-admin .jeeby-cms-table-actions .jeeby-cms-btn-ghost:hover {
+  color: var(--jeeby-cms-danger);
+  background: color-mix(in srgb, var(--jeeby-cms-danger) 8%, transparent);
 }
 
 /* WCAG 2.5.8: 44px minimum touch target */
@@ -382,10 +432,12 @@
 }
 
 /* Inline-editable cell read state — matches the input's min-height so the row never shifts
-   when toggling between read and edit modes. */
+   when toggling between read and edit modes. Edit button is pushed to flex-end so it
+   sits at a consistent position regardless of content length. */
 .jeeby-cms-admin .jeeby-cms-cell-read {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   min-height: 44px;
 }
@@ -403,6 +455,15 @@
 }
 
 /* Note: .jeeby-cms-live-region keeps display:none inline (accessibility-critical — do not move here) */
+
+/* Responsive: hide "Last Published" (4th column) at narrow widths where the table would
+   otherwise overflow. The scroll wrapper handles any remaining overflow gracefully. */
+@media (max-width: 819px) {
+  .jeeby-cms-admin .jeeby-cms-pages-table th:nth-child(4),
+  .jeeby-cms-admin .jeeby-cms-pages-table td:nth-child(4) {
+    display: none;
+  }
+}
 
 /* ─── Section 10: Page Editor / Editor Header ────────────────────── */
 
@@ -535,7 +596,8 @@
   border-radius: 2px;
 }
 
-/* Title input: matches h1 typographic weight and size, no box — just accent underline */
+/* Title input: matches h1 typographic weight and size, no box — just accent underline.
+   min-height: 44px matches the button's min-height to prevent layout shift on toggle. */
 .jeeby-cms-admin .jeeby-cms-editor-title-input {
   font-size: var(--jeeby-cms-text-xl);
   font-weight: 600;
@@ -548,6 +610,7 @@
   border-bottom: 1px solid var(--jeeby-cms-accent);
   border-radius: 0;
   padding: 0 4px 2px;
+  min-height: 44px;
   max-width: 32ch;
   width: 100%;
   outline: none;
@@ -591,16 +654,18 @@
   border-radius: 3px;
 }
 
-/* Slug input — edit mode only */
+/* Slug input — edit mode only. Underline-only style matches the title input pattern. */
 .jeeby-cms-admin .jeeby-cms-slug-input {
-  background: var(--jeeby-cms-bg-input);
+  background: none;
   color: var(--jeeby-cms-text-primary);
-  border: 1px solid var(--jeeby-cms-border);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border: none;
+  border-bottom: 1px solid var(--jeeby-cms-accent);
+  border-radius: 0;
+  padding: 4px 2px 2px;
   min-height: 44px;
   font-size: var(--jeeby-cms-text-sm);
   font-family: inherit;
+  outline: none;
 }
 
 .jeeby-cms-admin .jeeby-cms-slug-hint {
@@ -691,10 +756,19 @@
   color: var(--jeeby-cms-text-muted);
 }
 
+/* Draft = never published — neutral/muted so it doesn't compete with the accent Edit button */
 .jeeby-cms-admin .jeeby-cms-doc-status--draft {
-  color: var(--jeeby-cms-accent);
-  background: color-mix(in srgb, var(--jeeby-cms-accent) 10%, transparent);
-  border-color: color-mix(in srgb, var(--jeeby-cms-accent) 20%, transparent);
+  color: var(--jeeby-cms-text-secondary);
+  background: var(--jeeby-cms-bg-hover);
+  border-color: var(--jeeby-cms-border);
+}
+
+/* "Changes" = published page with staged draft updates — amber to signal divergence from live */
+.jeeby-cms-admin .jeeby-cms-doc-status--changes {
+  --jeeby-cms-warning: oklch(72% 0.13 75);
+  color: var(--jeeby-cms-warning);
+  background: color-mix(in srgb, var(--jeeby-cms-warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--jeeby-cms-warning) 20%, transparent);
 }
 
 .jeeby-cms-admin .jeeby-cms-doc-status--published {
@@ -782,6 +856,12 @@
   left: 0;
   width: 160px; /* covers gutter + enough content area to feel responsive */
   pointer-events: all;
+}
+
+/* The first seam sits before the ol with no gap above it — shift its UI up so the
+   button clears the first block's drag handle and sits visually above the block list. */
+.jeeby-cms-admin .jeeby-cms-block-canvas > .jeeby-cms-add-block-seam .jeeby-cms-add-block-ui {
+  transform: translateY(calc(-50% - 25px));
 }
 
 /* UI container: button + bar, centered vertically within the gap, gutter-aligned.
@@ -1116,6 +1196,7 @@
 }
 
 .jeeby-cms-admin .jeeby-cms-text-editor-content {
+  position: relative; /* anchors the absolutely-positioned placeholder */
   min-height: 120px;
   padding: 12px;
   background: transparent;
@@ -1173,23 +1254,17 @@
   text-underline-offset: 2px;
 }
 
-/* Placeholder for empty TextEditor at rest.
-   Tiptap adds .is-editor-empty when content is empty.
-   float: left / height: 0 is the standard Tiptap placeholder technique — the
-   pseudo-element sits in content flow without pushing subsequent text down.
-   ACCESSIBILITY: ::before content is not in the accessibility tree; the field
-   is already identified by aria-label="Text content" on the wrapper div. */
-.jeeby-cms-admin .jeeby-cms-text-editor-content .tiptap.is-editor-empty p:first-child::before {
-  content: 'Click to add text\2026';
-  color: var(--jeeby-cms-text-secondary); /* #a8a8a0 — ~5.6:1 against card bg, passes AA */
+/* Placeholder for empty TextEditor.
+   Rendered as a React element (not a CSS pseudo-element) so visibility is driven by
+   isEmptyHtml(data.html) — no dependency on Tiptap's is-editor-empty CSS class.
+   ACCESSIBILITY: aria-hidden — the field is already labelled by aria-label="Text content". */
+.jeeby-cms-admin .jeeby-cms-text-placeholder {
+  position: absolute;
+  top: 12px;  /* matches .jeeby-cms-text-editor-content padding */
+  left: 12px;
+  color: var(--jeeby-cms-text-muted);
   pointer-events: none;
-  float: left;
-  height: 0;
-}
-
-/* Hide placeholder once editing starts */
-.jeeby-cms-admin .jeeby-cms-text-editor-content:focus-within .tiptap.is-editor-empty p:first-child::before {
-  content: none;
+  user-select: none;
 }
 
 /* ── Text editor wrapper — document-like canvas layout ───────────── */
@@ -1344,13 +1419,11 @@
 .jeeby-cms-admin .jeeby-cms-list-empty-hint {
   margin: 0;
   color: var(--jeeby-cms-text-muted);
-  font-size: var(--jeeby-cms-text-base);
-  font-style: italic;
 }
 
-/* ── Image Editor empty state ─────────────────────────────────────── */
+/* ── Image Editor ──────────────────────────────────────────────────── */
 
-/* Visible label above an input — used in empty states where block-aux is bypassed */
+/* Visible label above an input */
 .jeeby-cms-admin .jeeby-cms-field-label {
   display: block;
   font-size: var(--jeeby-cms-text-sm);
@@ -1358,11 +1431,28 @@
   margin-bottom: 6px;
 }
 
-/* Empty state: placeholder area + always-visible URL input */
+/* Empty state layout — shared by view mode and edit mode (icon left, content right) */
 .jeeby-cms-admin .jeeby-cms-image-empty {
   display: flex;
   gap: 12px;
   align-items: flex-start;
+}
+
+/* View mode: interactive states matching .jeeby-cms-list-view pattern */
+.jeeby-cms-admin .jeeby-cms-image-empty[role="button"] {
+  cursor: text;
+  border-radius: 4px;
+  outline: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-empty[role="button"]:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-empty-hint {
+  margin: 0;
+  color: var(--jeeby-cms-text-muted);
 }
 
 .jeeby-cms-admin .jeeby-cms-image-empty-area {
@@ -1383,18 +1473,59 @@
   min-width: 0;
 }
 
-.jeeby-cms-admin .jeeby-cms-image-url-input {
-  width: 100%;
-  min-height: 44px;
-  box-sizing: border-box;
+/* Alt label gets a top margin to separate it from the URL field */
+.jeeby-cms-admin .jeeby-cms-image-alt-label {
+  margin-top: 8px;
 }
 
-/* ── Video Editor empty state — mirrors ImageEditor empty-state layout ── */
+/* Loaded state — preview above permanently visible URL + alt fields */
+.jeeby-cms-admin .jeeby-cms-image-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
+.jeeby-cms-admin .jeeby-cms-image-figure {
+  margin: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  border-radius: 4px;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Video Editor — mirrors ImageEditor layout and view/edit pattern ── */
+
+/* Empty state layout — shared by view mode and edit mode */
 .jeeby-cms-admin .jeeby-cms-video-empty {
   display: flex;
   gap: 12px;
   align-items: flex-start;
+}
+
+/* View mode: interactive states matching .jeeby-cms-list-view pattern */
+.jeeby-cms-admin .jeeby-cms-video-empty[role="button"] {
+  cursor: text;
+  border-radius: 4px;
+  outline: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-video-empty[role="button"]:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+.jeeby-cms-admin .jeeby-cms-video-empty-hint {
+  margin: 0;
+  color: var(--jeeby-cms-text-muted);
 }
 
 .jeeby-cms-admin .jeeby-cms-video-empty-area {
@@ -1497,9 +1628,7 @@
 
 .jeeby-cms-admin .jeeby-cms-gallery-empty-hint {
   margin: 0;
-  color: var(--jeeby-cms-text-secondary);
-  font-size: var(--jeeby-cms-text-base);
-  font-style: italic;
+  color: var(--jeeby-cms-text-muted);
 }
 
 /* Gallery edit mode — layout classes replacing inline styles */
@@ -1905,6 +2034,14 @@
   line-height: var(--jeeby-cms-leading-base);
 }
 
+/* Anchor for the block picker dropdown on the empty state button.
+   text-align: left resets the inherited center-align from .jeeby-cms-canvas-empty
+   so the picker items match the left-aligned layout of the add-block seam picker. */
+.jeeby-cms-admin .jeeby-cms-canvas-empty-picker-anchor {
+  position: relative;
+  text-align: left;
+}
+
 /* ─── Section 19: Canvas Width Hint ─────────────────────────────── */
 
 
@@ -1949,8 +2086,6 @@
 .jeeby-cms-admin .jeeby-cms-pullquote-empty-hint {
   margin: 0;
   color: var(--jeeby-cms-text-muted);
-  font-size: var(--jeeby-cms-text-base);
-  font-style: italic;
 }
 
 /* Edit mode */

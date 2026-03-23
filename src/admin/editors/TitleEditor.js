@@ -184,7 +184,7 @@ export function TitleEditor({ data, onChange, blockId }) {
           fontSize: HEADING_SIZES[data?.level ?? 'h2'],
           minHeight: '44px',
         }}
-        data-placeholder="Enter title..."
+        data-placeholder="Type a heading..."
       />
 
       {/* Heading level picker — aux control, revealed on block hover/focus */}

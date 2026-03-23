@@ -1,5 +1,5 @@
 "use client"
-import { useState, memo } from 'react'
+import { useState, useRef, memo } from 'react'
 import { useDragControls, Reorder } from 'framer-motion'
 import { TitleEditor } from './editors/TitleEditor.js'
 import { TextEditor } from './editors/TextEditor.js'
@@ -10,6 +10,7 @@ import { ListEditor } from './editors/ListEditor.js'
 import { PullQuoteEditor } from './editors/PullQuoteEditor.js'
 import { AddBlockButton } from './AddBlockButton.js'
 import { BlockGutter } from './BlockGutter.js'
+import { BlockTypePicker } from './BlockTypePicker.js'
 
 // Display name helper
 const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery', list: 'List', pullquote: 'Pull Quote' }
@@ -102,6 +103,9 @@ const EmptyStatePreviews = memo(function EmptyStatePreviews() {
 })
 
 export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
+  const [emptyPickerOpen, setEmptyPickerOpen] = useState(false)
+  const emptyBtnRef = useRef(null)
+
   if (blocks.length === 0) {
     return (
       <div className="jeeby-cms-block-canvas">
@@ -111,13 +115,30 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
           <p className="jeeby-cms-canvas-empty-body">
             Add blocks to build your page — headings, paragraphs, images, and more.
           </p>
-          <button
-            type="button"
-            className="jeeby-cms-btn-primary"
-            onClick={() => onAddBlock('richtext', -1, undefined)}
-          >
-            Add your first block
-          </button>
+          <div className="jeeby-cms-canvas-empty-picker-anchor">
+            <button
+              ref={emptyBtnRef}
+              type="button"
+              className="jeeby-cms-btn-primary"
+              aria-haspopup="listbox"
+              aria-expanded={emptyPickerOpen}
+              onClick={() => setEmptyPickerOpen(v => !v)}
+            >
+              Add your first block
+            </button>
+            {emptyPickerOpen && (
+              <BlockTypePicker
+                onSelect={(type, initialData) => {
+                  onAddBlock(type, -1, initialData)
+                  setEmptyPickerOpen(false)
+                }}
+                onClose={() => {
+                  setEmptyPickerOpen(false)
+                  emptyBtnRef.current?.focus()
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
     )

@@ -91,10 +91,10 @@ export function PullQuoteEditor({ data, onChange, blockId }) {
   // Edit mode — two labelled fields, blur outside container exits
   return (
     <div ref={containerRef} className="jeeby-cms-pullquote-editor" onBlur={handleContainerBlur}>
-      <label htmlFor={'pullquote-text-' + blockId} className="jeeby-cms-field-label">Quote</label>
+      <label htmlFor={'block-input-' + blockId} className="jeeby-cms-field-label">Quote</label>
       <textarea
         ref={textareaRef}
-        id={'pullquote-text-' + blockId}
+        id={'block-input-' + blockId}
         value={quote}
         onChange={e => update({ quote: e.target.value })}
         onKeyDown={handleTextareaKeyDown}

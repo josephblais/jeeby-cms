@@ -99,6 +99,13 @@ const ToolbarSeparator = () => (
 // so correct tab order is: contenteditable → Bold → Italic → Link → lists.
 // The toolbar is visually repositioned above the editor via CSS order: -1.
 // WCAG 1.3.2 (Meaningful Sequence), 2.4.3 (Focus Order).
+// Strips all HTML tags and checks if any visible text remains.
+// Tiptap's empty state is '<p></p>' or '<p><br ...></p>' — both strip to ''.
+function isEmptyHtml(html) {
+  if (!html) return true
+  return html.replace(/<[^>]*>/g, '').trim() === ''
+}
+
 export function TextEditor({ data, onChange, blockId }) {
   const [linkInputOpen, setLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
@@ -164,7 +171,12 @@ export function TextEditor({ data, onChange, blockId }) {
         id={'block-input-' + blockId}
         aria-label="Text content"
         className="jeeby-cms-text-editor-content"
+        tabIndex={-1}
+        onFocus={() => editor?.commands.focus()}
       >
+        {isEmptyHtml(data?.html) && (
+          <div className="jeeby-cms-text-placeholder" aria-hidden="true">Start writing...</div>
+        )}
         <EditorContent editor={editor} />
       </div>
 

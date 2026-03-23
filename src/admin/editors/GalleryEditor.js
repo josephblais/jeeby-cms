@@ -90,14 +90,22 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
 }
 
 export function GalleryEditor({ data, onChange, blockId }) {
-  const [isEditing, setIsEditing] = useState(false)
   const items = data?.items ?? []
+  // Skip view mode entirely when there are no items — nothing to preview, so the
+  // click-to-enter step is pure friction. Start in edit mode immediately.
+  const [isEditing, setIsEditing] = useState(items.length === 0)
   const containerRef = useRef(null)
+  const addButtonRef = useRef(null)
+  // Entering edit mode unmounts the focused view div, whose blur fires before any
+  // child of the edit container is focused. Suppress that one spurious blur so the
+  // edit mode doesn't immediately close itself.
+  const suppressNextBlur = useRef(false)
 
   function handleContainerBlur() {
-    // Defer so focus can settle after React re-renders. relatedTarget is unreliable
-    // when transitioning from view→edit (the unmounting view div's blur fires before
-    // focus reaches any child of the edit container), so check activeElement instead.
+    if (suppressNextBlur.current) {
+      suppressNextBlur.current = false
+      return
+    }
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
         setIsEditing(false)
@@ -116,8 +124,8 @@ export function GalleryEditor({ data, onChange, blockId }) {
         tabIndex={0}
         id={'block-input-' + blockId}
         aria-label={'Gallery — ' + items.length + ' image' + (items.length !== 1 ? 's' : '') + '. Click to edit'}
-        onClick={() => setIsEditing(true)}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditing(true) } }}
+        onClick={() => { suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) }}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) } }}
       >
         {itemsWithSrc.length > 0 ? (
           <div className="jeeby-cms-gallery-thumb-strip">
@@ -159,6 +167,8 @@ export function GalleryEditor({ data, onChange, blockId }) {
       </Reorder.Group>
 
       <button
+        ref={addButtonRef}
+        id={items.length === 0 ? 'block-input-' + blockId : undefined}
         type="button"
         className="jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn"
         onClick={() => onChange({

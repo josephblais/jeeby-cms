@@ -38,8 +38,8 @@ function IconOrderedList() {
 // ACCESSIBILITY: WCAG 4.1.2 (Name, Role, Value) — each input and button has an aria-label.
 // The type toggle uses aria-pressed to communicate the active state.
 export function ListEditor({ data, onChange, blockId }) {
-  const [isEditing, setIsEditing] = useState(false)
   const items = data?.items?.length ? data.items : ['']
+  const [isEditing, setIsEditing] = useState(false)
   const ordered = data?.ordered ?? false
   const inputRefs = useRef([])
   const containerRef = useRef(null)
