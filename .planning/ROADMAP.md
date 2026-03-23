@@ -187,6 +187,13 @@ Plans:
 
 **Requirements:** MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Wave 0: Test stubs for upload features + upload CSS classes + MEDIA-01 verification
+- [ ] 09-02-PLAN.md — ImageEditor upload integration (MEDIA-04)
+- [ ] 09-03-PLAN.md — GalleryEditor per-item + batch upload integration (MEDIA-03)
+
 **Success Criteria:**
 1. Video editor generates a valid iframe `src` from a YouTube, Vimeo, or Loom URL pasted by the admin
 2. Video editor uploads a file to Firebase Storage and stores the resulting URL in the block data
@@ -261,3 +268,4 @@ Plans:
 *Phase 6 plans added: 2026-03-18*
 *Phase 7 plans added: 2026-03-18*
 *Phase 8 plans added: 2026-03-19*
+*Phase 9 plans added: 2026-03-23*
