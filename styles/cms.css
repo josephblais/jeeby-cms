@@ -1478,11 +1478,23 @@
   margin-top: 8px;
 }
 
-/* Loaded state — preview above permanently visible URL + alt fields */
+/* Loaded state — image + optional edit fields */
 .jeeby-cms-admin .jeeby-cms-image-editor {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Loaded view mode — image only, click or keyboard to edit */
+.jeeby-cms-admin .jeeby-cms-image-editor--view {
+  cursor: pointer;
+  border-radius: 4px;
+  outline: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-editor--view:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
 }
 
 .jeeby-cms-admin .jeeby-cms-image-figure {

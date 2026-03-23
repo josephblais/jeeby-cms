@@ -13,8 +13,10 @@
 import { createElement } from 'react'
 
 export function Image({ data, className }) {
+  if (!data?.src) return null
+
   const imgProps = {
-    src: data?.src,
+    src: data.src,
     alt: data?.alt ?? '',          // empty string = decorative; never undefined/missing
     width: data?.width,
     height: data?.height,

@@ -24105,24 +24105,29 @@ function ImageEditor({ data, onChange, blockId }) {
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef(null);
   const urlInputRef = useRef(null);
+  const viewButtonRef = useRef(null);
   const hasImage = (data == null ? void 0 : data.src) && !imgError;
   useEffect(() => {
     if (imgError) setIsEditing(true);
   }, [imgError]);
+  useEffect(() => {
+    var _a;
+    if (isEditing) (_a = urlInputRef.current) == null ? void 0 : _a.focus();
+  }, [isEditing]);
   const urlInputId = "block-input-" + blockId;
   const altInputId = "image-alt-" + blockId;
   const altHintId = "alt-hint-" + blockId;
   function enterEditMode() {
     setIsEditing(true);
-    requestAnimationFrame(() => {
-      var _a;
-      return (_a = urlInputRef.current) == null ? void 0 : _a.focus();
-    });
   }
   function handleContainerBlur(e) {
     var _a;
     if (!(e.relatedTarget instanceof Node) || !((_a = containerRef.current) == null ? void 0 : _a.contains(e.relatedTarget))) {
       setIsEditing(false);
+      requestAnimationFrame(() => {
+        var _a2;
+        return (_a2 = viewButtonRef.current) == null ? void 0 : _a2.focus();
+      });
     }
   }
   const IconImage2 = () => /* @__PURE__ */ jsxs("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
@@ -24189,7 +24194,36 @@ function ImageEditor({ data, onChange, blockId }) {
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-image-editor", children: [
+  if (!isEditing) {
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        ref: viewButtonRef,
+        role: "button",
+        tabIndex: 0,
+        "aria-label": (data == null ? void 0 : data.alt) ? `Edit image: ${data.alt}` : "Image block \u2014 click to edit",
+        "aria-expanded": false,
+        className: "jeeby-cms-image-editor jeeby-cms-image-editor--view",
+        onClick: enterEditMode,
+        onKeyDown: (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            enterEditMode();
+          }
+        },
+        children: /* @__PURE__ */ jsx("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsx(
+          "img",
+          {
+            src: data.src,
+            alt: (data == null ? void 0 : data.alt) ?? "",
+            onError: () => setImgError(true),
+            className: "jeeby-cms-image-preview"
+          }
+        ) })
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "jeeby-cms-image-editor", onBlur: handleContainerBlur, children: [
     /* @__PURE__ */ jsx("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsx(
       "img",
       {
@@ -24204,6 +24238,7 @@ function ImageEditor({ data, onChange, blockId }) {
       /* @__PURE__ */ jsx(
         "input",
         {
+          ref: urlInputRef,
           id: urlInputId,
           type: "url",
           value: (data == null ? void 0 : data.src) ?? "",
@@ -24214,6 +24249,7 @@ function ImageEditor({ data, onChange, blockId }) {
           }
         }
       ),
+      imgError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
       /* @__PURE__ */ jsx("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
       /* @__PURE__ */ jsx(
         "input",
