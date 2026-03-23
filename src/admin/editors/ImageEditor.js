@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
+import { uploadFile } from '../../firebase/storage.js'
+import { useCMSFirebase } from '../../index.js'
 
 // ImageEditor — URL + alt text inputs with image preview.
 // Props: { data: { src, alt, caption }, onChange, blockId }
@@ -26,6 +28,10 @@ export function ImageEditor({ data, onChange, blockId }) {
   const containerRef = useRef(null)
   const urlInputRef = useRef(null)
   const viewButtonRef = useRef(null)
+  const { storage } = useCMSFirebase()
+  const [uploadProgress, setUploadProgress] = useState(null) // null | 0-100 | 'error'
+  const fileInputRef = useRef(null)
+  const pendingFileRef = useRef(null)
 
   const hasImage = data?.src && !imgError
 
@@ -47,7 +53,28 @@ export function ImageEditor({ data, onChange, blockId }) {
     setIsEditing(true)
   }
 
+  async function handleUpload(file) {
+    pendingFileRef.current = file
+    const ext = file.name.split('.').pop().toLowerCase()
+    const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+    setUploadProgress(0)
+    try {
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct))
+      onChange({ ...data, src: url })
+      setUploadProgress(null)
+    } catch {
+      setUploadProgress('error')
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  function handleRetry() {
+    if (pendingFileRef.current) handleUpload(pendingFileRef.current)
+  }
+
   function handleContainerBlur(e) {
+    if (uploadProgress !== null) return
     if (!(e.relatedTarget instanceof Node) || !containerRef.current?.contains(e.relatedTarget)) {
       setIsEditing(false)
       // Return focus to the view-mode button so it isn't skipped in tab order.
