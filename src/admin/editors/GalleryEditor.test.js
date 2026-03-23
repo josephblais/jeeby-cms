@@ -30,3 +30,36 @@ test('GalleryEditor has alt text per item', () => {
 test('GalleryEditor has "use client" directive', () => {
   assert.ok(src.trimStart().startsWith('"use client"'), 'GalleryEditor must start with "use client"')
 })
+
+// ─── Upload feature stubs (Phase 09 — wave 0) ────────────────────────────────
+// These tests define the upload contract. They FAIL until Plan 02 implements
+// the upload feature in GalleryEditor.js.
+
+test('GalleryEditor imports uploadFile from storage', () => {
+  assert.ok(
+    src.includes("from '../../firebase/storage.js'") || src.includes('uploadFile'),
+    'GalleryEditor must import uploadFile'
+  )
+})
+
+test('GalleryEditor imports useCMSFirebase', () => {
+  assert.ok(src.includes('useCMSFirebase'), 'GalleryEditor must import useCMSFirebase hook')
+})
+
+test('GalleryEditor has per-item upload button', () => {
+  assert.ok(
+    src.includes('Upload image') || src.includes('jeeby-cms-gallery-upload-btn'),
+    'GalleryItem must have per-item upload button'
+  )
+})
+
+test('GalleryEditor has batch upload button', () => {
+  assert.ok(
+    src.includes('Upload multiple') || src.includes('jeeby-cms-gallery-batch-btn'),
+    'GalleryEditor must have batch "Upload multiple" button'
+  )
+})
+
+test('GalleryEditor has hidden file input for upload', () => {
+  assert.ok(src.includes('type="file"'), 'GalleryEditor must have hidden file input')
+})
