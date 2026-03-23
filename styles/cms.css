@@ -410,6 +410,79 @@
 }
 
 /* Empty filter state inside the table */
+/* Search bar */
+.jeeby-cms-admin .jeeby-cms-search-bar {
+  margin-bottom: 12px;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-icon {
+  position: absolute;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  color: var(--jeeby-cms-text-muted);
+  pointer-events: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-input {
+  width: 100%;
+  padding: 7px 34px 7px 30px;
+  background: var(--jeeby-cms-bg-input);
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 5px;
+  color: var(--jeeby-cms-text-primary);
+  font-size: var(--jeeby-cms-text-sm);
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-input::placeholder {
+  color: var(--jeeby-cms-text-muted);
+}
+
+.jeeby-cms-admin .jeeby-cms-search-input:focus {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-clear {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: var(--jeeby-cms-text-muted);
+  cursor: pointer;
+}
+
+.jeeby-cms-admin .jeeby-cms-search-clear:hover {
+  background: var(--jeeby-cms-bg-hover);
+  color: var(--jeeby-cms-text-primary);
+}
+
+.jeeby-cms-admin .jeeby-cms-search-clear:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
 .jeeby-cms-admin .jeeby-cms-filter-empty {
   padding: 20px 12px;
   color: var(--jeeby-cms-text-muted);
@@ -418,6 +491,49 @@
 
 .jeeby-cms-admin .jeeby-cms-filter-empty span {
   margin-right: 12px;
+}
+
+.jeeby-cms-admin .jeeby-cms-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 0 2px;
+}
+
+.jeeby-cms-admin .jeeby-cms-pagination-label {
+  font-size: var(--jeeby-cms-text-sm);
+  color: var(--jeeby-cms-text-muted);
+  min-width: 6ch;
+  text-align: center;
+}
+
+.jeeby-cms-admin .jeeby-cms-pagination-btn {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 5px;
+  color: var(--jeeby-cms-text-secondary);
+  font-size: var(--jeeby-cms-text-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.jeeby-cms-admin .jeeby-cms-pagination-btn:hover:not(:disabled) {
+  background: var(--jeeby-cms-bg-hover);
+  color: var(--jeeby-cms-text-primary);
+  border-color: var(--jeeby-cms-border-strong, var(--jeeby-cms-border));
+}
+
+.jeeby-cms-admin .jeeby-cms-pagination-btn:focus-visible {
+  outline: 2px solid var(--jeeby-cms-accent);
+  outline-offset: 2px;
+}
+
+.jeeby-cms-admin .jeeby-cms-pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .jeeby-cms-admin .jeeby-cms-pages-empty {

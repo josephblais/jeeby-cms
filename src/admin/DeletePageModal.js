@@ -1,41 +1,12 @@
 "use client"
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useCMSFirebase } from '../index.js'
 import { deletePage } from '../firebase/firestore.js'
+import { ModalShell } from './ModalShell.js'
 
 export function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
   const { db } = useCMSFirebase()
   const [deleting, setDeleting] = useState(false)
-  const dialogRef = useRef(null)
-
-  const open = !!page
-
-  // Focus management: focus first button on open, return focus on close
-  useEffect(() => {
-    if (open) {
-      const firstFocusable = dialogRef.current?.querySelector(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      if (firstFocusable) firstFocusable.focus()
-    } else {
-      triggerRef?.current?.focus()
-    }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  function handleKeyDown(e) {
-    if (e.key === 'Escape') { onClose(); return }
-    if (e.key !== 'Tab') return
-    const focusable = dialogRef.current.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault(); last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault(); first.focus()
-    }
-  }
 
   async function handleDelete() {
     setDeleting(true)
@@ -51,19 +22,15 @@ export function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
     }
   }
 
-  if (!page) return null
   return (
-    <div className="jeeby-cms-modal-backdrop">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="delete-modal-heading"
-        className="jeeby-cms-modal-card" onKeyDown={handleKeyDown}>
-        <h2 id="delete-modal-heading">Delete page?</h2>
-        <p>Delete {page.slug}? This cannot be undone.</p>
-        <div className="jeeby-cms-modal-actions">
-          <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Keep Page</button>
-          <button type="button" className="jeeby-cms-btn-destructive" onClick={handleDelete} disabled={deleting} aria-busy={deleting ? 'true' : undefined}
-            style={{ cursor: deleting ? 'not-allowed' : 'pointer' }}>Delete Page</button>
-        </div>
+    <ModalShell open={!!page} labelId="delete-modal-heading" triggerRef={triggerRef} onClose={onClose}>
+      <h2 id="delete-modal-heading">Delete page?</h2>
+      <p>Delete {page?.slug}? This cannot be undone.</p>
+      <div className="jeeby-cms-modal-actions">
+        <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Keep Page</button>
+        <button type="button" className="jeeby-cms-btn-destructive" onClick={handleDelete} disabled={deleting} aria-busy={deleting ? 'true' : undefined}
+          style={{ cursor: deleting ? 'not-allowed' : 'pointer' }}>Delete Page</button>
       </div>
-    </div>
+    </ModalShell>
   )
 }

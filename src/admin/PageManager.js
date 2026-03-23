@@ -1,8 +1,8 @@
 "use client"
-import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCMSFirebase } from '../index.js'
-import { listPages, renamePage, savePage, validateSlug } from '../firebase/firestore.js'
+import { listPages, listPagesPaginated, renamePage, savePage, validateSlug } from '../firebase/firestore.js'
 import { CreatePageModal } from './CreatePageModal.js'
 import { DeletePageModal } from './DeletePageModal.js'
 
@@ -35,18 +35,46 @@ const SORT_OPTIONS = [
   { key: 'published', isFilter: true,  colorKey: 'published', label: 'Published only',      hint: 'live, no pending changes',       icon: <IconPublished /> },
 ]
 
-// Firestore Timestamps can arrive as {toMillis}, {seconds/nanoseconds}, or Date.
+// Firestore Timestamps can arrive as {toMillis}, {seconds/nanoseconds}, Date, or ISO string.
 function tsToMs(ts) {
   if (!ts) return 0
   if (typeof ts.toMillis === 'function') return ts.toMillis()
   if (typeof ts.seconds === 'number') return ts.seconds * 1000
   if (ts instanceof Date) return ts.getTime()
+  if (typeof ts === 'string') { const ms = Date.parse(ts); return isNaN(ms) ? 0 : ms }
   return 0
+}
+
+// ── Search ────────────────────────────────────────────────────────────
+
+// Normalize for matching: lowercase + strip diacritics (so "cafe" matches "Café")
+function normalizeForSearch(str) {
+  return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+}
+
+// Fuzzy match: every character in query must appear in str in order.
+// Spread into arrays to iterate code points, not code units — ensures
+// emoji and other surrogate pairs (e.g. 😀, 𝓐) match correctly.
+function fuzzyMatch(query, str) {
+  const q = [...normalizeForSearch(query)]
+  const s = [...normalizeForSearch(str)]
+  let qi = 0
+  for (let i = 0; i < s.length && qi < q.length; i++) {
+    if (s[i] === q[qi]) qi++
+  }
+  return qi === q.length
+}
+
+function applySearch(pages, query) {
+  if (!query.trim()) return pages
+  return pages.filter(p =>
+    fuzzyMatch(query, p.name || '') || fuzzyMatch(query, p.slug || '')
+  )
 }
 
 function applySortFilter(pages, key) {
   switch (key) {
-    case 'alpha':     return [...pages].sort((a, b) => (a.name || a.slug).localeCompare(b.name || b.slug))
+    case 'alpha':     return [...pages].sort((a, b) => (a.name || a.slug || '').localeCompare(b.name || b.slug || '', undefined, { sensitivity: 'base' }))
     case 'draft':     return pages.filter(p => pageStatus(p) === 'draft')
     case 'changes':   return pages.filter(p => pageStatus(p) === 'changes')
     case 'published': return pages.filter(p => pageStatus(p) === 'published')
@@ -105,6 +133,21 @@ function IconSortLines() {
     </svg>
   )
 }
+function IconSearch() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true" focusable="false">
+      <circle cx="5.5" cy="5.5" r="3.5" />
+      <path d="M8.5 8.5l2.5 2.5" />
+    </svg>
+  )
+}
+function IconClear() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true" focusable="false">
+      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" />
+    </svg>
+  )
+}
 function IconChevronDown() {
   return (
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
@@ -128,7 +171,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
     listRef.current?.querySelectorAll('[role="menuitemradio"]')[activeIndex]?.focus()
   }, [])
 
-  // Close on click outside (trigger handles its own toggle)
+  // Close on click or tap outside (trigger handles its own toggle)
   useEffect(() => {
     function handleClickOutside(e) {
       if (
@@ -139,7 +182,11 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
   }, [onClose, triggerRef])
 
   function handleKeyDown(e) {
@@ -200,6 +247,9 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
   )
 }
 
+const PAGE_SIZE = 20
+const ALL_PAGES_TTL = 60_000 // ms — invalidated on any mutation
+
 export function PageManager() {
   const { db, templates } = useCMSFirebase()
 
@@ -215,8 +265,12 @@ export function PageManager() {
   const [editValue, setEditValue] = useState('')
   const [editError, setEditError] = useState(null)
 
-  // Refs for focus management and debounce
+  // Refs for focus management, debounce, and save guard
   const debounceRef = useRef(null)
+  const isSavingRef = useRef(false)
+  // fetchGenRef: incremented on every loadPages call. Results are only applied when
+  // the generation at completion matches, discarding stale concurrent fetches.
+  const fetchGenRef = useRef(0)
   const newPageBtnRef = useRef(null)
   // editTriggerRef is set per-row to return focus after commit
   const editTriggerRefs = useRef({})
@@ -232,20 +286,131 @@ export function PageManager() {
   const sortTriggerRef = useRef(null)
   const prefersReducedMotion = useReducedMotion()
 
-  // Load pages from Firestore
+  // Search
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+
+  // Pagination
+  // isPaginated: true when Firestore cursor pagination is used (recent sort + no search).
+  // false: fetch all docs, process client-side, slice for UI pages.
+  const isPaginated = sortMode === 'recent' && !debouncedQuery.trim()
+  const [pageNum, setPageNum] = useState(1)
+  const [hasNextPage, setHasNextPage] = useState(false)
+  // cursorsRef[n] = startAfter cursor to fetch page n+1. Index 0 is always null (page 1 start).
+  const cursorsRef = useRef([null])
+  // allPagesCacheRef: full listPages result cached for ALL_PAGES_TTL. Invalidated on mutations.
+  const allPagesCacheRef = useRef(null)
+  // prefetchRef: background-fetched result for the next paginated page.
+  const prefetchRef = useRef(null)
+
+  const showSearch = isPaginated
+    ? (hasNextPage || pages.length >= 8)
+    : pages.length >= 8
+
+  // processedPages: full sort/filter/search result — used for total count in all mode
+  const processedPages = useMemo(
+    () => applySearch(applySortFilter(pages, sortMode), debouncedQuery),
+    [pages, sortMode, debouncedQuery]
+  )
+
+  // displayedPages: the slice that actually renders in the table
+  const displayedPages = useMemo(
+    () => isPaginated
+      ? processedPages
+      : processedPages.slice((pageNum - 1) * PAGE_SIZE, pageNum * PAGE_SIZE),
+    [isPaginated, processedPages, pageNum]
+  )
+
+  const totalPages = isPaginated ? null : Math.max(1, Math.ceil(processedPages.length / PAGE_SIZE))
+  const canGoPrev = pageNum > 1
+  const canGoNext = isPaginated ? hasNextPage : pageNum < (totalPages ?? 1)
+
+  // Load pages from Firestore.
+  // Multiple calls can be in flight; only the most recent result is applied (fetchGenRef).
+  // Paginated mode: uses a background prefetch cache for instant forward navigation.
+  // All mode: caches the full page list for ALL_PAGES_TTL to avoid refetching on filter/search changes.
   const loadPages = useCallback(async () => {
-    setLoading(true)
-    try {
-      const result = await listPages(db)
-      setPages(result)
-    } catch (err) {
-      setError('Failed to load pages.')
-    } finally {
-      setLoading(false)
+    const gen = ++fetchGenRef.current
+
+    if (isPaginated) {
+      // Use prefetched result if ready — no loading state, instant navigation
+      const pre = prefetchRef.current
+      if (pre?.pageNum === pageNum && pre?.result) {
+        prefetchRef.current = null
+        if (gen !== fetchGenRef.current) return
+        const { pages: result, nextCursor, hasMore } = pre.result
+        setPages(result)
+        setHasNextPage(hasMore)
+        if (hasMore) {
+          cursorsRef.current[pageNum] = nextCursor
+          // Keep prefetching ahead
+          const nextPage = pageNum + 1
+          prefetchRef.current = { pageNum: nextPage }
+          listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor: nextCursor })
+            .then(r => { if (prefetchRef.current?.pageNum === nextPage) prefetchRef.current.result = r })
+            .catch(() => {})
+        }
+        return
+      }
     }
-  }, [db])
+
+    setLoading(true)
+    setError(null)
+    try {
+      if (isPaginated) {
+        const cursor = cursorsRef.current[pageNum - 1] ?? null
+        const { pages: result, nextCursor, hasMore } = await listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor })
+        if (gen !== fetchGenRef.current) return
+        setPages(result)
+        setHasNextPage(hasMore)
+        if (hasMore) {
+          cursorsRef.current[pageNum] = nextCursor
+          // Start prefetching the next page in the background
+          const nextPage = pageNum + 1
+          prefetchRef.current = { pageNum: nextPage }
+          listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor: nextCursor })
+            .then(r => { if (prefetchRef.current?.pageNum === nextPage) prefetchRef.current.result = r })
+            .catch(() => {})
+        }
+      } else {
+        // Use cached full-page list when fresh; only hit Firestore when stale or invalidated
+        const cache = allPagesCacheRef.current
+        let result
+        if (cache && Date.now() - cache.cachedAt < ALL_PAGES_TTL) {
+          result = cache.pages
+        } else {
+          result = await listPages(db)
+          if (gen !== fetchGenRef.current) return
+          allPagesCacheRef.current = { pages: result, cachedAt: Date.now() }
+        }
+        if (gen !== fetchGenRef.current) return
+        setPages(result)
+        setHasNextPage(false)
+      }
+    } catch (err) {
+      if (gen === fetchGenRef.current) setError('Failed to load pages.')
+    } finally {
+      if (gen === fetchGenRef.current) setLoading(false)
+    }
+  }, [db, isPaginated, pageNum])
 
   useEffect(() => { loadPages() }, [loadPages])
+
+  // Reset to page 1 when sort mode or search changes (handles both isPaginated flip and filter changes)
+  useEffect(() => {
+    setPageNum(1)
+    cursorsRef.current = [null]
+    setHasNextPage(false)
+    prefetchRef.current = null
+  }, [sortMode, debouncedQuery])
+
+  // If the current page is empty but earlier pages exist, go back one page.
+  // Covers: deletion empties last paginated page, filter narrows below current page.
+  useEffect(() => {
+    if (displayedPages.length === 0 && pageNum > 1 && !loading) {
+      setPageNum(p => p - 1)
+    }
+  }, [displayedPages.length, pageNum, loading])
 
   // Clear announcement after 3 seconds
   useEffect(() => {
@@ -255,7 +420,29 @@ export function PageManager() {
     }
   }, [announcement])
 
-  // --- Inline edit handlers ---
+  // Debounce search: update debouncedQuery after 200ms idle.
+  // Announcement happens in a separate effect once processedPages settles.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 200)
+    return () => clearTimeout(t)
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (debouncedQuery.trim()) {
+      setAnnouncement(
+        processedPages.length === 0
+          ? 'No pages match.'
+          : `${processedPages.length} page${processedPages.length !== 1 ? 's' : ''} found.`
+      )
+    }
+  }, [debouncedQuery, processedPages.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear search when bar disappears (page count drops below threshold)
+  useEffect(() => {
+    if (!showSearch) setSearchQuery('')
+  }, [showSearch])
+
+// --- Inline edit handlers ---
 
   function startEdit(slug, field, currentValue) {
     setEditingSlug(slug)
@@ -295,14 +482,18 @@ export function PageManager() {
 
   async function commitEdit() {
     if (!editingSlug || !editField) return
+    if (isSavingRef.current) return
     const trimmed = editValue.trim()
     if (!trimmed) {
       cancelEdit()
       return
     }
 
+    clearTimeout(debounceRef.current)
+
     const currentSlug = editingSlug
     const currentField = editField
+    isSavingRef.current = true
 
     try {
       if (currentField === 'name') {
@@ -312,6 +503,8 @@ export function PageManager() {
           return
         }
         await savePage(db, currentSlug, { name: trimmed })
+        allPagesCacheRef.current = null
+        prefetchRef.current = null
         await loadPages()
         setAnnouncement('Page renamed successfully.')
         // Clear announcement after a tick so it re-announces if triggered again
@@ -333,6 +526,8 @@ export function PageManager() {
           return
         }
         await renamePage(db, currentSlug, trimmed)
+        allPagesCacheRef.current = null
+        prefetchRef.current = null
         await loadPages()
         setAnnouncement('Page renamed successfully.')
         setTimeout(() => setAnnouncement(''), 1000)
@@ -352,6 +547,8 @@ export function PageManager() {
         ? 'Rename failed. The old page may still exist -- check Firestore and try again.'
         : 'Save failed. Please try again.'
       setEditError(msg)
+    } finally {
+      isSavingRef.current = false
     }
   }
 
@@ -372,17 +569,19 @@ export function PageManager() {
     setSortPickerOpen(false)
     sortTriggerRef.current?.focus()
     const opt = SORT_OPTIONS.find(o => o.key === key)
-    const result = applySortFilter(pages, key)
     if (opt.isFilter) {
-      setAnnouncement(
-        result.length === 0
-          ? `${opt.label} — no pages match.`
-          : `${opt.label} — showing ${result.length} page${result.length !== 1 ? 's' : ''}.`
-      )
+      // Announce the filter name only — the count comes from processedPages which
+      // won't be correct until the all-pages fetch completes.
+      setAnnouncement(`${opt.label} filter applied.`)
     } else {
       setAnnouncement(key === 'alpha' ? 'Sorted alphabetically.' : 'Sorted by most recently edited.')
     }
   }
+
+  // --- Pagination handlers ---
+
+  function goToNextPage() { setPageNum(p => p + 1) }
+  function goToPrevPage() { setPageNum(p => Math.max(1, p - 1)) }
 
   // --- Render ---
 
@@ -430,6 +629,31 @@ export function PageManager() {
     )
   }
 
+  // Error state
+  if (error && pages.length === 0) {
+    return (
+      <div className="jeeby-cms-page-manager">
+        <div className="jeeby-cms-live-region" aria-live="polite" aria-atomic="true" style={{
+          position: 'absolute', width: '1px', height: '1px', overflow: 'hidden',
+          clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap'
+        }}>
+          {announcement}
+        </div>
+        <div className="jeeby-cms-page-list-header">
+          <h2>Pages</h2>
+        </div>
+        <div className="jeeby-cms-pages-empty" role="alert">
+          <p>{error}</p>
+          <button
+            type="button"
+            className="jeeby-cms-btn-primary"
+            onClick={loadPages}
+          >Try again</button>
+        </div>
+      </div>
+    )
+  }
+
   // Empty state
   if (pages.length === 0 && !loading) {
     return (
@@ -471,8 +695,8 @@ export function PageManager() {
       <div className="jeeby-cms-page-list-header">
         <h2>Pages</h2>
         <div className="jeeby-cms-page-list-controls">
-          {/* Sort / filter trigger */}
-          {(() => {
+          {/* Sort / filter trigger — only when there are pages to sort */}
+          {pages.length > 0 && (() => {
             const currentOpt = SORT_OPTIONS.find(o => o.key === sortMode) || SORT_OPTIONS[0]
             return (
               <div className="jeeby-cms-sort-anchor">
@@ -510,9 +734,45 @@ export function PageManager() {
         </div>
       </div>
 
+      <AnimatePresence initial={false}>
+        {showSearch && (
+          <motion.div
+            className="jeeby-cms-search-bar"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.16, 1, 0.3, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="jeeby-cms-search-inner" role="search">
+              <span className="jeeby-cms-search-icon" aria-hidden="true"><IconSearch /></span>
+              <input
+                type="search"
+                className="jeeby-cms-search-input"
+                placeholder="Search pages…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                aria-label="Search pages"
+                maxLength={200}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="jeeby-cms-search-clear"
+                  aria-label="Clear search"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <IconClear />
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait" initial={false}>
       <motion.div
-        key={sortMode}
+        key={`${sortMode}|${debouncedQuery}|${pageNum}`}
         className="jeeby-cms-pages-table-wrap"
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 5 }}
         animate={{ opacity: 1, y: 0 }}
@@ -531,24 +791,46 @@ export function PageManager() {
         </thead>
         <tbody>
           {(() => {
-            const displayedPages = applySortFilter(pages, sortMode)
             if (displayedPages.length === 0) {
+              const currentOpt = SORT_OPTIONS.find(o => o.key === sortMode)
+              const hasFilter = currentOpt?.isFilter
+              const hasSearch = !!debouncedQuery
+              const queryChars = [...debouncedQuery]
+              const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join('') + '…' : debouncedQuery
+              const emptyMsg = hasSearch && hasFilter
+                ? 'No pages match this search and filter.'
+                : hasSearch
+                  ? `No pages match "${shortQuery}".`
+                  : 'No pages match this filter.'
               return (
                 <tr>
                   <td colSpan={5} className="jeeby-cms-filter-empty">
-                    <span>No pages match this filter.</span>
-                    <button
-                      type="button"
-                      className="jeeby-cms-btn-ghost"
-                      onClick={() => { setSortMode('recent'); setAnnouncement('Filter cleared. Showing all pages.') }}
-                    >Show all pages</button>
+                    <span>{emptyMsg}</span>
+                    {hasSearch && (
+                      <button
+                        type="button"
+                        className="jeeby-cms-btn-ghost"
+                        onClick={() => { setSearchQuery(''); setAnnouncement('Search cleared.') }}
+                      >Clear search</button>
+                    )}
+                    {hasFilter && (
+                      <button
+                        type="button"
+                        className="jeeby-cms-btn-ghost"
+                        onClick={() => { setSortMode('recent'); setAnnouncement('Filter cleared. Showing all pages.') }}
+                      >Clear filter</button>
+                    )}
                   </td>
                 </tr>
               )
             }
-            return displayedPages.map(page => (
+            return (
+              <AnimatePresence>
+                {displayedPages.map(page => (
             <Fragment key={page.slug}>
-              <tr>
+              <motion.tr
+                exit={{ opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } }}
+              >
                 {/* Name cell — inline editable */}
                 <td>
                   {editingSlug === page.slug && editField === 'name' ? (
@@ -634,7 +916,7 @@ export function PageManager() {
                     >Delete</button>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
 
               {/* Inline error row — rendered below the row when there's an error for this page */}
               {editError && editingSlug === page.slug && (
@@ -649,23 +931,59 @@ export function PageManager() {
                 </tr>
               )}
             </Fragment>
-          ))
+                ))}
+              </AnimatePresence>
+            )
           })()}
         </tbody>
       </table>
       </motion.div>
       </AnimatePresence>
 
+      {(canGoPrev || canGoNext) && (
+        <div className="jeeby-cms-pagination" role="navigation" aria-label="Page navigation">
+          <button
+            type="button"
+            className="jeeby-cms-pagination-btn"
+            onClick={goToPrevPage}
+            disabled={!canGoPrev || loading}
+            aria-label="Previous page"
+          >← Prev</button>
+          <span className="jeeby-cms-pagination-label" aria-current="page">
+            {totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}`}
+          </span>
+          <button
+            type="button"
+            className="jeeby-cms-pagination-btn"
+            onClick={goToNextPage}
+            disabled={!canGoNext || loading}
+            aria-label="Next page"
+          >Next →</button>
+        </div>
+      )}
+
       <CreatePageModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }}
+        onCreated={() => {
+          allPagesCacheRef.current = null
+          prefetchRef.current = null
+          loadPages()
+          setAnnouncement('Page created successfully.')
+        }}
         triggerRef={newPageBtnRef}
       />
       <DeletePageModal
         page={deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        onDeleted={() => { loadPages(); setAnnouncement('Page deleted.') }}
+        onDeleted={() => {
+          const slug = deleteTarget?.slug
+          if (slug) setPages(prev => prev.filter(p => p.slug !== slug))
+          setAnnouncement('Page deleted.')
+          allPagesCacheRef.current = null
+          prefetchRef.current = null
+          setTimeout(() => loadPages(), 350)
+        }}
         triggerRef={deleteBtnRef}
       />
     </div>

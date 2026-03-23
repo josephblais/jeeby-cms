@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCMSFirebase } from '../index.js'
 import { savePage, validateSlug, listPages } from '../firebase/firestore.js'
+import { ModalShell } from './ModalShell.js'
 
 export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
   const { db, templates } = useCMSFirebase()
@@ -14,23 +15,10 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
   const [submitting, setSubmitting] = useState(false)
 
   const debounceRef = useRef(null)
-  const dialogRef = useRef(null)
 
   function toKebabSlug(str) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   }
-
-  // Focus management: focus first input on open, return focus on close
-  useEffect(() => {
-    if (open) {
-      // Focus the first focusable element (name input) when modal opens
-      const input = dialogRef.current?.querySelector('input, button, select, textarea')
-      if (input) input.focus()
-    } else {
-      // Return focus to trigger button on close
-      triggerRef?.current?.focus()
-    }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset form state when modal opens
   useEffect(() => {
@@ -43,21 +31,6 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setSubmitting(false)
     }
   }, [open])
-
-  function handleKeyDown(e) {
-    if (e.key === 'Escape') { onClose(); return }
-    if (e.key !== 'Tab') return
-    const focusable = dialogRef.current.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault(); last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault(); first.focus()
-    }
-  }
 
   function handleSlugChange(val) {
     setSlug(val)
@@ -105,49 +78,45 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     }
   }
 
-  if (!open) return null
   return (
-    <div className="jeeby-cms-modal-backdrop">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="create-modal-heading"
-        className="jeeby-cms-modal-card" onKeyDown={handleKeyDown}>
-        <h2 id="create-modal-heading">Create New Page</h2>
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Name field */}
+    <ModalShell open={open} labelId="create-modal-heading" triggerRef={triggerRef} onClose={onClose}>
+      <h2 id="create-modal-heading">Create New Page</h2>
+      <form onSubmit={handleSubmit} noValidate>
+        {/* Name field */}
+        <div className="jeeby-cms-field">
+          <label htmlFor="cms-page-name">Page name</label>
+          <input id="cms-page-name" type="text" required value={name}
+            onChange={e => {
+              setName(e.target.value)
+              if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value))
+            }} />
+        </div>
+        {/* Slug field */}
+        <div className="jeeby-cms-field">
+          <label htmlFor="cms-page-slug">Slug</label>
+          <input id="cms-page-slug" type="text" required value={slug}
+            onChange={e => { setSlugTouched(true); handleSlugChange(e.target.value) }}
+            aria-describedby="cms-slug-hint cms-slug-error" />
+          <p id="cms-slug-hint">e.g. /about or /blog/my-post</p>
+          {slugError && <p id="cms-slug-error" role="alert" className="jeeby-cms-inline-error">{slugError}</p>}
+        </div>
+        {/* Template dropdown — hidden when no templates */}
+        {templates.length > 0 && (
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-page-name">Page name</label>
-            <input id="cms-page-name" type="text" required value={name}
-              onChange={e => {
-                setName(e.target.value)
-                if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value))
-              }} />
+            <label htmlFor="cms-page-template">Template</label>
+            <select id="cms-page-template" value={template} onChange={e => setTemplate(e.target.value)}>
+              <option value="">Select a template</option>
+              {templates.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+            </select>
           </div>
-          {/* Slug field */}
-          <div className="jeeby-cms-field">
-            <label htmlFor="cms-page-slug">Slug</label>
-            <input id="cms-page-slug" type="text" required value={slug}
-              onChange={e => { setSlugTouched(true); handleSlugChange(e.target.value) }}
-              aria-describedby="cms-slug-hint cms-slug-error" />
-            <p id="cms-slug-hint">e.g. /about or /blog/my-post</p>
-            {slugError && <p id="cms-slug-error" role="alert" className="jeeby-cms-inline-error">{slugError}</p>}
-          </div>
-          {/* Template dropdown — hidden when no templates */}
-          {templates.length > 0 && (
-            <div className="jeeby-cms-field">
-              <label htmlFor="cms-page-template">Template</label>
-              <select id="cms-page-template" value={template} onChange={e => setTemplate(e.target.value)}>
-                <option value="">Select a template</option>
-                {templates.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-              </select>
-            </div>
-          )}
-          {/* Buttons */}
-          <div className="jeeby-cms-modal-actions">
-            <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Discard</button>
-            <button type="submit" className="jeeby-cms-btn-primary" disabled={submitting} aria-busy={submitting ? 'true' : undefined}
-              style={{ cursor: submitting ? 'not-allowed' : 'pointer' }}>Create Page</button>
-          </div>
-        </form>
-      </div>
-    </div>
+        )}
+        {/* Buttons */}
+        <div className="jeeby-cms-modal-actions">
+          <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Discard</button>
+          <button type="submit" className="jeeby-cms-btn-primary" disabled={submitting} aria-busy={submitting ? 'true' : undefined}
+            style={{ cursor: submitting ? 'not-allowed' : 'pointer' }}>Create Page</button>
+        </div>
+      </form>
+    </ModalShell>
   )
 }

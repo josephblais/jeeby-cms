@@ -54,6 +54,18 @@ async function listPages(db) {
   const snap = await firestore.getDocs(col);
   return snap.docs.map((d) => ({ slug: d.id, ...d.data() }));
 }
+async function listPagesPaginated(db, { pageSize = 20, cursor = null } = {}) {
+  const col = firestore.collection(db, "pages");
+  const constraints = cursor ? [firestore.orderBy("updatedAt", "desc"), firestore.startAfter(cursor), firestore.limit(pageSize + 1)] : [firestore.orderBy("updatedAt", "desc"), firestore.limit(pageSize + 1)];
+  const snap = await firestore.getDocs(firestore.query(col, ...constraints));
+  const hasMore = snap.docs.length > pageSize;
+  const pageDocs = snap.docs.slice(0, pageSize);
+  return {
+    pages: pageDocs.map((d) => ({ slug: d.id, ...d.data() })),
+    nextCursor: hasMore ? pageDocs[pageDocs.length - 1] : null,
+    hasMore
+  };
+}
 async function renamePage(db, oldSlug, newSlug) {
   const data = await getPage(db, oldSlug);
   if (!data) throw new Error(`Page "${oldSlug}" not found`);
@@ -23490,18 +23502,18 @@ Extension.create({
           if (initialEvaluationDone) {
             return;
           }
-          const limit = this.options.limit;
-          if (limit === null || limit === void 0 || limit === 0) {
+          const limit2 = this.options.limit;
+          if (limit2 === null || limit2 === void 0 || limit2 === 0) {
             initialEvaluationDone = true;
             return;
           }
           const initialContentSize = this.storage.characters({ node: newState.doc });
-          if (initialContentSize > limit) {
-            const over = initialContentSize - limit;
+          if (initialContentSize > limit2) {
+            const over = initialContentSize - limit2;
             const from2 = 0;
             const to = over;
             console.warn(
-              `[CharacterCount] Initial content exceeded limit of ${limit} characters. Content was automatically trimmed.`
+              `[CharacterCount] Initial content exceeded limit of ${limit2} characters. Content was automatically trimmed.`
             );
             const tr2 = newState.tr.deleteRange(from2, to);
             initialEvaluationDone = true;
@@ -23510,19 +23522,19 @@ Extension.create({
           initialEvaluationDone = true;
         },
         filterTransaction: (transaction, state) => {
-          const limit = this.options.limit;
-          if (!transaction.docChanged || limit === 0 || limit === null || limit === void 0) {
+          const limit2 = this.options.limit;
+          if (!transaction.docChanged || limit2 === 0 || limit2 === null || limit2 === void 0) {
             return true;
           }
           const oldSize = this.storage.characters({ node: state.doc });
           const newSize = this.storage.characters({ node: transaction.doc });
-          if (newSize <= limit) {
+          if (newSize <= limit2) {
             return true;
           }
-          if (oldSize > limit && newSize > limit && newSize <= oldSize) {
+          if (oldSize > limit2 && newSize > limit2 && newSize <= oldSize) {
             return true;
           }
-          if (oldSize > limit && newSize > limit && newSize > oldSize) {
+          if (oldSize > limit2 && newSize > limit2 && newSize > oldSize) {
             return false;
           }
           const isPaste = transaction.getMeta("paste");
@@ -23530,12 +23542,12 @@ Extension.create({
             return false;
           }
           const pos = transaction.selection.$head.pos;
-          const over = newSize - limit;
+          const over = newSize - limit2;
           const from2 = pos - over;
           const to = pos;
           transaction.deleteRange(from2, to);
           const updatedSize = this.storage.characters({ node: transaction.doc });
-          if (updatedSize > limit) {
+          if (updatedSize > limit2) {
             return false;
           }
           return true;
@@ -25246,32 +25258,48 @@ function UndoToast({ blockType, onUndo }) {
     }
   );
 }
-function UnsavedChangesWarning({ onLeave, onStay }) {
+var _scrollLockCount = 0;
+function lockScroll() {
+  if (_scrollLockCount === 0) document.body.style.overflow = "hidden";
+  _scrollLockCount++;
+}
+function unlockScroll() {
+  _scrollLockCount = Math.max(0, _scrollLockCount - 1);
+  if (_scrollLockCount === 0) document.body.style.overflow = "";
+}
+var FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef, onClose, backdropStyle, children }) {
   const dialogRef = React.useRef(null);
+  const reduced = framerMotion.useReducedMotion();
   React.useEffect(() => {
-    var _a;
-    const stayBtn = (_a = dialogRef.current) == null ? void 0 : _a.querySelector("[data-autofocus]");
-    stayBtn == null ? void 0 : stayBtn.focus();
-  }, []);
+    var _a, _b, _c;
+    if (!open) {
+      (_a = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _a.focus();
+      return;
+    }
+    const target = ((_b = dialogRef.current) == null ? void 0 : _b.querySelector("[data-autofocus]")) ?? ((_c = dialogRef.current) == null ? void 0 : _c.querySelector(FOCUSABLE));
+    target == null ? void 0 : target.focus();
+  }, [open]);
   React.useEffect(() => {
+    if (!open) return;
+    lockScroll();
+    return unlockScroll;
+  }, [open]);
+  React.useEffect(() => {
+    if (!open) return;
     function handleKeyDown2(e) {
       if (e.key === "Escape") {
         e.preventDefault();
-        onStay();
+        onClose == null ? void 0 : onClose();
+        return;
       }
-    }
-    document.addEventListener("keydown", handleKeyDown2);
-    return () => document.removeEventListener("keydown", handleKeyDown2);
-  }, [onStay]);
-  React.useEffect(() => {
-    function handleTab(e) {
       if (e.key !== "Tab") return;
       const dialog = dialogRef.current;
       if (!dialog) return;
-      const focusable = dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-      if (focusable.length === 0) return;
-      const first2 = focusable[0];
-      const last = focusable[focusable.length - 1];
+      const nodes = dialog.querySelectorAll(FOCUSABLE);
+      if (!nodes.length) return;
+      const first2 = nodes[0];
+      const last = nodes[nodes.length - 1];
       if (e.shiftKey && document.activeElement === first2) {
         e.preventDefault();
         last.focus();
@@ -25280,121 +25308,101 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
         first2.focus();
       }
     }
-    document.addEventListener("keydown", handleTab);
-    return () => document.removeEventListener("keydown", handleTab);
-  }, []);
-  return /* @__PURE__ */ jsxRuntime.jsx(
-    "div",
+    document.addEventListener("keydown", handleKeyDown2);
+    return () => document.removeEventListener("keydown", handleKeyDown2);
+  }, [open, onClose]);
+  return /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { children: open && /* @__PURE__ */ jsxRuntime.jsx(
+    framerMotion.motion.div,
     {
       className: "jeeby-cms-modal-backdrop",
-      style: { zIndex: 300 },
-      children: /* @__PURE__ */ jsxRuntime.jsxs(
-        "div",
+      style: backdropStyle,
+      onMouseDown: onClose,
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: { duration: reduced ? 0.01 : 0.2, ease: [0.16, 1, 0.3, 1] },
+      children: /* @__PURE__ */ jsxRuntime.jsx(
+        framerMotion.motion.div,
         {
           ref: dialogRef,
-          role: "alertdialog",
+          role,
           "aria-modal": "true",
-          "aria-labelledby": "unsaved-heading",
-          "aria-describedby": "unsaved-body",
+          "aria-labelledby": labelId,
+          "aria-describedby": descId,
           className: "jeeby-cms-modal-card",
-          children: [
-            /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
-            /* @__PURE__ */ jsxRuntime.jsx("p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
-            /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-              /* @__PURE__ */ jsxRuntime.jsx(
-                "button",
-                {
-                  type: "button",
-                  onClick: onLeave,
-                  className: "jeeby-cms-btn-ghost",
-                  children: "Leave without saving"
-                }
-              ),
-              /* @__PURE__ */ jsxRuntime.jsx(
-                "button",
-                {
-                  type: "button",
-                  "data-autofocus": true,
-                  onClick: onStay,
-                  className: "jeeby-cms-btn-ghost",
-                  children: "Stay and save"
-                }
-              )
-            ] })
-          ]
+          onMouseDown: (e) => e.stopPropagation(),
+          initial: { scale: reduced ? 1 : 0.96, y: reduced ? 0 : 10 },
+          animate: { scale: 1, y: 0 },
+          exit: { scale: reduced ? 1 : 0.96, y: reduced ? 0 : 4, transition: { duration: reduced ? 0.01 : 0.15, ease: [0.4, 0, 1, 1] } },
+          transition: { duration: reduced ? 0.01 : 0.26, ease: [0.16, 1, 0.3, 1] },
+          children
         }
       )
     }
-  );
+  ) });
 }
-function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, publishing, publishError }) {
-  const dialogRef = React.useRef(null);
-  React.useEffect(() => {
-    var _a, _b;
-    if (open) {
-      const focusable = (_a = dialogRef.current) == null ? void 0 : _a.querySelector(
-        'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusable) focusable.focus();
-    } else {
-      (_b = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _b.focus();
-    }
-  }, [open]);
-  function handleKeyDown2(e) {
-    if (e.key === "Escape") {
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab") return;
-    const focusable = dialogRef.current.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    );
-    const first2 = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first2) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first2.focus();
-    }
-  }
-  if (!open) return null;
-  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-modal-backdrop", children: /* @__PURE__ */ jsxRuntime.jsxs(
-    "div",
+function UnsavedChangesWarning({ onLeave, onStay }) {
+  return /* @__PURE__ */ jsxRuntime.jsxs(
+    ModalShell,
     {
-      ref: dialogRef,
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-labelledby": "publish-modal-heading",
-      className: "jeeby-cms-modal-card",
-      onKeyDown: handleKeyDown2,
+      role: "alertdialog",
+      labelId: "unsaved-heading",
+      descId: "unsaved-body",
+      onClose: onStay,
+      backdropStyle: { zIndex: 300 },
       children: [
-        /* @__PURE__ */ jsxRuntime.jsxs("h2", { id: "publish-modal-heading", children: [
-          "Publish \u2018",
-          pageName,
-          "\u2019?"
-        ] }),
-        /* @__PURE__ */ jsxRuntime.jsx("p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
-        publishError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
+        /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
+        /* @__PURE__ */ jsxRuntime.jsx("p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
         /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
           /* @__PURE__ */ jsxRuntime.jsx(
             "button",
             {
               type: "button",
-              className: "jeeby-cms-btn-primary",
-              onClick: onConfirm,
-              disabled: publishing,
-              "aria-busy": publishing ? "true" : void 0,
-              style: { cursor: publishing ? "not-allowed" : "pointer" },
-              children: publishing ? "Publishing\u2026" : "Publish now"
+              onClick: onLeave,
+              className: "jeeby-cms-btn-ghost",
+              children: "Leave without saving"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsx(
+            "button",
+            {
+              type: "button",
+              "data-autofocus": true,
+              onClick: onStay,
+              className: "jeeby-cms-btn-ghost",
+              children: "Stay and save"
             }
           )
         ] })
       ]
     }
-  ) });
+  );
+}
+function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, publishing, publishError }) {
+  return /* @__PURE__ */ jsxRuntime.jsxs(ModalShell, { open, labelId: "publish-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsxRuntime.jsxs("h2", { id: "publish-modal-heading", children: [
+      "Publish \u2018",
+      pageName,
+      "\u2019?"
+    ] }),
+    /* @__PURE__ */ jsxRuntime.jsx("p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
+    publishError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-primary",
+          onClick: onConfirm,
+          disabled: publishing,
+          "aria-busy": publishing ? "true" : void 0,
+          style: { cursor: publishing ? "not-allowed" : "pointer" },
+          children: publishing ? "Publishing\u2026" : "Publish now"
+        }
+      )
+    ] })
+  ] });
 }
 function PublishToast() {
   return /* @__PURE__ */ jsxRuntime.jsx(
@@ -25828,19 +25836,9 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
   const [slugError, setSlugError] = React.useState(null);
   const [submitting, setSubmitting] = React.useState(false);
   const debounceRef = React.useRef(null);
-  const dialogRef = React.useRef(null);
   function toKebabSlug(str) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
-  React.useEffect(() => {
-    var _a, _b;
-    if (open) {
-      const input = (_a = dialogRef.current) == null ? void 0 : _a.querySelector("input, button, select, textarea");
-      if (input) input.focus();
-    } else {
-      (_b = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _b.focus();
-    }
-  }, [open]);
   React.useEffect(() => {
     if (open) {
       setName("");
@@ -25851,25 +25849,6 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setSubmitting(false);
     }
   }, [open]);
-  function handleKeyDown2(e) {
-    if (e.key === "Escape") {
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab") return;
-    const focusable = dialogRef.current.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    );
-    const first2 = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first2) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first2.focus();
-    }
-  }
   function handleSlugChange(val) {
     setSlug(val);
     setSlugError(null);
@@ -25912,115 +25891,71 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setSubmitting(false);
     }
   }
-  if (!open) return null;
-  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-modal-backdrop", children: /* @__PURE__ */ jsxRuntime.jsxs(
-    "div",
-    {
-      ref: dialogRef,
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-labelledby": "create-modal-heading",
-      className: "jeeby-cms-modal-card",
-      onKeyDown: handleKeyDown2,
-      children: [
-        /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "create-modal-heading", children: "Create New Page" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("form", { onSubmit: handleSubmit, noValidate: true, children: [
-          /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-            /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-name", children: "Page name" }),
-            /* @__PURE__ */ jsxRuntime.jsx(
-              "input",
-              {
-                id: "cms-page-name",
-                type: "text",
-                required: true,
-                value: name,
-                onChange: (e) => {
-                  setName(e.target.value);
-                  if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value));
-                }
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-            /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-slug", children: "Slug" }),
-            /* @__PURE__ */ jsxRuntime.jsx(
-              "input",
-              {
-                id: "cms-page-slug",
-                type: "text",
-                required: true,
-                value: slug,
-                onChange: (e) => {
-                  setSlugTouched(true);
-                  handleSlugChange(e.target.value);
-                },
-                "aria-describedby": "cms-slug-hint cms-slug-error"
-              }
-            ),
-            /* @__PURE__ */ jsxRuntime.jsx("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
-            slugError && /* @__PURE__ */ jsxRuntime.jsx("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
-          ] }),
-          templates.length > 0 && /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-            /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-template", children: "Template" }),
-            /* @__PURE__ */ jsxRuntime.jsxs("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
-              /* @__PURE__ */ jsxRuntime.jsx("option", { value: "", children: "Select a template" }),
-              templates.map((t) => /* @__PURE__ */ jsxRuntime.jsx("option", { value: t.name, children: t.name }, t.name))
-            ] })
-          ] }),
-          /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-            /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
-            /* @__PURE__ */ jsxRuntime.jsx(
-              "button",
-              {
-                type: "submit",
-                className: "jeeby-cms-btn-primary",
-                disabled: submitting,
-                "aria-busy": submitting ? "true" : void 0,
-                style: { cursor: submitting ? "not-allowed" : "pointer" },
-                children: "Create Page"
-              }
-            )
-          ] })
+  return /* @__PURE__ */ jsxRuntime.jsxs(ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "create-modal-heading", children: "Create New Page" }),
+    /* @__PURE__ */ jsxRuntime.jsxs("form", { onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-name", children: "Page name" }),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          "input",
+          {
+            id: "cms-page-name",
+            type: "text",
+            required: true,
+            value: name,
+            onChange: (e) => {
+              setName(e.target.value);
+              if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value));
+            }
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-slug", children: "Slug" }),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          "input",
+          {
+            id: "cms-page-slug",
+            type: "text",
+            required: true,
+            value: slug,
+            onChange: (e) => {
+              setSlugTouched(true);
+              handleSlugChange(e.target.value);
+            },
+            "aria-describedby": "cms-slug-hint cms-slug-error"
+          }
+        ),
+        /* @__PURE__ */ jsxRuntime.jsx("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
+        slugError && /* @__PURE__ */ jsxRuntime.jsx("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
+      ] }),
+      templates.length > 0 && /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-template", children: "Template" }),
+        /* @__PURE__ */ jsxRuntime.jsxs("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
+          /* @__PURE__ */ jsxRuntime.jsx("option", { value: "", children: "Select a template" }),
+          templates.map((t) => /* @__PURE__ */ jsxRuntime.jsx("option", { value: t.name, children: t.name }, t.name))
         ] })
-      ]
-    }
-  ) });
+      ] }),
+      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
+        /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          "button",
+          {
+            type: "submit",
+            className: "jeeby-cms-btn-primary",
+            disabled: submitting,
+            "aria-busy": submitting ? "true" : void 0,
+            style: { cursor: submitting ? "not-allowed" : "pointer" },
+            children: "Create Page"
+          }
+        )
+      ] })
+    ] })
+  ] });
 }
 function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
   const { db } = jeebyCms.useCMSFirebase();
   const [deleting, setDeleting] = React.useState(false);
-  const dialogRef = React.useRef(null);
-  const open = !!page;
-  React.useEffect(() => {
-    var _a, _b;
-    if (open) {
-      const firstFocusable = (_a = dialogRef.current) == null ? void 0 : _a.querySelector(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      );
-      if (firstFocusable) firstFocusable.focus();
-    } else {
-      (_b = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _b.focus();
-    }
-  }, [open]);
-  function handleKeyDown2(e) {
-    if (e.key === "Escape") {
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab") return;
-    const focusable = dialogRef.current.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    );
-    const first2 = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first2) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first2.focus();
-    }
-  }
   async function handleDelete2() {
     setDeleting(true);
     try {
@@ -26033,41 +25968,29 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
       setDeleting(false);
     }
   }
-  if (!page) return null;
-  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-modal-backdrop", children: /* @__PURE__ */ jsxRuntime.jsxs(
-    "div",
-    {
-      ref: dialogRef,
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-labelledby": "delete-modal-heading",
-      className: "jeeby-cms-modal-card",
-      onKeyDown: handleKeyDown2,
-      children: [
-        /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "delete-modal-heading", children: "Delete page?" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("p", { children: [
-          "Delete ",
-          page.slug,
-          "? This cannot be undone."
-        ] }),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
-          /* @__PURE__ */ jsxRuntime.jsx(
-            "button",
-            {
-              type: "button",
-              className: "jeeby-cms-btn-destructive",
-              onClick: handleDelete2,
-              disabled: deleting,
-              "aria-busy": deleting ? "true" : void 0,
-              style: { cursor: deleting ? "not-allowed" : "pointer" },
-              children: "Delete Page"
-            }
-          )
-        ] })
-      ]
-    }
-  ) });
+  return /* @__PURE__ */ jsxRuntime.jsxs(ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "delete-modal-heading", children: "Delete page?" }),
+    /* @__PURE__ */ jsxRuntime.jsxs("p", { children: [
+      "Delete ",
+      page == null ? void 0 : page.slug,
+      "? This cannot be undone."
+    ] }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-destructive",
+          onClick: handleDelete2,
+          disabled: deleting,
+          "aria-busy": deleting ? "true" : void 0,
+          style: { cursor: deleting ? "not-allowed" : "pointer" },
+          children: "Delete Page"
+        }
+      )
+    ] })
+  ] });
 }
 function formatDate(ts2) {
   if (!ts2) return "Not yet";
@@ -26096,12 +26019,34 @@ function tsToMs(ts2) {
   if (typeof ts2.toMillis === "function") return ts2.toMillis();
   if (typeof ts2.seconds === "number") return ts2.seconds * 1e3;
   if (ts2 instanceof Date) return ts2.getTime();
+  if (typeof ts2 === "string") {
+    const ms = Date.parse(ts2);
+    return isNaN(ms) ? 0 : ms;
+  }
   return 0;
+}
+function normalizeForSearch(str) {
+  return str.normalize("NFD").replace(new RegExp("\\p{Diacritic}", "gu"), "").toLowerCase();
+}
+function fuzzyMatch(query2, str) {
+  const q = [...normalizeForSearch(query2)];
+  const s = [...normalizeForSearch(str)];
+  let qi = 0;
+  for (let i = 0; i < s.length && qi < q.length; i++) {
+    if (s[i] === q[qi]) qi++;
+  }
+  return qi === q.length;
+}
+function applySearch(pages, query2) {
+  if (!query2.trim()) return pages;
+  return pages.filter(
+    (p) => fuzzyMatch(query2, p.name || "") || fuzzyMatch(query2, p.slug || "")
+  );
 }
 function applySortFilter(pages, key) {
   switch (key) {
     case "alpha":
-      return [...pages].sort((a, b) => (a.name || a.slug).localeCompare(b.name || b.slug));
+      return [...pages].sort((a, b) => (a.name || a.slug || "").localeCompare(b.name || b.slug || "", void 0, { sensitivity: "base" }));
     case "draft":
       return pages.filter((p) => pageStatus(p) === "draft");
     case "changes":
@@ -26148,6 +26093,15 @@ function IconSortLines() {
     /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
   ] });
 }
+function IconSearch() {
+  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
+    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M8.5 8.5l2.5 2.5" })
+  ] });
+}
+function IconClear() {
+  return /* @__PURE__ */ jsxRuntime.jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
+}
 function IconChevronDown() {
   return /* @__PURE__ */ jsxRuntime.jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M2 3.5l3 3 3-3" }) });
 }
@@ -26168,7 +26122,11 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [onClose, triggerRef]);
   function handleKeyDown2(e) {
     var _a, _b, _c, _d, _e;
@@ -26226,6 +26184,8 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
     }
   );
 }
+var PAGE_SIZE = 20;
+var ALL_PAGES_TTL = 6e4;
 function PageManager() {
   const { db, templates } = jeebyCms.useCMSFirebase();
   const [pages, setPages] = React.useState([]);
@@ -26237,6 +26197,8 @@ function PageManager() {
   const [editValue, setEditValue] = React.useState("");
   const [editError, setEditError] = React.useState(null);
   const debounceRef = React.useRef(null);
+  const isSavingRef = React.useRef(false);
+  const fetchGenRef = React.useRef(0);
   const newPageBtnRef = React.useRef(null);
   const editTriggerRefs = React.useRef({});
   const [showCreateModal, setShowCreateModal] = React.useState(false);
@@ -26246,26 +26208,122 @@ function PageManager() {
   const [sortPickerOpen, setSortPickerOpen] = React.useState(false);
   const sortTriggerRef = React.useRef(null);
   const prefersReducedMotion = framerMotion.useReducedMotion();
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedQuery, setDebouncedQuery] = React.useState("");
+  const isPaginated = sortMode === "recent" && !debouncedQuery.trim();
+  const [pageNum, setPageNum] = React.useState(1);
+  const [hasNextPage, setHasNextPage] = React.useState(false);
+  const cursorsRef = React.useRef([null]);
+  const allPagesCacheRef = React.useRef(null);
+  const prefetchRef = React.useRef(null);
+  const showSearch = isPaginated ? hasNextPage || pages.length >= 8 : pages.length >= 8;
+  const processedPages = React.useMemo(
+    () => applySearch(applySortFilter(pages, sortMode), debouncedQuery),
+    [pages, sortMode, debouncedQuery]
+  );
+  const displayedPages = React.useMemo(
+    () => isPaginated ? processedPages : processedPages.slice((pageNum - 1) * PAGE_SIZE, pageNum * PAGE_SIZE),
+    [isPaginated, processedPages, pageNum]
+  );
+  const totalPages = isPaginated ? null : Math.max(1, Math.ceil(processedPages.length / PAGE_SIZE));
+  const canGoPrev = pageNum > 1;
+  const canGoNext = isPaginated ? hasNextPage : pageNum < (totalPages ?? 1);
   const loadPages = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await listPages(db);
-      setPages(result);
-    } catch (err) {
-      setError("Failed to load pages.");
-    } finally {
-      setLoading(false);
+    const gen = ++fetchGenRef.current;
+    if (isPaginated) {
+      const pre = prefetchRef.current;
+      if ((pre == null ? void 0 : pre.pageNum) === pageNum && (pre == null ? void 0 : pre.result)) {
+        prefetchRef.current = null;
+        if (gen !== fetchGenRef.current) return;
+        const { pages: result, nextCursor, hasMore } = pre.result;
+        setPages(result);
+        setHasNextPage(hasMore);
+        if (hasMore) {
+          cursorsRef.current[pageNum] = nextCursor;
+          const nextPage = pageNum + 1;
+          prefetchRef.current = { pageNum: nextPage };
+          listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor: nextCursor }).then((r) => {
+            var _a;
+            if (((_a = prefetchRef.current) == null ? void 0 : _a.pageNum) === nextPage) prefetchRef.current.result = r;
+          }).catch(() => {
+          });
+        }
+        return;
+      }
     }
-  }, [db]);
+    setLoading(true);
+    setError(null);
+    try {
+      if (isPaginated) {
+        const cursor = cursorsRef.current[pageNum - 1] ?? null;
+        const { pages: result, nextCursor, hasMore } = await listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor });
+        if (gen !== fetchGenRef.current) return;
+        setPages(result);
+        setHasNextPage(hasMore);
+        if (hasMore) {
+          cursorsRef.current[pageNum] = nextCursor;
+          const nextPage = pageNum + 1;
+          prefetchRef.current = { pageNum: nextPage };
+          listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor: nextCursor }).then((r) => {
+            var _a;
+            if (((_a = prefetchRef.current) == null ? void 0 : _a.pageNum) === nextPage) prefetchRef.current.result = r;
+          }).catch(() => {
+          });
+        }
+      } else {
+        const cache = allPagesCacheRef.current;
+        let result;
+        if (cache && Date.now() - cache.cachedAt < ALL_PAGES_TTL) {
+          result = cache.pages;
+        } else {
+          result = await listPages(db);
+          if (gen !== fetchGenRef.current) return;
+          allPagesCacheRef.current = { pages: result, cachedAt: Date.now() };
+        }
+        if (gen !== fetchGenRef.current) return;
+        setPages(result);
+        setHasNextPage(false);
+      }
+    } catch (err) {
+      if (gen === fetchGenRef.current) setError("Failed to load pages.");
+    } finally {
+      if (gen === fetchGenRef.current) setLoading(false);
+    }
+  }, [db, isPaginated, pageNum]);
   React.useEffect(() => {
     loadPages();
   }, [loadPages]);
+  React.useEffect(() => {
+    setPageNum(1);
+    cursorsRef.current = [null];
+    setHasNextPage(false);
+    prefetchRef.current = null;
+  }, [sortMode, debouncedQuery]);
+  React.useEffect(() => {
+    if (displayedPages.length === 0 && pageNum > 1 && !loading) {
+      setPageNum((p) => p - 1);
+    }
+  }, [displayedPages.length, pageNum, loading]);
   React.useEffect(() => {
     if (announcement) {
       const t = setTimeout(() => setAnnouncement(""), 3e3);
       return () => clearTimeout(t);
     }
   }, [announcement]);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+  React.useEffect(() => {
+    if (debouncedQuery.trim()) {
+      setAnnouncement(
+        processedPages.length === 0 ? "No pages match." : `${processedPages.length} page${processedPages.length !== 1 ? "s" : ""} found.`
+      );
+    }
+  }, [debouncedQuery, processedPages.length]);
+  React.useEffect(() => {
+    if (!showSearch) setSearchQuery("");
+  }, [showSearch]);
   function startEdit(slug, field, currentValue) {
     setEditingSlug(slug);
     setEditField(field);
@@ -26298,13 +26356,16 @@ function PageManager() {
   }
   async function commitEdit() {
     if (!editingSlug || !editField) return;
+    if (isSavingRef.current) return;
     const trimmed = editValue.trim();
     if (!trimmed) {
       cancelEdit();
       return;
     }
+    clearTimeout(debounceRef.current);
     const currentSlug = editingSlug;
     const currentField = editField;
+    isSavingRef.current = true;
     try {
       if (currentField === "name") {
         const page = pages.find((p) => p.slug === currentSlug);
@@ -26313,6 +26374,8 @@ function PageManager() {
           return;
         }
         await savePage(db, currentSlug, { name: trimmed });
+        allPagesCacheRef.current = null;
+        prefetchRef.current = null;
         await loadPages();
         setAnnouncement("Page renamed successfully.");
         setTimeout(() => setAnnouncement(""), 1e3);
@@ -26330,6 +26393,8 @@ function PageManager() {
           return;
         }
         await renamePage(db, currentSlug, trimmed);
+        allPagesCacheRef.current = null;
+        prefetchRef.current = null;
         await loadPages();
         setAnnouncement("Page renamed successfully.");
         setTimeout(() => setAnnouncement(""), 1e3);
@@ -26346,6 +26411,8 @@ function PageManager() {
     } catch (err) {
       const msg = currentField === "slug" ? "Rename failed. The old page may still exist -- check Firestore and try again." : "Save failed. Please try again.";
       setEditError(msg);
+    } finally {
+      isSavingRef.current = false;
     }
   }
   function handleEditKeyDown(e) {
@@ -26363,14 +26430,17 @@ function PageManager() {
     setSortPickerOpen(false);
     (_a = sortTriggerRef.current) == null ? void 0 : _a.focus();
     const opt = SORT_OPTIONS.find((o) => o.key === key);
-    const result = applySortFilter(pages, key);
     if (opt.isFilter) {
-      setAnnouncement(
-        result.length === 0 ? `${opt.label} \u2014 no pages match.` : `${opt.label} \u2014 showing ${result.length} page${result.length !== 1 ? "s" : ""}.`
-      );
+      setAnnouncement(`${opt.label} filter applied.`);
     } else {
       setAnnouncement(key === "alpha" ? "Sorted alphabetically." : "Sorted by most recently edited.");
     }
+  }
+  function goToNextPage() {
+    setPageNum((p) => p + 1);
+  }
+  function goToPrevPage() {
+    setPageNum((p) => Math.max(1, p - 1));
   }
   if (loading && pages.length === 0) {
     return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-manager", children: [
@@ -26399,6 +26469,31 @@ function PageManager() {
           /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
         ] }, i)) })
       ] }) }) })
+    ] });
+  }
+  if (error && pages.length === 0) {
+    return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+        position: "absolute",
+        width: "1px",
+        height: "1px",
+        overflow: "hidden",
+        clip: "rect(0,0,0,0)",
+        whiteSpace: "nowrap"
+      }, children: announcement }),
+      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsxRuntime.jsx("h2", { children: "Pages" }) }),
+      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
+        /* @__PURE__ */ jsxRuntime.jsx("p", { children: error }),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          "button",
+          {
+            type: "button",
+            className: "jeeby-cms-btn-primary",
+            onClick: loadPages,
+            children: "Try again"
+          }
+        )
+      ] })
     ] });
   }
   if (pages.length === 0 && !loading) {
@@ -26443,7 +26538,7 @@ function PageManager() {
     /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-list-header", children: [
       /* @__PURE__ */ jsxRuntime.jsx("h2", { children: "Pages" }),
       /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-list-controls", children: [
-        (() => {
+        pages.length > 0 && (() => {
           const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode) || SORT_OPTIONS[0];
           return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-sort-anchor", children: [
             /* @__PURE__ */ jsxRuntime.jsxs(
@@ -26491,6 +26586,42 @@ function PageManager() {
         )
       ] })
     ] }),
+    /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { initial: false, children: showSearch && /* @__PURE__ */ jsxRuntime.jsx(
+      framerMotion.motion.div,
+      {
+        className: "jeeby-cms-search-bar",
+        initial: { opacity: 0, height: 0 },
+        animate: { opacity: 1, height: "auto" },
+        exit: { opacity: 0, height: 0 },
+        transition: { duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.16, 1, 0.3, 1] },
+        style: { overflow: "hidden" },
+        children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-search-inner", role: "search", children: [
+          /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsx(IconSearch, {}) }),
+          /* @__PURE__ */ jsxRuntime.jsx(
+            "input",
+            {
+              type: "search",
+              className: "jeeby-cms-search-input",
+              placeholder: "Search pages\u2026",
+              value: searchQuery,
+              onChange: (e) => setSearchQuery(e.target.value),
+              "aria-label": "Search pages",
+              maxLength: 200
+            }
+          ),
+          searchQuery && /* @__PURE__ */ jsxRuntime.jsx(
+            "button",
+            {
+              type: "button",
+              className: "jeeby-cms-search-clear",
+              "aria-label": "Clear search",
+              onClick: () => setSearchQuery(""),
+              children: /* @__PURE__ */ jsxRuntime.jsx(IconClear, {})
+            }
+          )
+        ] })
+      }
+    ) }),
     /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { mode: "wait", initial: false, children: /* @__PURE__ */ jsxRuntime.jsx(
       framerMotion.motion.div,
       {
@@ -26508,11 +26639,28 @@ function PageManager() {
             /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Actions" })
           ] }) }),
           /* @__PURE__ */ jsxRuntime.jsx("tbody", { children: (() => {
-            const displayedPages = applySortFilter(pages, sortMode);
             if (displayedPages.length === 0) {
+              const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode);
+              const hasFilter = currentOpt == null ? void 0 : currentOpt.isFilter;
+              const hasSearch = !!debouncedQuery;
+              const queryChars = [...debouncedQuery];
+              const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join("") + "\u2026" : debouncedQuery;
+              const emptyMsg = hasSearch && hasFilter ? "No pages match this search and filter." : hasSearch ? `No pages match "${shortQuery}".` : "No pages match this filter.";
               return /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsxs("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
-                /* @__PURE__ */ jsxRuntime.jsx("span", { children: "No pages match this filter." }),
-                /* @__PURE__ */ jsxRuntime.jsx(
+                /* @__PURE__ */ jsxRuntime.jsx("span", { children: emptyMsg }),
+                hasSearch && /* @__PURE__ */ jsxRuntime.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    className: "jeeby-cms-btn-ghost",
+                    onClick: () => {
+                      setSearchQuery("");
+                      setAnnouncement("Search cleared.");
+                    },
+                    children: "Clear search"
+                  }
+                ),
+                hasFilter && /* @__PURE__ */ jsxRuntime.jsx(
                   "button",
                   {
                     type: "button",
@@ -26521,101 +26669,107 @@ function PageManager() {
                       setSortMode("recent");
                       setAnnouncement("Filter cleared. Showing all pages.");
                     },
-                    children: "Show all pages"
+                    children: "Clear filter"
                   }
                 )
               ] }) });
             }
-            return displayedPages.map((page) => /* @__PURE__ */ jsxRuntime.jsxs(React.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntime.jsxs("tr", { children: [
-                /* @__PURE__ */ jsxRuntime.jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsxRuntime.jsx(
-                  "input",
-                  {
-                    type: "text",
-                    className: "jeeby-cms-inline-edit-input",
-                    value: editValue,
-                    "aria-label": `Rename: ${page.name || page.slug}`,
-                    "aria-describedby": `cms-rename-error-${page.slug}`,
-                    onChange: (e) => handleEditChange(e.target.value),
-                    onKeyDown: handleEditKeyDown,
-                    onBlur: commitEdit,
-                    autoFocus: true
-                  }
-                ) : /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-cell-read", children: [
-                  /* @__PURE__ */ jsxRuntime.jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
-                  /* @__PURE__ */ jsxRuntime.jsx(
-                    "button",
-                    {
-                      ref: (el) => {
-                        editTriggerRefs.current[`${page.slug}-name`] = el;
-                      },
-                      type: "button",
-                      className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
-                      "aria-label": `Rename ${page.name || page.slug}`,
-                      onClick: () => startEdit(page.slug, "name", page.name || ""),
-                      children: "Rename"
-                    }
-                  )
-                ] }) }),
-                /* @__PURE__ */ jsxRuntime.jsx("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsxRuntime.jsx(
-                  "input",
-                  {
-                    type: "text",
-                    className: "jeeby-cms-inline-edit-input",
-                    value: editValue,
-                    "aria-label": `Rename slug: ${page.name || page.slug}`,
-                    "aria-describedby": `cms-rename-error-${page.slug}`,
-                    onChange: (e) => handleEditChange(e.target.value),
-                    onKeyDown: handleEditKeyDown,
-                    onBlur: commitEdit,
-                    autoFocus: true
-                  }
-                ) : /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-cell-read", children: [
-                  /* @__PURE__ */ jsxRuntime.jsx("span", { children: page.slug }),
-                  /* @__PURE__ */ jsxRuntime.jsx(
-                    "button",
-                    {
-                      ref: (el) => {
-                        editTriggerRefs.current[`${page.slug}-slug`] = el;
-                      },
-                      type: "button",
-                      className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
-                      "aria-label": `Rename slug for ${page.name || page.slug}`,
-                      onClick: () => startEdit(page.slug, "slug", page.slug),
-                      children: "Rename"
-                    }
-                  )
-                ] }) }),
-                /* @__PURE__ */ jsxRuntime.jsx("td", { children: (() => {
-                  const { label, cls } = STATUS_PROPS[pageStatus(page)];
-                  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: cls, children: label });
-                })() }),
-                /* @__PURE__ */ jsxRuntime.jsx("td", { children: formatDate(page.lastPublishedAt) }),
-                /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-table-actions", children: [
-                  /* @__PURE__ */ jsxRuntime.jsx(
-                    "a",
-                    {
-                      href: "/admin/pages/" + encodeURIComponent(page.slug),
-                      "aria-label": "Edit blocks for " + page.slug,
-                      className: "jeeby-cms-btn-primary",
-                      children: "Edit"
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntime.jsx(
-                    "button",
-                    {
-                      type: "button",
-                      className: "jeeby-cms-btn-ghost",
-                      "aria-label": `Delete ${page.slug}`,
-                      onClick: (e) => {
-                        deleteBtnRef.current = e.currentTarget;
-                        setDeleteTarget(page);
-                      },
-                      children: "Delete"
-                    }
-                  )
-                ] }) })
-              ] }),
+            return /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { children: displayedPages.map((page) => /* @__PURE__ */ jsxRuntime.jsxs(React.Fragment, { children: [
+              /* @__PURE__ */ jsxRuntime.jsxs(
+                framerMotion.motion.tr,
+                {
+                  exit: { opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } },
+                  children: [
+                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsxRuntime.jsx(
+                      "input",
+                      {
+                        type: "text",
+                        className: "jeeby-cms-inline-edit-input",
+                        value: editValue,
+                        "aria-label": `Rename: ${page.name || page.slug}`,
+                        "aria-describedby": `cms-rename-error-${page.slug}`,
+                        onChange: (e) => handleEditChange(e.target.value),
+                        onKeyDown: handleEditKeyDown,
+                        onBlur: commitEdit,
+                        autoFocus: true
+                      }
+                    ) : /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-cell-read", children: [
+                      /* @__PURE__ */ jsxRuntime.jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
+                      /* @__PURE__ */ jsxRuntime.jsx(
+                        "button",
+                        {
+                          ref: (el) => {
+                            editTriggerRefs.current[`${page.slug}-name`] = el;
+                          },
+                          type: "button",
+                          className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                          "aria-label": `Rename ${page.name || page.slug}`,
+                          onClick: () => startEdit(page.slug, "name", page.name || ""),
+                          children: "Rename"
+                        }
+                      )
+                    ] }) }),
+                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsxRuntime.jsx(
+                      "input",
+                      {
+                        type: "text",
+                        className: "jeeby-cms-inline-edit-input",
+                        value: editValue,
+                        "aria-label": `Rename slug: ${page.name || page.slug}`,
+                        "aria-describedby": `cms-rename-error-${page.slug}`,
+                        onChange: (e) => handleEditChange(e.target.value),
+                        onKeyDown: handleEditKeyDown,
+                        onBlur: commitEdit,
+                        autoFocus: true
+                      }
+                    ) : /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-cell-read", children: [
+                      /* @__PURE__ */ jsxRuntime.jsx("span", { children: page.slug }),
+                      /* @__PURE__ */ jsxRuntime.jsx(
+                        "button",
+                        {
+                          ref: (el) => {
+                            editTriggerRefs.current[`${page.slug}-slug`] = el;
+                          },
+                          type: "button",
+                          className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                          "aria-label": `Rename slug for ${page.name || page.slug}`,
+                          onClick: () => startEdit(page.slug, "slug", page.slug),
+                          children: "Rename"
+                        }
+                      )
+                    ] }) }),
+                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: (() => {
+                      const { label, cls } = STATUS_PROPS[pageStatus(page)];
+                      return /* @__PURE__ */ jsxRuntime.jsx("span", { className: cls, children: label });
+                    })() }),
+                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: formatDate(page.lastPublishedAt) }),
+                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-table-actions", children: [
+                      /* @__PURE__ */ jsxRuntime.jsx(
+                        "a",
+                        {
+                          href: "/admin/pages/" + encodeURIComponent(page.slug),
+                          "aria-label": "Edit blocks for " + page.slug,
+                          className: "jeeby-cms-btn-primary",
+                          children: "Edit"
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntime.jsx(
+                        "button",
+                        {
+                          type: "button",
+                          className: "jeeby-cms-btn-ghost",
+                          "aria-label": `Delete ${page.slug}`,
+                          onClick: (e) => {
+                            deleteBtnRef.current = e.currentTarget;
+                            setDeleteTarget(page);
+                          },
+                          children: "Delete"
+                        }
+                      )
+                    ] }) })
+                  ]
+                }
+              ),
               editError && editingSlug === page.slug && /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsx("td", { colSpan: 5, children: /* @__PURE__ */ jsxRuntime.jsx(
                 "p",
                 {
@@ -26625,18 +26779,45 @@ function PageManager() {
                   children: editError
                 }
               ) }) })
-            ] }, page.slug));
+            ] }, page.slug)) });
           })() })
         ] })
       },
-      sortMode
+      `${sortMode}|${debouncedQuery}|${pageNum}`
     ) }),
+    (canGoPrev || canGoNext) && /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-pagination-btn",
+          onClick: goToPrevPage,
+          disabled: !canGoPrev || loading,
+          "aria-label": "Previous page",
+          children: "\u2190 Prev"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-pagination-label", "aria-current": "page", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-pagination-btn",
+          onClick: goToNextPage,
+          disabled: !canGoNext || loading,
+          "aria-label": "Next page",
+          children: "Next \u2192"
+        }
+      )
+    ] }),
     /* @__PURE__ */ jsxRuntime.jsx(
       CreatePageModal,
       {
         open: showCreateModal,
         onClose: () => setShowCreateModal(false),
         onCreated: () => {
+          allPagesCacheRef.current = null;
+          prefetchRef.current = null;
           loadPages();
           setAnnouncement("Page created successfully.");
         },
@@ -26649,8 +26830,12 @@ function PageManager() {
         page: deleteTarget,
         onClose: () => setDeleteTarget(null),
         onDeleted: () => {
-          loadPages();
+          const slug = deleteTarget == null ? void 0 : deleteTarget.slug;
+          if (slug) setPages((prev) => prev.filter((p) => p.slug !== slug));
           setAnnouncement("Page deleted.");
+          allPagesCacheRef.current = null;
+          prefetchRef.current = null;
+          setTimeout(() => loadPages(), 350);
         },
         triggerRef: deleteBtnRef
       }
@@ -26658,50 +26843,14 @@ function PageManager() {
   ] });
 }
 function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishing, publishError }) {
-  const dialogRef = React.useRef(null);
-  React.useEffect(() => {
-    var _a, _b;
-    (_b = (_a = dialogRef.current) == null ? void 0 : _a.querySelector("[data-autofocus]")) == null ? void 0 : _b.focus();
-  }, []);
-  React.useEffect(() => {
-    function handleKeyDown2(e) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCancel();
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown2);
-    return () => document.removeEventListener("keydown", handleKeyDown2);
-  }, [onCancel]);
-  React.useEffect(() => {
-    function handleTab(e) {
-      if (e.key !== "Tab") return;
-      const dialog = dialogRef.current;
-      if (!dialog) return;
-      const focusable = dialog.querySelectorAll('button:not(:disabled), [href], input, [tabindex]:not([tabindex="-1"])');
-      if (focusable.length === 0) return;
-      const first2 = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first2) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first2.focus();
-      }
-    }
-    document.addEventListener("keydown", handleTab);
-    return () => document.removeEventListener("keydown", handleTab);
-  }, []);
-  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-modal-backdrop", style: { zIndex: 300 }, children: /* @__PURE__ */ jsxRuntime.jsxs(
-    "div",
+  return /* @__PURE__ */ jsxRuntime.jsxs(
+    ModalShell,
     {
-      ref: dialogRef,
       role: "alertdialog",
-      "aria-modal": "true",
-      "aria-labelledby": "signout-modal-heading",
-      "aria-describedby": "signout-modal-body",
-      className: "jeeby-cms-modal-card",
+      labelId: "signout-modal-heading",
+      descId: "signout-modal-body",
+      onClose: onCancel,
+      backdropStyle: { zIndex: 300 },
       children: [
         /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
         /* @__PURE__ */ jsxRuntime.jsxs("p", { id: "signout-modal-body", children: [
@@ -26745,7 +26894,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
         ] })
       ]
     }
-  ) });
+  );
 }
 function AdminPanel({ children, siteName }) {
   const { user, loading, signOut } = jeebyCms.useAuth();

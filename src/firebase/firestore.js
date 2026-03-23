@@ -2,7 +2,8 @@
 // All Firestore access for the pages/{slug} collection.
 // No other file in this package makes direct Firestore calls.
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, getDocs
+  doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp,
+  collection, getDocs, query, orderBy, limit, startAfter,
 } from 'firebase/firestore'
 
 // Internal helper — not exported
@@ -57,6 +58,24 @@ export async function listPages(db) {
   const col = collection(db, 'pages')
   const snap = await getDocs(col)
   return snap.docs.map(d => ({ slug: d.id, ...d.data() }))
+}
+
+// Returns one page of results ordered by updatedAt desc, plus a cursor for the
+// next page and a hasMore flag. Fetches pageSize+1 docs to detect overflow.
+// cursor: Firestore DocumentSnapshot returned as nextCursor from a previous call.
+export async function listPagesPaginated(db, { pageSize = 20, cursor = null } = {}) {
+  const col = collection(db, 'pages')
+  const constraints = cursor
+    ? [orderBy('updatedAt', 'desc'), startAfter(cursor), limit(pageSize + 1)]
+    : [orderBy('updatedAt', 'desc'), limit(pageSize + 1)]
+  const snap = await getDocs(query(col, ...constraints))
+  const hasMore = snap.docs.length > pageSize
+  const pageDocs = snap.docs.slice(0, pageSize)
+  return {
+    pages: pageDocs.map(d => ({ slug: d.id, ...d.data() })),
+    nextCursor: hasMore ? pageDocs[pageDocs.length - 1] : null,
+    hasMore,
+  }
 }
 
 // Rename a page by reading the old doc, writing under new slug, then deleting old.
