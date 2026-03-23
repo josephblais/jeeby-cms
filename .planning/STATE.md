@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 09-media-handling
-current_plan: 09-01 complete
-status: in-progress
-last_updated: "2026-03-23T18:51:21.276Z"
+current_plan: 09-02 complete
+status: executing
+last_updated: "2026-03-23T18:55:43.762Z"
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 32
-  completed_plans: 30
+  completed_plans: 31
 ---
 
 # Session State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 09-media-handling
-**Current plan:** 09-01 complete
-**Status:** In progress — 09-02 next
+**Current plan:** 09-02 complete
+**Status:** In progress — 09-03 next
 
 ## Decisions
 
@@ -41,6 +41,8 @@ See: .planning/PROJECT.md
 - [Phase 08-css-theming]: Used gap on flex column layout for block canvas ol — avoids last-child margin workarounds
 - [Phase 09-media-handling]: CSS transition used for upload progress bar width animation — Framer Motion excluded from CSS files per design principles
 - [Phase 09-media-handling]: Wave 0 TDD stubs placed in existing test files; MEDIA-01 already verified by VideoEditor.test.js
+- [Phase 09-media-handling]: accept=image/jpeg,image/png,image/gif,image/webp excludes SVG (XSS risk) — covers four formats editors use
+- [Phase 09-media-handling]: Upload button label changes during upload for WCAG 2.5.3 compliance; uploadProgress guard prevents blur-dismiss during active upload
 
 ## Session Log
 
@@ -50,3 +52,4 @@ See: .planning/PROJECT.md
 - 2026-03-19: Completed 08-css-theming/08-03-PLAN.md — remaining 13 components migrated, README theming docs added
 - 2026-03-19: Completed 08-css-theming/08-04-PLAN.md — block-spacing wired to gap rule, gallery-columns documented as consumer-side token
 - 2026-03-23: Completed 09-media-handling/09-01-PLAN.md — wave 0 TDD stubs (12 failing) and 7 upload CSS classes added
+- 2026-03-23: Completed 09-media-handling/09-02-PLAN.md — ImageEditor Firebase Storage upload wired; all 13 tests pass; MEDIA-04 complete

@@ -187,7 +187,7 @@ Plans:
 
 **Requirements:** MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 09-01-PLAN.md — Wave 0: Test stubs for upload features + upload CSS classes + MEDIA-01 verification
@@ -244,7 +244,7 @@ Plans:
 | 1 | PKG-01, PKG-02, PKG-03, PKG-04 | 4 | 2/2 | Complete   | 2026-03-18 | 4 |
 | 3 | FRONT-01 through FRONT-10 | 10 |
 | 4 | AUTH-01, AUTH-02, AUTH-03 | 3 |
-| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete    | 2026-03-18 | 7 | 2/2 | Complete   | 2026-03-19 | 8 | 4/4 | Complete   | 2026-03-19 | 9 | 1/3 | In Progress|  | 10 | Polish/publish | — |
+| 5 | 3/3 | Complete   | 2026-03-18 | 6 | 4/4 | Complete    | 2026-03-18 | 7 | 2/2 | Complete   | 2026-03-19 | 8 | 4/4 | Complete   | 2026-03-19 | 9 | 2/3 | In Progress|  | 10 | Polish/publish | — |
 | **Total** | | **44** |
 
 ### Phase 11: i18n localization for admin panel and block components

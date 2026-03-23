@@ -67,7 +67,7 @@
 - [x] **MEDIA-01**: Video editor supports embed URL input (YouTube, Vimeo, Loom) and generates iframe src
 - [ ] **MEDIA-02**: Video editor supports Firebase Storage file upload
 - [ ] **MEDIA-03**: Gallery editor supports adding items via Firebase Storage upload or external URL paste
-- [ ] **MEDIA-04**: Image editor supports Firebase Storage upload or external URL
+- [x] **MEDIA-04**: Image editor supports Firebase Storage upload or external URL
 
 ### CSS & Theming
 
@@ -155,7 +155,7 @@
 | MEDIA-01 | Phase 9 | Complete |
 | MEDIA-02 | Phase 9 | Pending |
 | MEDIA-03 | Phase 9 | Pending |
-| MEDIA-04 | Phase 9 | Pending |
+| MEDIA-04 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 43 total
