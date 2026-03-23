@@ -498,17 +498,20 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  padding: 10px 0 2px;
+  padding: 10px 0 6px;
 }
 
 .jeeby-cms-admin .jeeby-cms-pagination-label {
   font-size: var(--jeeby-cms-text-sm);
   color: var(--jeeby-cms-text-muted);
-  min-width: 6ch;
+  min-width: 10ch;
   text-align: center;
 }
 
 .jeeby-cms-admin .jeeby-cms-pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 5px 10px;
   background: transparent;
   border: 1px solid var(--jeeby-cms-border);
@@ -1746,6 +1749,58 @@
   gap: 4px;
 }
 
+/* ─── Upload UI ─────────────────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-image-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.jeeby-cms-admin .jeeby-cms-image-url-row input[type="url"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-upload-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: var(--jeeby-cms-text-sm);
+  white-space: nowrap;
+}
+
+.jeeby-cms-admin .jeeby-cms-upload-progress {
+  height: 3px;
+  background: var(--jeeby-cms-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-upload-progress-fill {
+  height: 100%;
+  background: var(--jeeby-cms-accent);
+  border-radius: 2px;
+  transition: width 150ms ease-out;
+}
+
+.jeeby-cms-admin .jeeby-cms-upload-error-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.jeeby-cms-admin .jeeby-cms-upload-error-row .jeeby-cms-inline-error {
+  margin: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-upload-status {
+  font-size: var(--jeeby-cms-text-sm);
+  color: var(--jeeby-cms-text-secondary);
+  margin-top: 4px;
+}
+
 /* ── Video Editor — mirrors ImageEditor layout and view/edit pattern ── */
 
 /* Empty state layout — shared by view mode and edit mode */
@@ -1920,6 +1975,24 @@
 .jeeby-cms-admin .jeeby-cms-gallery-remove-btn:hover:not(:disabled),
 .jeeby-cms-admin .jeeby-cms-gallery-remove-btn:focus-visible {
   opacity: 1;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-upload-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: var(--jeeby-cms-text-sm);
+  white-space: nowrap;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-batch-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-batch-btn {
+  font-size: var(--jeeby-cms-text-sm);
+  padding: 6px 12px;
 }
 
 /* ─── Section 14: Block Layout (document-flow, Notion-style) ──────── */
