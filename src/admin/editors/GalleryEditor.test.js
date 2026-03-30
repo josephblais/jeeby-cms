@@ -42,6 +42,27 @@ test('GalleryEditor imports uploadFile from storage', () => {
   )
 })
 
+test('GalleryEditor supports saving uploaded gallery images to media library', () => {
+  assert.ok(src.includes('addMediaItem'), 'GalleryEditor should import/use addMediaItem')
+  assert.ok(src.includes('Add upload to Media Library'), 'GalleryEditor should show media-library metadata prompt for uploads')
+  assert.ok(src.includes('Save to Library'), 'GalleryEditor should include Save to Library action')
+})
+
+test('GalleryEditor syncs metadata alt from gallery alt during upload until metadata alt is manually edited', () => {
+  assert.ok(src.includes('handleGalleryAltChange'), 'GalleryEditor should define a gallery alt change handler')
+  assert.ok(src.includes('altManuallyEdited'), 'GalleryEditor should track manual metadata alt edits')
+  assert.ok(src.includes('if (isUploading)'), 'GalleryEditor should only live-sync during upload')
+})
+
+test('GalleryEditor copies metadata title to metadata alt unless alt is manually edited', () => {
+  assert.ok(src.includes('handlePendingTitleChange'), 'GalleryEditor should handle metadata title changes')
+  assert.ok(src.includes('alt: prev.altManuallyEdited ? prev.alt : nextTitle'), 'GalleryEditor should auto-copy title to alt unless manually overridden')
+})
+
+test('GalleryEditor updates item alt from locally saved metadata alt', () => {
+  assert.ok(src.includes('items: items.map((it, i) => i === index ? { ...it, alt: trimmedAlt } : it)'), 'GalleryEditor should sync item alt from saved metadata alt without refetching')
+})
+
 test('GalleryEditor imports useCMSFirebase', () => {
   assert.ok(src.includes('useCMSFirebase'), 'GalleryEditor must import useCMSFirebase hook')
 })

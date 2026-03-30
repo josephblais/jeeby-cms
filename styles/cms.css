@@ -1875,6 +1875,21 @@
   margin-top: 4px;
 }
 
+.jeeby-cms-admin .jeeby-cms-library-meta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  background: var(--jeeby-cms-bg-input);
+}
+
+.jeeby-cms-admin .jeeby-cms-library-meta-form input {
+  width: 100%;
+}
+
 /* ── Video Editor — mirrors ImageEditor layout and view/edit pattern ── */
 
 /* Empty state layout — shared by view mode and edit mode */
@@ -2674,15 +2689,9 @@
   overflow: hidden;
   background: var(--jeeby-cms-bg-input);
   width: 100%;
-  min-height: 0;
-  aspect-ratio: 1 / 1;
-  cursor: pointer;
-}
-
-.jeeby-cms-admin .jeeby-cms-media-card::before {
-  content: '';
-  display: block;
+  height: 0;
   padding-top: 100%;
+  cursor: pointer;
 }
 
 .jeeby-cms-admin .jeeby-cms-media-card:focus-within {
@@ -2743,10 +2752,10 @@
 
 .jeeby-cms-admin .jeeby-cms-media-card-skeleton {
   width: 100%;
-  min-height: 0;
+  height: 0;
+  padding-top: 100%;
   background: var(--jeeby-cms-bg-hover);
   border-radius: 6px;
-  aspect-ratio: 1 / 1;
   animation: jeeby-pulse 1.5s ease-in-out infinite;
 }
 

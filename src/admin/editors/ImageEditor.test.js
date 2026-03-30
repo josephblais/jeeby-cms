@@ -101,3 +101,13 @@ test('ImageEditor supports saving uploaded image metadata to media library', () 
   assert.ok(src.includes('Save to Library'), 'ImageEditor should include Save to Library action')
   assert.ok(src.includes('addMediaItem'), 'ImageEditor should persist uploaded media metadata')
 })
+
+test('ImageEditor copies metadata title to metadata alt unless alt is manually edited', () => {
+  assert.ok(src.includes('handlePendingTitleChange'), 'ImageEditor should handle metadata title changes')
+  assert.ok(src.includes('altManuallyEdited'), 'ImageEditor should track manual metadata alt edits')
+  assert.ok(src.includes('alt: prev.altManuallyEdited ? prev.alt : nextTitle'), 'ImageEditor should auto-copy title to alt unless manually overridden')
+})
+
+test('ImageEditor updates block alt from locally saved metadata alt', () => {
+  assert.ok(src.includes('onChange({ ...data, alt: trimmedAlt })'), 'ImageEditor should sync block alt from saved metadata alt without refetching')
+})

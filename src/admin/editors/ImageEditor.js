@@ -129,25 +129,34 @@ export function ImageEditor({ data, onChange, blockId }) {
       return
     }
     pendingFileRef.current = file
+    const ext = file.name.includes('.')
+      ? file.name.split('.').pop().toLowerCase()
+      : (MIME_TO_EXT[file.type] ?? 'jpg')
+    const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+    // Start metadata drafting immediately so title/alt can be entered while upload runs.
+    setPendingLibraryItem((prev) => ({
+      storageUrl: prev?.storageUrl ?? '',
+      storagePath: path,
+      title: prev?.title ?? '',
+      alt: prev?.alt ?? '',
+      altManuallyEdited: prev?.altManuallyEdited ?? false,
+      mimeType: file.type,
+      size: file.size,
+    }))
     // Show a local preview immediately — the image appears before Firebase responds.
     const previewUrl = URL.createObjectURL(file)
     setPreviewSrc(previewUrl)
     setUploadProgress(0)
     try {
-      const ext = file.name.includes('.')
-        ? file.name.split('.').pop().toLowerCase()
-        : (MIME_TO_EXT[file.type] ?? 'jpg')
-      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
       const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef)
       onChange({ ...data, src: url })
-      setPendingLibraryItem({
+      setPendingLibraryItem((prev) => prev ? {
+        ...prev,
         storageUrl: url,
         storagePath: path,
-        title: '',
-        alt: data?.alt ?? '',
         mimeType: file.type,
         size: file.size,
-      })
+      } : prev)
       setUploadProgress(null)
     } catch (err) {
       if (err.code === 'storage/canceled') return  // component unmounting — no state updates
@@ -177,18 +186,32 @@ export function ImageEditor({ data, onChange, blockId }) {
   async function savePendingLibraryItem() {
     if (!pendingLibraryItem) return
     try {
+      const trimmedAlt = pendingLibraryItem.alt.trim()
       await addMediaItem(db, {
         storageUrl: pendingLibraryItem.storageUrl,
         storagePath: pendingLibraryItem.storagePath,
         title: pendingLibraryItem.title.trim(),
-        alt: pendingLibraryItem.alt.trim(),
+        alt: trimmedAlt,
         mimeType: pendingLibraryItem.mimeType,
         size: pendingLibraryItem.size,
       })
+      // Keep editor alt in sync with metadata entered during Save to Library.
+      onChange({ ...data, alt: trimmedAlt })
       setPendingLibraryItem(null)
     } catch (err) {
       console.error('[jeeby-cms] Failed to save uploaded image to library:', err)
     }
+  }
+
+  function handlePendingTitleChange(nextTitle) {
+    setPendingLibraryItem((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        title: nextTitle,
+        alt: prev.altManuallyEdited ? prev.alt : nextTitle,
+      }
+    })
   }
 
   function applySelectedMedia(item, { replaceAlt }) {
@@ -279,24 +302,31 @@ export function ImageEditor({ data, onChange, blockId }) {
         {isUploading ? `Uploading — ${Math.round(uploadProgress)}%` : null}
       </div>
       {pendingLibraryItem && (
-        <div className="jeeby-cms-media-card-meta-form" role="region" aria-label="Save uploaded image to media library">
+        <div className="jeeby-cms-library-meta-form" role="region" aria-label="Save uploaded image to media library">
           <p className="jeeby-cms-field-label">Save uploaded image to Media Library</p>
           <label className="jeeby-cms-field-label" htmlFor={'image-library-title-' + blockId}>Title</label>
           <input
             id={'image-library-title-' + blockId}
             type="text"
             value={pendingLibraryItem.title}
-            onChange={(e) => setPendingLibraryItem((prev) => prev ? { ...prev, title: e.target.value } : prev)}
+            onChange={(e) => handlePendingTitleChange(e.target.value)}
           />
           <label className="jeeby-cms-field-label" htmlFor={'image-library-alt-' + blockId}>Alt text</label>
           <input
             id={'image-library-alt-' + blockId}
             type="text"
             value={pendingLibraryItem.alt}
-            onChange={(e) => setPendingLibraryItem((prev) => prev ? { ...prev, alt: e.target.value } : prev)}
+            onChange={(e) => setPendingLibraryItem((prev) => prev ? { ...prev, alt: e.target.value, altManuallyEdited: true } : prev)}
           />
           <div className="jeeby-cms-image-done-row">
-            <button type="button" className="jeeby-cms-btn-primary" onClick={savePendingLibraryItem}>Save to Library</button>
+            <button
+              type="button"
+              className="jeeby-cms-btn-primary"
+              disabled={isUploading || !pendingLibraryItem.storageUrl}
+              onClick={savePendingLibraryItem}
+            >
+              {isUploading ? 'Finishing upload…' : 'Save to Library'}
+            </button>
             <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setPendingLibraryItem(null)}>Skip</button>
           </div>
         </div>

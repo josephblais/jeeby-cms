@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
 import { uploadFile, validateImageFile, MIME_TO_EXT } from '../../firebase/storage.js'
+import { addMediaItem } from '../../firebase/firestore.js'
 import { useCMSFirebase } from '../../index.js'
 import { MediaLibraryModal } from '../MediaLibraryModal.js'
 
@@ -34,7 +35,7 @@ async function withConcurrency(factories, limit = 3) {
 
 // Memoized — prevents re-renders during concurrent upload progress ticks.
 // onUploadStart/onUploadEnd must be stabilized with useCallback in the parent.
-const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onChange, data, storage, filePickerOpen, onUploadStart, onUploadEnd }) {
+const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onChange, data, storage, db, filePickerOpen, onUploadStart, onUploadEnd }) {
   const controls = useDragControls()
   // null | 0–100 (uploading) | { message: string, retryable: boolean } (error/validation fail)
   const [uploadProgress, setUploadProgress] = useState(null)
@@ -47,6 +48,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
   const [previewSrc, setPreviewSrc] = useState(null)
   const uploadCancelRef = useRef(null)
   const [imgLoadError, setImgLoadError] = useState(false)
+  const [pendingLibraryItem, setPendingLibraryItem] = useState(null)
 
   // Revoke the blob URL after React renders without it.
   useEffect(() => {
@@ -72,19 +74,36 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
     }
     onUploadStart?.()
     pendingFileRef.current = file
+    const ext = file.name.includes('.')
+      ? file.name.split('.').pop().toLowerCase()
+      : (MIME_TO_EXT[file.type] ?? 'jpg')
+    const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+    // Create metadata draft immediately so editors can type while upload is in flight.
+    setPendingLibraryItem((prev) => ({
+      storageUrl: prev?.storageUrl ?? '',
+      storagePath: path,
+      title: prev?.title ?? '',
+      alt: prev?.alt ?? '',
+      altManuallyEdited: prev?.altManuallyEdited ?? false,
+      mimeType: file.type,
+      size: file.size,
+    }))
     const previewUrl = URL.createObjectURL(file)
     setPreviewSrc(previewUrl)
     setUploadProgress(0)
     try {
-      const ext = file.name.includes('.')
-        ? file.name.split('.').pop().toLowerCase()
-        : (MIME_TO_EXT[file.type] ?? 'jpg')
-      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
       const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef)
       onChange({
         ...data,
         items: items.map((it, i) => i === index ? { ...it, src: url } : it),
       })
+      setPendingLibraryItem((prev) => prev ? {
+        ...prev,
+        storageUrl: url,
+        storagePath: path,
+        mimeType: file.type,
+        size: file.size,
+      } : prev)
       setUploadProgress(null)
     } catch (err) {
       if (err.code === 'storage/canceled') return
@@ -99,6 +118,56 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
 
   function handleItemRetry() {
     if (pendingFileRef.current) handleItemUpload(pendingFileRef.current)
+  }
+
+  function handleGalleryAltChange(nextAlt) {
+    onChange({
+      ...data,
+      items: updateItem(items, index, 'alt', nextAlt),
+    })
+
+    // Keep metadata alt in sync with the gallery item's alt while uploading,
+    // unless the editor has manually changed the metadata alt field.
+    if (isUploading) {
+      setPendingLibraryItem((prev) => {
+        if (!prev || prev.altManuallyEdited) return prev
+        return { ...prev, alt: nextAlt }
+      })
+    }
+  }
+
+  async function savePendingLibraryItem() {
+    if (!pendingLibraryItem?.storageUrl) return
+    try {
+      const trimmedAlt = pendingLibraryItem.alt.trim()
+      await addMediaItem(db, {
+        storageUrl: pendingLibraryItem.storageUrl,
+        storagePath: pendingLibraryItem.storagePath,
+        title: pendingLibraryItem.title.trim(),
+        alt: trimmedAlt,
+        mimeType: pendingLibraryItem.mimeType,
+        size: pendingLibraryItem.size,
+      })
+      // Keep the gallery item's alt in sync with metadata entered during save.
+      onChange({
+        ...data,
+        items: items.map((it, i) => i === index ? { ...it, alt: trimmedAlt } : it),
+      })
+      setPendingLibraryItem(null)
+    } catch (err) {
+      console.error('[jeeby-cms] Failed to save uploaded gallery image to library:', err)
+    }
+  }
+
+  function handlePendingTitleChange(nextTitle) {
+    setPendingLibraryItem((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        title: nextTitle,
+        alt: prev.altManuallyEdited ? prev.alt : nextTitle,
+      }
+    })
   }
 
   return (
@@ -182,15 +251,47 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
           <div className="jeeby-cms-upload-status" aria-live="polite">
             {isUploading ? `Uploading — ${Math.round(uploadProgress)}%` : null}
           </div>
+          {pendingLibraryItem && (
+            <div className="jeeby-cms-library-meta-form" role="region" aria-label={'Save uploaded gallery image ' + (index + 1) + ' to media library'}>
+              <p className="jeeby-cms-field-label">Add upload to Media Library</p>
+              <label className="jeeby-cms-field-label" htmlFor={'gallery-library-title-' + blockId + '-' + index}>Title</label>
+              <input
+                id={'gallery-library-title-' + blockId + '-' + index}
+                type="text"
+                value={pendingLibraryItem.title}
+                onChange={(e) => handlePendingTitleChange(e.target.value)}
+              />
+              <label className="jeeby-cms-field-label" htmlFor={'gallery-library-alt-' + blockId + '-' + index}>Alt text</label>
+              <input
+                id={'gallery-library-alt-' + blockId + '-' + index}
+                type="text"
+                value={pendingLibraryItem.alt}
+                onChange={(e) => setPendingLibraryItem((prev) => prev ? { ...prev, alt: e.target.value, altManuallyEdited: true } : prev)}
+              />
+              {!pendingLibraryItem.alt.trim() && (
+                <p className="jeeby-cms-field-hint" role="alert">Images without alt text may fail accessibility checks.</p>
+              )}
+              <div className="jeeby-cms-image-done-row">
+                <button
+                  type="button"
+                  className="jeeby-cms-btn-primary"
+                  disabled={isUploading || !pendingLibraryItem.storageUrl}
+                  onClick={savePendingLibraryItem}
+                >
+                  {isUploading ? 'Finishing upload…' : 'Save to Library'}
+                </button>
+                <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setPendingLibraryItem(null)}>
+                  Skip
+                </button>
+              </div>
+            </div>
+          )}
           <input
             type="text"
             value={item.alt ?? ''}
             aria-label={'Alt text for item ' + (index + 1)}
             placeholder="Describe the image"
-            onChange={(e) => onChange({
-              ...data,
-              items: updateItem(items, index, 'alt', e.target.value),
-            })}
+            onChange={(e) => handleGalleryAltChange(e.target.value)}
           />
         </div>
 
@@ -220,7 +321,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
   const [isEditing, setIsEditing] = useState(items.length === 0)
   const containerRef = useRef(null)
   const addButtonRef = useRef(null)
-  const { storage } = useCMSFirebase()
+  const { storage, db } = useCMSFirebase()
   const batchInputRef = useRef(null)
   const filePickerOpen = useRef(false)
   // Counter tracking concurrent in-progress item uploads. When an upload starts,
@@ -381,6 +482,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
             onChange={onChange}
             data={data}
             storage={storage}
+            db={db}
             filePickerOpen={filePickerOpen}
             onUploadStart={handleUploadStart}
             onUploadEnd={handleUploadEnd}
