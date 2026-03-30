@@ -203,6 +203,29 @@ Plans:
 
 ---
 
+### Phase 09.2: Media Library (INSERTED)
+
+**Goal:** A persistent media library backed by a /cms/media Firestore collection, with a modal-based image browser featuring lazy-loaded infinite scroll, multi-upload with title/alt prompting, and block editor integration for ImageEditor and GalleryEditor.
+
+**Requirements:** MLIB-01, MLIB-02, MLIB-03, MLIB-04, MLIB-05, MLIB-06, MLIB-07, MLIB-08, MLIB-09, MLIB-10, MLIB-11
+**Depends on:** Phase 9
+**Plans:** 5 plans
+
+Plans:
+- [ ] 09.2-01-PLAN.md — Foundation: ModalShell cardClassName prop, Firestore media helpers, CSS classes, Wave 0 tests
+- [ ] 09.2-02-PLAN.md — MediaLibraryModal component (grid, infinite scroll, upload, card-flip metadata, multi-select, edit)
+- [ ] 09.2-03-PLAN.md — ImageEditor integration (Select from Library, post-upload title/alt prompt, alt conflict)
+- [ ] 09.2-04-PLAN.md — GalleryEditor integration (Select from Library multi-select, post-upload title/alt prompt)
+- [ ] 09.2-05-PLAN.md — PageManager Upload Media button + admin export wiring
+
+**Success Criteria:**
+1. /cms/media Firestore collection stores image metadata with cursor-paginated querying
+2. MediaLibraryModal renders a responsive grid with infinite scroll and upload + card-flip metadata forms
+3. ImageEditor has "Select from Library" (single-select) and post-upload library record creation
+4. GalleryEditor has "Select from Library" (multi-select) and per-item post-upload library record creation
+5. PageManager has "Upload Media" button opening the library in browse mode
+6. Alt conflict prompt appears when selecting a library image into a block with existing alt text
+
 ### Phase 09.1: Page Collections and Index Pattern (INSERTED)
 
 **Goal:** [Urgent work - to be planned]
@@ -268,3 +291,4 @@ Plans:
 *Phase 7 plans added: 2026-03-18*
 *Phase 8 plans added: 2026-03-19*
 *Phase 9 plans added: 2026-03-23*
+*Phase 09.2 plans added: 2026-03-29*
