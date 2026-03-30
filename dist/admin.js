@@ -1,63 +1,68 @@
 "use client";
-'use strict';
+"use strict";Object.defineProperty(exports, "__esModule", {value: true}); function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; } function _nullishCoalesce(lhs, rhsFn) { if (lhs != null) { return lhs; } else { return rhsFn(); } }"use client";
 
-var React = require('react');
-var jeebyCms = require('jeeby-cms');
-var firestore = require('firebase/firestore');
-var jsxRuntime = require('react/jsx-runtime');
-var framerMotion = require('framer-motion');
-var ReactDOM = require('react-dom');
-var index_js = require('use-sync-external-store/shim/index.js');
-var withSelector_js = require('use-sync-external-store/shim/with-selector.js');
+// src/admin/PageEditor.js
+var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+var _jeebycms = require('jeeby-cms');
 
-function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
+// src/firebase/firestore.js
 
-var React__default = /*#__PURE__*/_interopDefault(React);
-var ReactDOM__default = /*#__PURE__*/_interopDefault(ReactDOM);
 
+
+
+
+
+
+
+
+
+
+
+
+var _firestore = require('firebase/firestore');
 function pageRef(db, slug) {
-  return firestore.doc(db, "pages", slug);
+  return _firestore.doc.call(void 0, db, "pages", slug);
 }
 async function getPage(db, slug) {
-  const snap = await firestore.getDoc(pageRef(db, slug));
+  const snap = await _firestore.getDoc.call(void 0, pageRef(db, slug));
   return snap.exists() ? snap.data() : null;
 }
 async function savePage(db, slug, data) {
-  await firestore.setDoc(
+  await _firestore.setDoc.call(void 0, 
     pageRef(db, slug),
-    { ...data, updatedAt: firestore.serverTimestamp() },
+    { ...data, updatedAt: _firestore.serverTimestamp.call(void 0, ) },
     { merge: true }
   );
 }
 async function saveDraft(db, slug, blocks) {
-  await firestore.updateDoc(pageRef(db, slug), {
+  await _firestore.updateDoc.call(void 0, pageRef(db, slug), {
     "draft.blocks": blocks,
     hasDraftChanges: true,
-    updatedAt: firestore.serverTimestamp()
+    updatedAt: _firestore.serverTimestamp.call(void 0, )
   });
 }
 async function publishPage(db, slug) {
   var _a;
   const page = await getPage(db, slug);
   if (!page) throw new Error(`Page "${slug}" not found`);
-  await firestore.updateDoc(pageRef(db, slug), {
-    "published.blocks": ((_a = page.draft) == null ? void 0 : _a.blocks) ?? [],
-    lastPublishedAt: firestore.serverTimestamp(),
+  await _firestore.updateDoc.call(void 0, pageRef(db, slug), {
+    "published.blocks": _nullishCoalesce(((_a = page.draft) == null ? void 0 : _a.blocks), () => ( [])),
+    lastPublishedAt: _firestore.serverTimestamp.call(void 0, ),
     hasDraftChanges: false
   });
 }
 async function deletePage(db, slug) {
-  await firestore.deleteDoc(pageRef(db, slug));
+  await _firestore.deleteDoc.call(void 0, pageRef(db, slug));
 }
 async function listPages(db) {
-  const col = firestore.collection(db, "pages");
-  const snap = await firestore.getDocs(col);
+  const col = _firestore.collection.call(void 0, db, "pages");
+  const snap = await _firestore.getDocs.call(void 0, col);
   return snap.docs.map((d) => ({ slug: d.id, ...d.data() }));
 }
 async function listPagesPaginated(db, { pageSize = 20, cursor = null } = {}) {
-  const col = firestore.collection(db, "pages");
-  const constraints = cursor ? [firestore.orderBy("updatedAt", "desc"), firestore.startAfter(cursor), firestore.limit(pageSize + 1)] : [firestore.orderBy("updatedAt", "desc"), firestore.limit(pageSize + 1)];
-  const snap = await firestore.getDocs(firestore.query(col, ...constraints));
+  const col = _firestore.collection.call(void 0, db, "pages");
+  const constraints = cursor ? [_firestore.orderBy.call(void 0, "updatedAt", "desc"), _firestore.startAfter.call(void 0, cursor), _firestore.limit.call(void 0, pageSize + 1)] : [_firestore.orderBy.call(void 0, "updatedAt", "desc"), _firestore.limit.call(void 0, pageSize + 1)];
+  const snap = await _firestore.getDocs.call(void 0, _firestore.query.call(void 0, col, ...constraints));
   const hasMore = snap.docs.length > pageSize;
   const pageDocs = snap.docs.slice(0, pageSize);
   return {
@@ -77,6 +82,10 @@ function validateSlug(pattern, slug) {
   const regexStr = pattern.replace(/\[\.\.\.[\w]+\]/g, ".*").replace(/\[[\w]+\]/g, "[^/]+").replace(/\//g, "\\/");
   return new RegExp("^" + regexStr + "$").test(slug);
 }
+
+// src/admin/EditorHeader.js
+
+var _jsxruntime = require('react/jsx-runtime');
 function formatPublishedDate(ts2) {
   if (!ts2) return null;
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
@@ -121,16 +130,16 @@ function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
 }
 function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
   const displayName3 = pageName || slug;
-  const [editingTitle, setEditingTitle] = React.useState(false);
-  const [titleValue, setTitleValue] = React.useState(displayName3);
-  const [editingSlug, setEditingSlug] = React.useState(false);
-  const [slugValue, setSlugValue] = React.useState(slug);
-  const [slugDirty, setSlugDirty] = React.useState(false);
+  const [editingTitle, setEditingTitle] = _react.useState.call(void 0, false);
+  const [titleValue, setTitleValue] = _react.useState.call(void 0, displayName3);
+  const [editingSlug, setEditingSlug] = _react.useState.call(void 0, false);
+  const [slugValue, setSlugValue] = _react.useState.call(void 0, slug);
+  const [slugDirty, setSlugDirty] = _react.useState.call(void 0, false);
   const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt });
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     setTitleValue(pageName || slug);
   }, [pageName, slug]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     setSlugValue(slug);
     setSlugDirty(false);
   }, [slug]);
@@ -178,8 +187,8 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
       setEditingSlug(false);
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("header", { className: "jeeby-cms-editor-header", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-editor-zone-left", children: /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "header", { className: "jeeby-cms-editor-header", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-editor-zone-left", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "a",
       {
         href: "/admin",
@@ -189,8 +198,8 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
         children: "\u2190 Pages"
       }
     ) }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-editor-zone-center", children: [
-      editingTitle ? /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-editor-zone-center", children: [
+      editingTitle ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "input",
         {
           type: "text",
@@ -208,7 +217,7 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
          * the button provides the native interactive semantics (keyboard operable,
          * announced as "button" by screen readers). WCAG 4.1.2 satisfied.
          */
-        /* @__PURE__ */ jsxRuntime.jsx("h1", { className: "jeeby-cms-editor-title", children: /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h1", { className: "jeeby-cms-editor-title", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             className: "jeeby-cms-editor-title-btn",
@@ -224,10 +233,10 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
           }
         ) })
       ),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-slug-row", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-slug-prefix", "aria-hidden": "true", children: "/" }),
-        editingSlug ? /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-slug-row", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-slug-prefix", "aria-hidden": "true", children: "/" }),
+        editingSlug ? /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "input",
             {
               type: "text",
@@ -240,8 +249,8 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
               autoFocus: true
             }
           ),
-          slugDirty && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-slug-hint", "aria-live": "polite", children: "Enter to save" })
-        ] }) : /* @__PURE__ */ jsxRuntime.jsx(
+          slugDirty && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-slug-hint", "aria-live": "polite", children: "Enter to save" })
+        ] }) : /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             className: "jeeby-cms-slug-read-btn",
@@ -258,8 +267,8 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-editor-zone-right", children: [
-      /* @__PURE__ */ jsxRuntime.jsxs(
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-editor-zone-right", children: [
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
         "div",
         {
           role: "status",
@@ -267,9 +276,9 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
           "aria-atomic": "true",
           className: "jeeby-cms-doc-status-container",
           children: [
-            /* @__PURE__ */ jsxRuntime.jsxs("div", { className: `jeeby-cms-doc-status jeeby-cms-doc-status--${status.tone}`, children: [
-              /* @__PURE__ */ jsxRuntime.jsx("span", { children: status.label }),
-              status.retry && /* @__PURE__ */ jsxRuntime.jsx(
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: `jeeby-cms-doc-status jeeby-cms-doc-status--${status.tone}`, children: [
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: status.label }),
+              status.retry && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                 "button",
                 {
                   type: "button",
@@ -279,11 +288,11 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
                 }
               )
             ] }),
-            status.sublabel && /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-doc-status-sublabel", children: status.sublabel })
+            status.sublabel && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-doc-status-sublabel", children: status.sublabel })
           ]
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           ref: publishBtnRef,
@@ -302,23 +311,31 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
     ] })
   ] });
 }
+
+// src/admin/BlockCanvas.js
+
+var _framermotion = require('framer-motion');
+
+// src/admin/editors/TitleEditor.js
+
+
 var HEADING_SIZES = { h2: "28px", h3: "24px", h4: "20px", h5: "16px", h6: "14px" };
 var LEVELS = ["h2", "h3", "h4", "h5", "h6"];
 var LEVEL_LABELS = { h2: "Heading 2", h3: "Heading 3", h4: "Heading 4", h5: "Heading 5", h6: "Heading 6" };
 function HeadingLevelIcon({ level }) {
   const num = level.slice(1);
-  return /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-heading-icon-h", children: "H" }),
-    /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-heading-icon-n", children: num })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-heading-icon-h", children: "H" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-heading-icon-n", children: num })
   ] });
 }
 function HeadingLevelPicker({ value, onChange }) {
-  const [open, setOpen] = React.useState(false);
-  const [dropdownStyle, setDropdownStyle] = React.useState({});
-  const [hoverIndex, setHoverIndex] = React.useState(LEVELS.indexOf(value));
-  const wrapperRef = React.useRef(null);
-  const triggerRef = React.useRef(null);
-  const listRef = React.useRef(null);
+  const [open, setOpen] = _react.useState.call(void 0, false);
+  const [dropdownStyle, setDropdownStyle] = _react.useState.call(void 0, {});
+  const [hoverIndex, setHoverIndex] = _react.useState.call(void 0, LEVELS.indexOf(value));
+  const wrapperRef = _react.useRef.call(void 0, null);
+  const triggerRef = _react.useRef.call(void 0, null);
+  const listRef = _react.useRef.call(void 0, null);
   function computeDropdownStyle() {
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
@@ -328,7 +345,7 @@ function HeadingLevelPicker({ value, onChange }) {
     setDropdownStyle(computeDropdownStyle());
     setOpen(true);
   }
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     var _a;
     if (!open) return;
     function handleClickOutside(e) {
@@ -347,7 +364,7 @@ function HeadingLevelPicker({ value, onChange }) {
       scrollEl == null ? void 0 : scrollEl.removeEventListener("scroll", handleScroll);
     };
   }, [open]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     var _a, _b;
     if (open) {
       const idx = LEVELS.indexOf(value);
@@ -384,8 +401,8 @@ function HeadingLevelPicker({ value, onChange }) {
       (_f = triggerRef.current) == null ? void 0 : _f.focus();
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: wrapperRef, className: "jeeby-cms-heading-picker-wrapper", children: [
-    /* @__PURE__ */ jsxRuntime.jsxs(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: wrapperRef, className: "jeeby-cms-heading-picker-wrapper", children: [
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
       "button",
       {
         ref: triggerRef,
@@ -397,12 +414,12 @@ function HeadingLevelPicker({ value, onChange }) {
         onClick: () => open ? setOpen(false) : openPicker(),
         onKeyDown: handleTriggerKeyDown,
         children: [
-          /* @__PURE__ */ jsxRuntime.jsx(HeadingLevelIcon, { level: value }),
-          /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-heading-picker-chevron", "aria-hidden": "true", children: "\u25BE" })
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, HeadingLevelIcon, { level: value }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-heading-picker-chevron", "aria-hidden": "true", children: "\u25BE" })
         ]
       }
     ),
-    open && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-heading-picker-dropdown-wrap", style: dropdownStyle, children: /* @__PURE__ */ jsxRuntime.jsx(
+    open && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-heading-picker-dropdown-wrap", style: dropdownStyle, children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "ul",
       {
         ref: listRef,
@@ -410,7 +427,7 @@ function HeadingLevelPicker({ value, onChange }) {
         "aria-label": "Choose heading level",
         onKeyDown: handleListKeyDown,
         className: "jeeby-cms-block-type-picker jeeby-cms-heading-picker-dropdown",
-        children: LEVELS.map((l, i) => /* @__PURE__ */ jsxRuntime.jsxs(
+        children: LEVELS.map((l, i) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
           "li",
           {
             role: "option",
@@ -424,8 +441,8 @@ function HeadingLevelPicker({ value, onChange }) {
               (_a = triggerRef.current) == null ? void 0 : _a.focus();
             },
             children: [
-              /* @__PURE__ */ jsxRuntime.jsx(HeadingLevelIcon, { level: l }),
-              /* @__PURE__ */ jsxRuntime.jsx("span", { children: LEVEL_LABELS[l] })
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, HeadingLevelIcon, { level: l }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: LEVEL_LABELS[l] })
             ]
           },
           l
@@ -435,13 +452,13 @@ function HeadingLevelPicker({ value, onChange }) {
   ] });
 }
 function TitleEditor({ data, onChange, blockId }) {
-  const divRef = React.useRef(null);
-  const isInternalChange = React.useRef(false);
+  const divRef = _react.useRef.call(void 0, null);
+  const isInternalChange = _react.useRef.call(void 0, false);
   function handleInput(e) {
     isInternalChange.current = true;
     onChange({ ...data, text: e.currentTarget.textContent });
   }
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (!isInternalChange.current && divRef.current && (data == null ? void 0 : data.text) !== void 0) {
       if (divRef.current.textContent !== data.text) {
         divRef.current.textContent = data.text;
@@ -449,8 +466,8 @@ function TitleEditor({ data, onChange, blockId }) {
     }
     isInternalChange.current = false;
   }, [data == null ? void 0 : data.text]);
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "div",
       {
         ref: divRef,
@@ -465,21 +482,31 @@ function TitleEditor({ data, onChange, blockId }) {
           if (e.key === "Enter") e.preventDefault();
         },
         style: {
-          fontSize: HEADING_SIZES[(data == null ? void 0 : data.level) ?? "h2"],
+          fontSize: HEADING_SIZES[_nullishCoalesce((data == null ? void 0 : data.level), () => ( "h2"))],
           minHeight: "44px"
         },
         "data-placeholder": "Type a heading..."
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       HeadingLevelPicker,
       {
-        value: (data == null ? void 0 : data.level) ?? "h2",
+        value: _nullishCoalesce((data == null ? void 0 : data.level), () => ( "h2")),
         onChange: (level) => onChange({ ...data, level })
       }
     ) })
   ] });
 }
+
+// src/admin/editors/TextEditor.js
+
+
+// node_modules/@tiptap/react/dist/index.js
+
+
+var _reactdom = require('react-dom'); var _reactdom2 = _interopRequireDefault(_reactdom);
+var _indexjs = require('use-sync-external-store/shim/index.js');
+
 
 // node_modules/orderedmap/dist/index.js
 function OrderedMap(content) {
@@ -6881,7 +6908,8 @@ function splitBlockAs(splitNode) {
         atEnd = $from.end(d) == $from.pos + ($from.depth - d);
         atStart = $from.start(d) == $from.pos - ($from.depth - d);
         deflt = defaultBlockAt($from.node(d - 1).contentMatchAt($from.indexAfter(d - 1)));
-        types.unshift((atEnd && deflt ? { type: deflt } : null));
+        let splitType = splitNode && splitNode($to.parent, atEnd, $from);
+        types.unshift(splitType || (atEnd && deflt ? { type: deflt } : null));
         splitDepth = d;
         break;
       } else {
@@ -6921,6 +6949,11 @@ var selectParentNode = (state, dispatch) => {
   pos = $from.before(same);
   if (dispatch)
     dispatch(state.tr.setSelection(NodeSelection.create(state.doc, pos)));
+  return true;
+};
+var selectAll = (state, dispatch) => {
+  if (dispatch)
+    dispatch(state.tr.setSelection(new AllSelection(state.doc)));
   return true;
 };
 function joinMaybeClear(state, $pos, dispatch) {
@@ -7057,11 +7090,31 @@ function chainCommands(...commands) {
     return false;
   };
 }
-chainCommands(deleteSelection, joinBackward, selectNodeBackward);
-chainCommands(deleteSelection, joinForward, selectNodeForward);
-({
-  "Enter": chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock)});
-typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform) : typeof os != "undefined" && os.platform ? os.platform() == "darwin" : false;
+var backspace = chainCommands(deleteSelection, joinBackward, selectNodeBackward);
+var del = chainCommands(deleteSelection, joinForward, selectNodeForward);
+var pcBaseKeymap = {
+  "Enter": chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock),
+  "Mod-Enter": exitCode,
+  "Backspace": backspace,
+  "Mod-Backspace": backspace,
+  "Shift-Backspace": backspace,
+  "Delete": del,
+  "Mod-Delete": del,
+  "Mod-a": selectAll
+};
+var macBaseKeymap = {
+  "Ctrl-h": pcBaseKeymap["Backspace"],
+  "Alt-Backspace": pcBaseKeymap["Mod-Backspace"],
+  "Ctrl-d": pcBaseKeymap["Delete"],
+  "Ctrl-Alt-Backspace": pcBaseKeymap["Mod-Delete"],
+  "Alt-Delete": pcBaseKeymap["Mod-Delete"],
+  "Alt-d": pcBaseKeymap["Mod-Delete"],
+  "Ctrl-a": selectTextblockStart,
+  "Ctrl-e": selectTextblockEnd
+};
+for (let key in pcBaseKeymap)
+  macBaseKeymap[key] = pcBaseKeymap[key];
+var mac = typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform) : typeof os != "undefined" && os.platform ? os.platform() == "darwin" : false;
 
 // node_modules/prosemirror-schema-list/dist/index.js
 function wrapInList(listType, attrs = null) {
@@ -10068,7 +10121,8 @@ function updateSelection(view, selection, origin) {
   if (view.state.selection.eq(selection))
     return;
   let tr2 = view.state.tr.setSelection(selection);
-  tr2.setMeta("pointer", true);
+  if (origin == "pointer")
+    tr2.setMeta("pointer", true);
   view.dispatch(tr2);
 }
 function selectClickedLeaf(view, inside) {
@@ -10076,7 +10130,7 @@ function selectClickedLeaf(view, inside) {
     return false;
   let $pos = view.state.doc.resolve(inside), node = $pos.nodeAfter;
   if (node && node.isAtom && NodeSelection.isSelectable(node)) {
-    updateSelection(view, new NodeSelection($pos));
+    updateSelection(view, new NodeSelection($pos), "pointer");
     return true;
   }
   return false;
@@ -10099,7 +10153,7 @@ function selectClickedNode(view, inside) {
     }
   }
   if (selectAt != null) {
-    updateSelection(view, NodeSelection.create(view.state.doc, selectAt));
+    updateSelection(view, NodeSelection.create(view.state.doc, selectAt), "pointer");
     return true;
   } else {
     return false;
@@ -10120,7 +10174,7 @@ function defaultTripleClick(view, inside, event) {
   let doc4 = view.state.doc;
   if (inside == -1) {
     if (doc4.inlineContent) {
-      updateSelection(view, TextSelection.create(doc4, 0, doc4.content.size));
+      updateSelection(view, TextSelection.create(doc4, 0, doc4.content.size), "pointer");
       return true;
     }
     return false;
@@ -10130,9 +10184,9 @@ function defaultTripleClick(view, inside, event) {
     let node = i > $pos.depth ? $pos.nodeAfter : $pos.node(i);
     let nodePos = $pos.before(i);
     if (node.inlineContent)
-      updateSelection(view, TextSelection.create(doc4, nodePos + 1, nodePos + 1 + node.content.size));
+      updateSelection(view, TextSelection.create(doc4, nodePos + 1, nodePos + 1 + node.content.size), "pointer");
     else if (NodeSelection.isSelectable(node))
-      updateSelection(view, NodeSelection.create(doc4, nodePos));
+      updateSelection(view, NodeSelection.create(doc4, nodePos), "pointer");
     else
       continue;
     return true;
@@ -10249,7 +10303,7 @@ var MouseDown = class {
     // thus doesn't get a reaction from ProseMirror. This
     // works around that.
     chrome && !this.view.state.selection.visible && Math.min(Math.abs(pos.pos - this.view.state.selection.from), Math.abs(pos.pos - this.view.state.selection.to)) <= 2)) {
-      updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)));
+      updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)), "pointer");
       event.preventDefault();
     } else {
       setSelectionOrigin(this.view, "pointer");
@@ -12805,6 +12859,7 @@ var blur = () => ({ editor, view }) => {
   requestAnimationFrame(() => {
     var _a;
     if (!editor.isDestroyed) {
+      ;
       view.dom.blur();
       (_a = window == null ? void 0 : window.getSelection()) == null ? void 0 : _a.removeAllRanges();
     }
@@ -13057,9 +13112,11 @@ var focus = (position = null, options = {}) => ({ editor, view, tr: tr2, dispatc
   };
   const delayedFocus = () => {
     if (isiOS() || isAndroid()) {
+      ;
       view.dom.focus();
     }
     if (isSafari() && !isiOS() && !isAndroid()) {
+      ;
       view.dom.focus({ preventScroll: true });
     }
     requestAnimationFrame(() => {
@@ -13075,7 +13132,7 @@ var focus = (position = null, options = {}) => ({ editor, view, tr: tr2, dispatc
     if (view.hasFocus() && position === null || position === false) {
       return true;
     }
-  } catch {
+  } catch (e2) {
     return false;
   }
   if (dispatch && position === null && !isTextSelection(editor.state.selection)) {
@@ -13234,6 +13291,7 @@ var insertContentAt = (position, value, options) => ({ tr: tr2, dispatch, editor
         error,
         disableCollaboration: () => {
           if ("collaboration" in editor.storage && typeof editor.storage.collaboration === "object" && editor.storage.collaboration) {
+            ;
             editor.storage.collaboration.isDisabled = true;
           }
         }
@@ -13344,7 +13402,7 @@ var joinItemBackward = () => ({ state, dispatch, tr: tr2 }) => {
       dispatch(tr2);
     }
     return true;
-  } catch {
+  } catch (e3) {
     return false;
   }
 };
@@ -13359,7 +13417,7 @@ var joinItemForward = () => ({ state, dispatch, tr: tr2 }) => {
       dispatch(tr2);
     }
     return true;
-  } catch {
+  } catch (e4) {
     return false;
   }
 };
@@ -15516,7 +15574,7 @@ function pasteRulesPlugin(props) {
   let dropEvent;
   try {
     dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
-  } catch {
+  } catch (e5) {
     dropEvent = null;
   }
   const processEvent = ({
@@ -15545,7 +15603,7 @@ function pasteRulesPlugin(props) {
     }
     try {
       dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
-    } catch {
+    } catch (e6) {
       dropEvent = null;
     }
     pasteEvent = typeof ClipboardEvent !== "undefined" ? new ClipboardEvent("paste") : null;
@@ -16618,7 +16676,7 @@ img.ProseMirror-separator {
   display: block;
 }`;
 function createStyleTag(style2, nonce, suffix) {
-  const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${""}]`);
+  const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${suffix ? `-${suffix}` : ""}]`);
   if (tiptapStyleTag !== null) {
     return tiptapStyleTag;
   }
@@ -16626,7 +16684,7 @@ function createStyleTag(style2, nonce, suffix) {
   if (nonce) {
     styleNode.setAttribute("nonce", nonce);
   }
-  styleNode.setAttribute(`data-tiptap-style${""}`, "");
+  styleNode.setAttribute(`data-tiptap-style${suffix ? `-${suffix}` : ""}`, "");
   styleNode.innerHTML = style2;
   document.getElementsByTagName("head")[0].appendChild(styleNode);
   return styleNode;
@@ -16979,6 +17037,7 @@ var Editor = class extends EventEmitter {
         error: e,
         disableCollaboration: () => {
           if ("collaboration" in this.storage && typeof this.storage.collaboration === "object" && this.storage.collaboration) {
+            ;
             this.storage.collaboration.isDisabled = true;
           }
           this.options.extensions = this.options.extensions.filter((extension) => extension.name !== "collaboration");
@@ -17899,6 +17958,10 @@ function markPasteRule(config) {
   });
 }
 
+// node_modules/@tiptap/react/dist/index.js
+
+
+
 // node_modules/fast-equals/dist/es/index.mjs
 var { getOwnPropertyNames, getOwnPropertySymbols } = Object;
 var { hasOwnProperty } = Object.prototype;
@@ -18307,24 +18370,24 @@ function createIsEqual({ circular, comparator, createState, equals, strict }) {
   };
 }
 var deepEqual = createCustomEqual();
-createCustomEqual({ strict: true });
-createCustomEqual({ circular: true });
-createCustomEqual({
+var strictDeepEqual = createCustomEqual({ strict: true });
+var circularDeepEqual = createCustomEqual({ circular: true });
+var strictCircularDeepEqual = createCustomEqual({
   circular: true,
   strict: true
 });
-createCustomEqual({
+var shallowEqual = createCustomEqual({
   createInternalComparator: () => sameValueZeroEqual
 });
-createCustomEqual({
+var strictShallowEqual = createCustomEqual({
   strict: true,
   createInternalComparator: () => sameValueZeroEqual
 });
-createCustomEqual({
+var circularShallowEqual = createCustomEqual({
   circular: true,
   createInternalComparator: () => sameValueZeroEqual
 });
-createCustomEqual({
+var strictCircularShallowEqual = createCustomEqual({
   circular: true,
   createInternalComparator: () => sameValueZeroEqual,
   strict: true
@@ -18336,24 +18399,43 @@ function createCustomEqual(options = {}) {
   const equals = createCustomInternalComparator ? createCustomInternalComparator(comparator) : createInternalEqualityComparator(comparator);
   return createIsEqual({ circular, comparator, createState, equals, strict });
 }
+
+// node_modules/@tiptap/react/dist/index.js
+
+var _withselectorjs = require('use-sync-external-store/shim/with-selector.js');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 var mergeRefs = (...refs) => {
   return (node) => {
-    refs.forEach((ref) => {
-      if (typeof ref === "function") {
-        ref(node);
-      } else if (ref) {
-        ref.current = node;
+    refs.forEach((ref2) => {
+      if (typeof ref2 === "function") {
+        ref2(node);
+      } else if (ref2) {
+        ;
+        ref2.current = node;
       }
     });
   };
 };
 var Portals = ({ contentComponent }) => {
-  const renderers = index_js.useSyncExternalStore(
+  const renderers = _indexjs.useSyncExternalStore.call(void 0, 
     contentComponent.subscribe,
     contentComponent.getSnapshot,
     contentComponent.getServerSnapshot
   );
-  return /* @__PURE__ */ jsxRuntime.jsx(jsxRuntime.Fragment, { children: Object.values(renderers) });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _jsxruntime.Fragment, { children: Object.values(renderers) });
 };
 function getInstance() {
   const subscribers = /* @__PURE__ */ new Set();
@@ -18380,7 +18462,7 @@ function getInstance() {
     setRenderer(id, renderer) {
       renderers = {
         ...renderers,
-        [id]: ReactDOM__default.default.createPortal(renderer.reactElement, renderer.element, id)
+        [id]: _reactdom2.default.createPortal(renderer.reactElement, renderer.element, id)
       };
       subscribers.forEach((subscriber) => subscriber());
     },
@@ -18395,11 +18477,11 @@ function getInstance() {
     }
   };
 }
-var PureEditorContent = class extends React__default.default.Component {
+var PureEditorContent = class extends _react2.default.Component {
   constructor(props) {
     var _a;
     super(props);
-    this.editorContentRef = React__default.default.createRef();
+    this.editorContentRef = _react2.default.createRef();
     this.initialized = false;
     this.state = {
       hasContentComponentInitialized: Boolean((_a = props.editor) == null ? void 0 : _a.contentComponent)
@@ -18468,31 +18550,31 @@ var PureEditorContent = class extends React__default.default.Component {
       editor.setOptions({
         element: newElement
       });
-    } catch {
+    } catch (e7) {
     }
   }
   render() {
     const { editor, innerRef, ...rest } = this.props;
-    return /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { ref: mergeRefs(innerRef, this.editorContentRef), ...rest }),
-      (editor == null ? void 0 : editor.contentComponent) && /* @__PURE__ */ jsxRuntime.jsx(Portals, { contentComponent: editor.contentComponent })
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { ref: mergeRefs(innerRef, this.editorContentRef), ...rest }),
+      (editor == null ? void 0 : editor.contentComponent) && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, Portals, { contentComponent: editor.contentComponent })
     ] });
   }
 };
-var EditorContentWithKey = React.forwardRef(
-  (props, ref) => {
-    const key = React__default.default.useMemo(() => {
+var EditorContentWithKey = _react.forwardRef.call(void 0, 
+  (props, ref2) => {
+    const key = _react2.default.useMemo(() => {
       return Math.floor(Math.random() * 4294967295).toString();
     }, [props.editor]);
-    return React__default.default.createElement(PureEditorContent, {
+    return _react2.default.createElement(PureEditorContent, {
       key,
-      innerRef: ref,
+      innerRef: ref2,
       ...props
     });
   }
 );
-var EditorContent = React__default.default.memo(EditorContentWithKey);
-var useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+var EditorContent = _react2.default.memo(EditorContentWithKey);
+var useIsomorphicLayoutEffect = typeof window !== "undefined" ? _react.useLayoutEffect : _react.useEffect;
 var EditorStateManager = class {
   constructor(initialEditor) {
     this.transactionNumber = 0;
@@ -18552,8 +18634,8 @@ var EditorStateManager = class {
 };
 function useEditorState(options) {
   var _a;
-  const [editorStateManager] = React.useState(() => new EditorStateManager(options.editor));
-  const selectedState = withSelector_js.useSyncExternalStoreWithSelector(
+  const [editorStateManager] = _react.useState.call(void 0, () => new EditorStateManager(options.editor));
+  const selectedState = _withselectorjs.useSyncExternalStoreWithSelector.call(void 0, 
     editorStateManager.subscribe,
     editorStateManager.getSnapshot,
     editorStateManager.getServerSnapshot,
@@ -18563,7 +18645,7 @@ function useEditorState(options) {
   useIsomorphicLayoutEffect(() => {
     return editorStateManager.watch(options.editor);
   }, [options.editor, editorStateManager]);
-  React.useDebugValue(selectedState);
+  _react.useDebugValue.call(void 0, selectedState);
   return selectedState;
 }
 var isDev = process.env.NODE_ENV !== "production";
@@ -18800,16 +18882,16 @@ var EditorInstanceManager = class _EditorInstanceManager {
   }
 };
 function useEditor(options = {}, deps = []) {
-  const mostRecentOptions = React.useRef(options);
+  const mostRecentOptions = _react.useRef.call(void 0, options);
   mostRecentOptions.current = options;
-  const [instanceManager] = React.useState(() => new EditorInstanceManager(mostRecentOptions));
-  const editor = index_js.useSyncExternalStore(
+  const [instanceManager] = _react.useState.call(void 0, () => new EditorInstanceManager(mostRecentOptions));
+  const editor = _indexjs.useSyncExternalStore.call(void 0, 
     instanceManager.subscribe,
     instanceManager.getEditor,
     instanceManager.getServerSnapshot
   );
-  React.useDebugValue(editor);
-  React.useEffect(instanceManager.onRender(deps));
+  _react.useDebugValue.call(void 0, editor);
+  _react.useEffect.call(void 0, instanceManager.onRender(deps));
   useEditorState({
     editor,
     selector: ({ transactionNumber }) => {
@@ -18824,28 +18906,28 @@ function useEditor(options = {}, deps = []) {
   });
   return editor;
 }
-var EditorContext = React.createContext({
+var EditorContext = _react.createContext.call(void 0, {
   editor: null
 });
-EditorContext.Consumer;
-var ReactNodeViewContext = React.createContext({
+var EditorConsumer = EditorContext.Consumer;
+var ReactNodeViewContext = _react.createContext.call(void 0, {
   onDragStart: () => {
   },
   nodeViewContentChildren: void 0,
   nodeViewContentRef: () => {
   }
 });
-var useReactNodeView = () => React.useContext(ReactNodeViewContext);
-React__default.default.forwardRef((props, ref) => {
+var useReactNodeView = () => _react.useContext.call(void 0, ReactNodeViewContext);
+var NodeViewWrapper = _react2.default.forwardRef((props, ref2) => {
   const { onDragStart } = useReactNodeView();
   const Tag = props.as || "div";
   return (
     // @ts-ignore
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       Tag,
       {
         ...props,
-        ref,
+        ref: ref2,
         "data-node-view-wrapper": "",
         onDragStart,
         style: {
@@ -18856,33 +18938,33 @@ React__default.default.forwardRef((props, ref) => {
     )
   );
 });
-React__default.default.createContext({
+var ReactMarkViewContext = _react2.default.createContext({
   markViewContentRef: () => {
   }
 });
-var TiptapContext = React.createContext({
+var TiptapContext = _react.createContext.call(void 0, {
   get editor() {
     throw new Error("useTiptap must be used within a <Tiptap> provider");
   }
 });
 TiptapContext.displayName = "TiptapContext";
-var useTiptap = () => React.useContext(TiptapContext);
+var useTiptap = () => _react.useContext.call(void 0, TiptapContext);
 function TiptapWrapper({ editor, instance, children }) {
   const resolvedEditor = editor != null ? editor : instance;
   if (!resolvedEditor) {
     throw new Error("Tiptap: An editor instance is required. Pass a non-null `editor` prop.");
   }
-  const tiptapContextValue = React.useMemo(() => ({ editor: resolvedEditor }), [resolvedEditor]);
-  const legacyContextValue = React.useMemo(() => ({ editor: resolvedEditor }), [resolvedEditor]);
-  return /* @__PURE__ */ jsxRuntime.jsx(EditorContext.Provider, { value: legacyContextValue, children: /* @__PURE__ */ jsxRuntime.jsx(TiptapContext.Provider, { value: tiptapContextValue, children }) });
+  const tiptapContextValue = _react.useMemo.call(void 0, () => ({ editor: resolvedEditor }), [resolvedEditor]);
+  const legacyContextValue = _react.useMemo.call(void 0, () => ({ editor: resolvedEditor }), [resolvedEditor]);
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, EditorContext.Provider, { value: legacyContextValue, children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, TiptapContext.Provider, { value: tiptapContextValue, children }) });
 }
 TiptapWrapper.displayName = "Tiptap";
 function TiptapContent({ ...rest }) {
   const { editor } = useTiptap();
-  return /* @__PURE__ */ jsxRuntime.jsx(EditorContent, { editor, ...rest });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, EditorContent, { editor, ...rest });
 }
 TiptapContent.displayName = "Tiptap.Content";
-Object.assign(TiptapWrapper, {
+var Tiptap = Object.assign(TiptapWrapper, {
   /**
    * The Tiptap Content component that renders the EditorContent with the editor instance from the context.
    * @see TiptapContent
@@ -22338,7 +22420,7 @@ var TaskList = Node3.create({
     };
   }
 });
-Extension.create({
+var ListKit = Extension.create({
   name: "listKit",
   addExtensions() {
     const extensions = [];
@@ -23459,9 +23541,11 @@ function buildCommand(redo2, scroll) {
 }
 var undo = buildCommand(false, true);
 var redo = buildCommand(true, true);
+var undoNoScroll = buildCommand(false, false);
+var redoNoScroll = buildCommand(true, false);
 
 // node_modules/@tiptap/extensions/dist/index.js
-Extension.create({
+var CharacterCount = Extension.create({
   name: "characterCount",
   addOptions() {
     return {
@@ -23569,7 +23653,7 @@ var Dropcursor = Extension.create({
     return [dropCursor(this.options)];
   }
 });
-Extension.create({
+var Focus = Extension.create({
   name: "focus",
   addOptions() {
     return {
@@ -23650,7 +23734,7 @@ var DEFAULT_DATA_ATTRIBUTE = "placeholder";
 function preparePlaceholderAttribute(attr) {
   return attr.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/^[0-9-]+/, "").replace(/^-+/, "").toLowerCase();
 }
-Extension.create({
+var Placeholder = Extension.create({
   name: "placeholder",
   addOptions() {
     return {
@@ -23708,7 +23792,7 @@ Extension.create({
     ];
   }
 });
-Extension.create({
+var Selection2 = Extension.create({
   name: "selection",
   addOptions() {
     return {
@@ -23894,6 +23978,9 @@ var StarterKit = Extension.create({
   }
 });
 var index_default2 = StarterKit;
+
+// src/admin/editors/TextEditor.js
+
 var TabEscape = Extension.create({
   name: "tabEscape",
   addKeyboardShortcuts() {
@@ -23904,41 +23991,41 @@ var TabEscape = Extension.create({
   }
 });
 function IconBold() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--bold", "aria-hidden": "true", children: "B" });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--bold", "aria-hidden": "true", children: "B" });
 }
 function IconItalic() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--italic", "aria-hidden": "true", children: "I" });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--italic", "aria-hidden": "true", children: "I" });
 }
 function IconLink() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M6.5 9.5a3.5 3.5 0 0 0 4.95 0l2-2a3.5 3.5 0 0 0-4.95-4.95l-1 1" }),
-    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M9.5 6.5a3.5 3.5 0 0 0-4.95 0l-2 2a3.5 3.5 0 0 0 4.95 4.95l1-1" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M6.5 9.5a3.5 3.5 0 0 0 4.95 0l2-2a3.5 3.5 0 0 0-4.95-4.95l-1 1" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M9.5 6.5a3.5 3.5 0 0 0-4.95 0l-2 2a3.5 3.5 0 0 0 4.95 4.95l1-1" })
   ] });
 }
 function IconBulletList() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
 function IconOrderedList() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
-var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PURE__ */ jsxRuntime.jsx(
+var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
   "button",
   {
     type: "button",
@@ -23950,33 +24037,33 @@ var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PUR
     children: icon
   }
 );
-var ToolbarSeparator = () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-toolbar-separator", role: "separator", "aria-orientation": "vertical" });
+var ToolbarSeparator = () => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-toolbar-separator", role: "separator", "aria-orientation": "vertical" });
 function isEmptyHtml(html) {
   if (!html) return true;
   return html.replace(/<[^>]*>/g, "").trim() === "";
 }
 function TextEditor({ data, onChange, blockId }) {
-  const [linkInputOpen, setLinkInputOpen] = React.useState(false);
-  const [linkUrl, setLinkUrl] = React.useState("");
-  const linkInputRef = React.useRef(null);
+  const [linkInputOpen, setLinkInputOpen] = _react.useState.call(void 0, false);
+  const [linkUrl, setLinkUrl] = _react.useState.call(void 0, "");
+  const linkInputRef = _react.useRef.call(void 0, null);
   const editor = useEditor({
     extensions: [
       index_default2,
       TabEscape,
       index_default.configure({ openOnClick: false })
     ],
-    content: (data == null ? void 0 : data.html) ?? "",
+    content: _nullishCoalesce((data == null ? void 0 : data.html), () => ( "")),
     immediatelyRender: false,
     onUpdate({ editor: editor2 }) {
       onChange({ html: editor2.getHTML() });
     }
   });
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (editor && (data == null ? void 0 : data.html) !== void 0 && data.html !== editor.getHTML()) {
       editor.commands.setContent(data.html, false);
     }
   }, [data == null ? void 0 : data.html]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     var _a;
     if (linkInputOpen) (_a = linkInputRef.current) == null ? void 0 : _a.focus();
   }, [linkInputOpen]);
@@ -23985,7 +24072,7 @@ function TextEditor({ data, onChange, blockId }) {
       editor.chain().focus().unsetLink().run();
       return;
     }
-    const href = editor.getAttributes("link").href ?? "";
+    const href = _nullishCoalesce(editor.getAttributes("link").href, () => ( ""));
     setLinkUrl(href);
     setLinkInputOpen(true);
   }
@@ -24002,8 +24089,8 @@ function TextEditor({ data, onChange, blockId }) {
     setLinkUrl("");
     editor.commands.focus();
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-text-editor-wrapper", children: [
-    /* @__PURE__ */ jsxRuntime.jsxs(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-text-editor-wrapper", children: [
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
       "div",
       {
         id: "block-input-" + blockId,
@@ -24012,61 +24099,61 @@ function TextEditor({ data, onChange, blockId }) {
         tabIndex: -1,
         onFocus: () => editor == null ? void 0 : editor.commands.focus(),
         children: [
-          isEmptyHtml(data == null ? void 0 : data.html) && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-text-placeholder", "aria-hidden": "true", children: "Start writing..." }),
-          /* @__PURE__ */ jsxRuntime.jsx(EditorContent, { editor })
+          isEmptyHtml(data == null ? void 0 : data.html) && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-text-placeholder", "aria-hidden": "true", children: "Start writing..." }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, EditorContent, { editor })
         ]
       }
     ),
-    editor && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-text-editor-toolbar-reveal", children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-text-editor-toolbar-inner", children: [
-      /* @__PURE__ */ jsxRuntime.jsxs(
+    editor && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-text-editor-toolbar-reveal", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-text-editor-toolbar-inner", children: [
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
         "div",
         {
           role: "toolbar",
           "aria-label": "Text formatting",
           className: "jeeby-cms-toolbar",
           children: [
-            /* @__PURE__ */ jsxRuntime.jsx(
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               ToolbarButton,
               {
                 label: "Bold",
-                icon: /* @__PURE__ */ jsxRuntime.jsx(IconBold, {}),
+                icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconBold, {}),
                 isActive: editor.isActive("bold"),
                 onClick: () => editor.chain().focus().toggleBold().run()
               }
             ),
-            /* @__PURE__ */ jsxRuntime.jsx(
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               ToolbarButton,
               {
                 label: "Italic",
-                icon: /* @__PURE__ */ jsxRuntime.jsx(IconItalic, {}),
+                icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconItalic, {}),
                 isActive: editor.isActive("italic"),
                 onClick: () => editor.chain().focus().toggleItalic().run()
               }
             ),
-            /* @__PURE__ */ jsxRuntime.jsx(
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               ToolbarButton,
               {
                 label: editor.isActive("link") ? "Remove link" : "Add link",
-                icon: /* @__PURE__ */ jsxRuntime.jsx(IconLink, {}),
+                icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconLink, {}),
                 isActive: editor.isActive("link") || linkInputOpen,
                 onClick: handleLinkClick
               }
             ),
-            /* @__PURE__ */ jsxRuntime.jsx(ToolbarSeparator, {}),
-            /* @__PURE__ */ jsxRuntime.jsx(
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, ToolbarSeparator, {}),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               ToolbarButton,
               {
                 label: "Bullet list",
-                icon: /* @__PURE__ */ jsxRuntime.jsx(IconBulletList, {}),
+                icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconBulletList, {}),
                 isActive: editor.isActive("bulletList"),
                 onClick: () => editor.chain().focus().toggleBulletList().run()
               }
             ),
-            /* @__PURE__ */ jsxRuntime.jsx(
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               ToolbarButton,
               {
                 label: "Ordered list",
-                icon: /* @__PURE__ */ jsxRuntime.jsx(IconOrderedList, {}),
+                icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconOrderedList, {}),
                 isActive: editor.isActive("orderedList"),
                 onClick: () => editor.chain().focus().toggleOrderedList().run()
               }
@@ -24074,8 +24161,8 @@ function TextEditor({ data, onChange, blockId }) {
           ]
         }
       ),
-      linkInputOpen && /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-link-input-row", children: [
-        /* @__PURE__ */ jsxRuntime.jsx(
+      linkInputOpen && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-link-input-row", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "input",
           {
             ref: linkInputRef,
@@ -24097,7 +24184,7 @@ function TextEditor({ data, onChange, blockId }) {
             }
           }
         ),
-        /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             type: "button",
@@ -24106,7 +24193,7 @@ function TextEditor({ data, onChange, blockId }) {
             children: "Apply"
           }
         ),
-        /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             type: "button",
@@ -24119,17 +24206,112 @@ function TextEditor({ data, onChange, blockId }) {
     ] }) })
   ] });
 }
+
+// src/admin/editors/ImageEditor.js
+
+
+// src/firebase/storage.js
+var _storage = require('firebase/storage');
+var MAX_FILE_BYTES = 10 * 1024 * 1024;
+var ALLOWED_MIME = /* @__PURE__ */ new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+var ALLOWED_EXT = /* @__PURE__ */ new Set(["jpg", "jpeg", "png", "gif", "webp"]);
+var MIME_TO_EXT = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp"
+};
+function validateImageFile(file) {
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (!ALLOWED_MIME.has(file.type) && !ALLOWED_EXT.has(ext)) {
+    return "Only JPEG, PNG, GIF, and WebP images are supported.";
+  }
+  if (file.size === 0) return "The selected file is empty.";
+  if (file.size > MAX_FILE_BYTES) {
+    return `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB) \u2014 10 MB maximum.`;
+  }
+  return null;
+}
+function uploadFile(storage, file, path, onProgress, cancelRef) {
+  return new Promise((resolve, reject) => {
+    const storageRef = _storage.ref.call(void 0, storage, path);
+    const task = _storage.uploadBytesResumable.call(void 0, storageRef, file);
+    if (cancelRef) cancelRef.current = () => task.cancel();
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        if (onProgress) {
+          const percent = Math.round(
+            snapshot.bytesTransferred / snapshot.totalBytes * 100
+          );
+          onProgress(percent);
+        }
+      },
+      (error) => reject(error),
+      async () => {
+        if (cancelRef) cancelRef.current = null;
+        try {
+          const url = await _storage.getDownloadURL.call(void 0, task.snapshot.ref);
+          resolve(url);
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
+}
+
+// src/admin/editors/ImageEditor.js
+
+
+function IconImage() {
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "11", cy: "13", r: "2.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M3 22 l7-7 5 5 4-4 10 9" })
+  ] });
+}
+function IconPencil() {
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" })
+  ] });
+}
 function ImageEditor({ data, onChange, blockId }) {
-  const [imgError, setImgError] = React.useState(false);
-  const [isEditing, setIsEditing] = React.useState(false);
-  const containerRef = React.useRef(null);
-  const urlInputRef = React.useRef(null);
-  const viewButtonRef = React.useRef(null);
-  const hasImage = (data == null ? void 0 : data.src) && !imgError;
-  React.useEffect(() => {
+  const [imgError, setImgError] = _react.useState.call(void 0, false);
+  const [isEditing, setIsEditing] = _react.useState.call(void 0, false);
+  const containerRef = _react.useRef.call(void 0, null);
+  const urlInputRef = _react.useRef.call(void 0, null);
+  const viewButtonRef = _react.useRef.call(void 0, null);
+  const { storage } = _jeebycms.useCMSFirebase.call(void 0, );
+  const [uploadProgress, setUploadProgress] = _react.useState.call(void 0, null);
+  const isUploading = typeof uploadProgress === "number";
+  const uploadError = uploadProgress !== null && !isUploading ? uploadProgress : null;
+  const fileInputRef = _react.useRef.call(void 0, null);
+  const pendingFileRef = _react.useRef.call(void 0, null);
+  const isPickingFile = _react.useRef.call(void 0, false);
+  const [previewSrc, setPreviewSrc] = _react.useState.call(void 0, null);
+  const uploadCancelRef = _react.useRef.call(void 0, null);
+  _react.useEffect.call(void 0, () => {
+    return () => {
+      if (previewSrc) URL.revokeObjectURL(previewSrc);
+    };
+  }, [previewSrc]);
+  _react.useEffect.call(void 0, () => {
+    return () => {
+      var _a;
+      (_a = uploadCancelRef.current) == null ? void 0 : _a.call(uploadCancelRef);
+    };
+  }, []);
+  const displaySrc = _nullishCoalesce(previewSrc, () => ( (data == null ? void 0 : data.src)));
+  const hasImage = displaySrc && !imgError;
+  _react.useEffect.call(void 0, () => {
     if (imgError) setIsEditing(true);
   }, [imgError]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
+    setImgError(false);
+  }, [data == null ? void 0 : data.src]);
+  _react.useEffect.call(void 0, () => {
     var _a;
     if (isEditing) (_a = urlInputRef.current) == null ? void 0 : _a.focus();
   }, [isEditing]);
@@ -24139,8 +24321,45 @@ function ImageEditor({ data, onChange, blockId }) {
   function enterEditMode() {
     setIsEditing(true);
   }
+  function exitEditMode() {
+    setIsEditing(false);
+    requestAnimationFrame(() => {
+      var _a;
+      return (_a = viewButtonRef.current) == null ? void 0 : _a.focus();
+    });
+  }
+  async function handleUpload(file) {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadProgress({ message: validationError, retryable: false });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    pendingFileRef.current = file;
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewSrc(previewUrl);
+    setUploadProgress(0);
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : _nullishCoalesce(MIME_TO_EXT[file.type], () => ( "jpg"));
+      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef);
+      onChange({ ...data, src: url });
+      setUploadProgress(null);
+    } catch (err) {
+      if (err.code === "storage/canceled") return;
+      console.error("[jeeby-cms] Image upload failed:", err);
+      setUploadProgress({ message: "Upload failed \u2014 check your connection and try again.", retryable: true });
+    } finally {
+      setPreviewSrc(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+  function handleRetry() {
+    if (pendingFileRef.current) handleUpload(pendingFileRef.current);
+  }
   function handleContainerBlur(e) {
     var _a;
+    if (isUploading || isPickingFile.current) return;
     if (!(e.relatedTarget instanceof Node) || !((_a = containerRef.current) == null ? void 0 : _a.contains(e.relatedTarget))) {
       setIsEditing(false);
       requestAnimationFrame(() => {
@@ -24149,19 +24368,78 @@ function ImageEditor({ data, onChange, blockId }) {
       });
     }
   }
-  const IconImage2 = () => /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "11", cy: "13", r: "2.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M3 22 l7-7 5 5 4-4 10 9" })
+  const uploadControls = /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-url-row", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        "input",
+        {
+          ref: urlInputRef,
+          id: urlInputId,
+          type: "url",
+          value: _nullishCoalesce((data == null ? void 0 : data.src), () => ( "")),
+          placeholder: "https://example.com/image.jpg",
+          onChange: (e) => {
+            setImgError(false);
+            onChange({ ...data, src: e.target.value });
+          },
+          onBlur: (e) => {
+            const v = e.target.value.trim();
+            if (v !== e.target.value) onChange({ ...data, src: v });
+          }
+        }
+      ),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-image-url-or", "aria-hidden": "true", children: "or" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-upload-btn",
+          "aria-label": isUploading ? "Uploading image\u2026" : "Upload image from device",
+          disabled: isUploading,
+          onClick: () => {
+            var _a;
+            isPickingFile.current = true;
+            (_a = fileInputRef.current) == null ? void 0 : _a.click();
+          },
+          children: isUploading ? "Uploading\u2026" : "Upload"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+      "input",
+      {
+        ref: fileInputRef,
+        type: "file",
+        accept: "image/jpeg,image/png,image/gif,image/webp",
+        style: { display: "none" },
+        "aria-hidden": "true",
+        tabIndex: -1,
+        onChange: (e) => {
+          var _a;
+          isPickingFile.current = false;
+          const file = (_a = e.target.files) == null ? void 0 : _a[0];
+          if (file) handleUpload(file);
+        },
+        onCancel: () => {
+          isPickingFile.current = false;
+        }
+      }
+    ),
+    isUploading && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": Math.round(uploadProgress), "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${uploadProgress}%` } }) }),
+    uploadError && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-upload-error-row", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: uploadError.message }),
+      uploadError.retryable && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: handleRetry, children: "Retry" })
+    ] }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: isUploading ? `Uploading \u2014 ${Math.round(uploadProgress)}%` : null })
   ] });
   if (!hasImage && !isEditing) {
-    return /* @__PURE__ */ jsxRuntime.jsxs(
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
       "div",
       {
         role: "button",
         tabIndex: 0,
         id: urlInputId,
-        "aria-label": "Image \u2014 click to add image URL",
+        "aria-label": "Image \u2014 click to add image by URL or upload from device",
         className: "jeeby-cms-image-empty",
         onClick: enterEditMode,
         onKeyDown: (e) => {
@@ -24171,50 +24449,50 @@ function ImageEditor({ data, onChange, blockId }) {
           }
         },
         children: [
-          /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsx(IconImage2, {}) }),
-          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-image-empty-hint", children: "Image \u2014 click to add image URL" })
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconImage, {}) }),
+          /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "p", { className: "jeeby-cms-image-empty-hint", children: [
+            "Add image",
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-image-empty-sub", children: "Paste a URL or upload from your device" })
+          ] })
         ]
       }
     );
   }
   if (!hasImage) {
-    return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, className: "jeeby-cms-image-empty", onBlur: handleContainerBlur, children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsx(IconImage2, {}) }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-image-empty-inputs", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
-          "input",
-          {
-            ref: urlInputRef,
-            id: urlInputId,
-            type: "url",
-            value: (data == null ? void 0 : data.src) ?? "",
-            placeholder: "https://example.com/image.jpg",
-            onChange: (e) => {
-              setImgError(false);
-              onChange({ ...data, src: e.target.value });
-            }
-          }
-        ),
-        (data == null ? void 0 : data.src) && imgError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: containerRef, className: "jeeby-cms-image-empty", onBlur: handleContainerBlur, children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconImage, {}) }),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-empty-inputs", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
+        uploadControls,
+        imgError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "input",
           {
             id: altInputId,
             type: "text",
-            value: (data == null ? void 0 : data.alt) ?? "",
+            value: _nullishCoalesce((data == null ? void 0 : data.alt), () => ( "")),
             "aria-describedby": altHintId,
             placeholder: "Describe the image for screen readers",
             onChange: (e) => onChange({ ...data, alt: e.target.value })
           }
         ),
-        /* @__PURE__ */ jsxRuntime.jsx("p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image is purely decorative." })
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image adds no meaning (e.g., a background pattern)." }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+          "button",
+          {
+            type: "button",
+            className: "jeeby-cms-btn-ghost jeeby-cms-image-done-btn",
+            disabled: isUploading,
+            onClick: exitEditMode,
+            children: "Done"
+          }
+        ) })
       ] })
     ] });
   }
   if (!isEditing) {
-    return /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "div",
       {
         ref: viewButtonRef,
@@ -24230,61 +24508,70 @@ function ImageEditor({ data, onChange, blockId }) {
             enterEditMode();
           }
         },
-        children: /* @__PURE__ */ jsxRuntime.jsx("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsxRuntime.jsx(
-          "img",
-          {
-            src: data.src,
-            alt: (data == null ? void 0 : data.alt) ?? "",
-            onError: () => setImgError(true),
-            className: "jeeby-cms-image-preview"
-          }
-        ) })
+        children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "figure", { className: "jeeby-cms-image-figure", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+            "img",
+            {
+              src: displaySrc,
+              alt: _nullishCoalesce((data == null ? void 0 : data.alt), () => ( "")),
+              onError: () => setImgError(true),
+              className: "jeeby-cms-image-preview"
+            }
+          ),
+          /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-edit-overlay", "aria-hidden": "true", children: [
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconPencil, {}),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: "Edit image" })
+          ] })
+        ] })
       }
     );
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, className: "jeeby-cms-image-editor", onBlur: handleContainerBlur, children: [
-    /* @__PURE__ */ jsxRuntime.jsx("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: containerRef, className: "jeeby-cms-image-editor", onBlur: handleContainerBlur, children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "img",
       {
-        src: data.src,
-        alt: (data == null ? void 0 : data.alt) ?? "",
+        src: displaySrc,
+        alt: _nullishCoalesce((data == null ? void 0 : data.alt), () => ( "")),
         onError: () => setImgError(true),
         className: "jeeby-cms-image-preview"
       }
     ) }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-image-fields", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
-      /* @__PURE__ */ jsxRuntime.jsx(
-        "input",
-        {
-          ref: urlInputRef,
-          id: urlInputId,
-          type: "url",
-          value: (data == null ? void 0 : data.src) ?? "",
-          placeholder: "https://example.com/image.jpg",
-          onChange: (e) => {
-            setImgError(false);
-            onChange({ ...data, src: e.target.value });
-          }
-        }
-      ),
-      imgError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
-      /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
-      /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-fields", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
+      uploadControls,
+      imgError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "input",
         {
           id: altInputId,
           type: "text",
-          value: (data == null ? void 0 : data.alt) ?? "",
+          value: _nullishCoalesce((data == null ? void 0 : data.alt), () => ( "")),
           "aria-describedby": altHintId,
           placeholder: "Describe the image for screen readers",
           onChange: (e) => onChange({ ...data, alt: e.target.value })
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx("p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image is purely decorative." })
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image adds no meaning (e.g., a background pattern)." }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-image-done-btn",
+          disabled: isUploading,
+          onClick: exitEditMode,
+          children: "Done"
+        }
+      ) })
     ] })
   ] });
 }
+
+// src/admin/editors/VideoEditor.js
+
+
+// src/blocks/Video.js
+
 function toEmbedUrl(url) {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -24295,15 +24582,18 @@ function toEmbedUrl(url) {
   if (loomMatch) return `https://www.loom.com/embed/${loomMatch[1]}`;
   return url;
 }
+
+// src/admin/editors/VideoEditor.js
+
 function VideoEditor({ data, onChange, blockId }) {
-  const rawUrl = (data == null ? void 0 : data.url) ?? "";
+  const rawUrl = _nullishCoalesce((data == null ? void 0 : data.url), () => ( ""));
   const embedUrl = rawUrl ? toEmbedUrl(rawUrl) : null;
   const isRecognized = rawUrl && embedUrl !== rawUrl;
   const showError = rawUrl.length > 0 && !isRecognized;
-  const [isEditing, setIsEditing] = React.useState(false);
-  const containerRef = React.useRef(null);
-  const urlInputRef = React.useRef(null);
-  React.useEffect(() => {
+  const [isEditing, setIsEditing] = _react.useState.call(void 0, false);
+  const containerRef = _react.useRef.call(void 0, null);
+  const urlInputRef = _react.useRef.call(void 0, null);
+  _react.useEffect.call(void 0, () => {
     if (showError) setIsEditing(true);
   }, [showError]);
   function enterEditMode() {
@@ -24319,12 +24609,12 @@ function VideoEditor({ data, onChange, blockId }) {
       setIsEditing(false);
     }
   }
-  const IconVideo2 = () => /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
-    /* @__PURE__ */ jsxRuntime.jsx("polygon", { fill: "currentColor", stroke: "none", points: "13,11 23,16 13,21" })
+  const IconVideo2 = () => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "polygon", { fill: "currentColor", stroke: "none", points: "13,11 23,16 13,21" })
   ] });
   if (!isRecognized && !isEditing) {
-    return /* @__PURE__ */ jsxRuntime.jsxs(
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
       "div",
       {
         role: "button",
@@ -24340,18 +24630,18 @@ function VideoEditor({ data, onChange, blockId }) {
           }
         },
         children: [
-          /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsx(IconVideo2, {}) }),
-          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-video-empty-hint", children: "Video \u2014 click to add video URL" })
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconVideo2, {}) }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-video-empty-hint", children: "Video \u2014 click to add video URL" })
         ]
       }
     );
   }
   if (!isRecognized) {
-    return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, className: "jeeby-cms-video-empty", onBlur: handleContainerBlur, children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsx(IconVideo2, {}) }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-video-empty-inputs", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Video URL" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: containerRef, className: "jeeby-cms-video-empty", onBlur: handleContainerBlur, children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconVideo2, {}) }),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-video-empty-inputs", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Video URL" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "input",
           {
             ref: urlInputRef,
@@ -24364,13 +24654,13 @@ function VideoEditor({ data, onChange, blockId }) {
             className: "jeeby-cms-video-url-input"
           }
         ),
-        /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" }),
-        showError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Unrecognised video URL" })
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" }),
+        showError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: "Unrecognised video URL" })
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { style: { aspectRatio: "16/9", width: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { style: { aspectRatio: "16/9", width: "100%" }, children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "iframe",
       {
         title: "Video preview",
@@ -24379,8 +24669,8 @@ function VideoEditor({ data, onChange, blockId }) {
         style: { width: "100%", height: "100%", border: 0, borderRadius: "4px" }
       }
     ) }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-block-aux", children: [
-      /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-block-aux", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "input",
         {
           id: "block-input-" + blockId,
@@ -24392,25 +24682,96 @@ function VideoEditor({ data, onChange, blockId }) {
           style: { width: "100%", minHeight: "44px" }
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" })
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" })
     ] })
   ] });
 }
+
+// src/admin/editors/GalleryEditor.js
+
+
+
+
 function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item);
 }
-function GalleryItem({ item, index, items, blockId, onChange, data }) {
-  const controls = framerMotion.useDragControls();
-  return /* @__PURE__ */ jsxRuntime.jsx(
-    framerMotion.Reorder.Item,
+async function withConcurrency(factories, limit2 = 3) {
+  const results = [];
+  for (let i = 0; i < factories.length; i += limit2) {
+    const batch = await Promise.allSettled(factories.slice(i, i + limit2).map((fn) => fn()));
+    results.push(...batch);
+  }
+  return results;
+}
+var GalleryItem = _react.memo.call(void 0, function GalleryItem2({ item, index, items, blockId, onChange, data, storage, filePickerOpen, onUploadStart, onUploadEnd }) {
+  const controls = _framermotion.useDragControls.call(void 0, );
+  const [uploadProgress, setUploadProgress] = _react.useState.call(void 0, null);
+  const isUploading = typeof uploadProgress === "number";
+  const uploadError = uploadProgress !== null && !isUploading ? uploadProgress : null;
+  const fileInputRef = _react.useRef.call(void 0, null);
+  const pendingFileRef = _react.useRef.call(void 0, null);
+  const [previewSrc, setPreviewSrc] = _react.useState.call(void 0, null);
+  const uploadCancelRef = _react.useRef.call(void 0, null);
+  const [imgLoadError, setImgLoadError] = _react.useState.call(void 0, false);
+  _react.useEffect.call(void 0, () => {
+    return () => {
+      if (previewSrc) URL.revokeObjectURL(previewSrc);
+    };
+  }, [previewSrc]);
+  _react.useEffect.call(void 0, () => {
+    setImgLoadError(false);
+  }, [item.src]);
+  _react.useEffect.call(void 0, () => {
+    return () => {
+      var _a;
+      (_a = uploadCancelRef.current) == null ? void 0 : _a.call(uploadCancelRef);
+    };
+  }, []);
+  const displaySrc = _nullishCoalesce(previewSrc, () => ( item.src));
+  async function handleItemUpload(file) {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadProgress({ message: validationError, retryable: false });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    onUploadStart == null ? void 0 : onUploadStart();
+    pendingFileRef.current = file;
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewSrc(previewUrl);
+    setUploadProgress(0);
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : _nullishCoalesce(MIME_TO_EXT[file.type], () => ( "jpg"));
+      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef);
+      onChange({
+        ...data,
+        items: items.map((it, i) => i === index ? { ...it, src: url } : it)
+      });
+      setUploadProgress(null);
+    } catch (err) {
+      if (err.code === "storage/canceled") return;
+      console.error("[jeeby-cms] Gallery item upload failed:", err);
+      setUploadProgress({ message: "Upload failed \u2014 check your connection and try again.", retryable: true });
+    } finally {
+      setPreviewSrc(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      onUploadEnd == null ? void 0 : onUploadEnd();
+    }
+  }
+  function handleItemRetry() {
+    if (pendingFileRef.current) handleItemUpload(pendingFileRef.current);
+  }
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+    _framermotion.Reorder.Item,
     {
       value: item,
       dragListener: false,
       dragControls: controls,
       as: "li",
       style: { listStyle: "none" },
-      children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-gallery-item-row", children: [
-        /* @__PURE__ */ jsxRuntime.jsx(
+      children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-gallery-item-row", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             className: "jeeby-cms-drag-handle",
@@ -24423,34 +24784,83 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
             children: "\u283F"
           }
         ),
-        item.src && /* @__PURE__ */ jsxRuntime.jsx(
+        displaySrc && !imgLoadError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "img",
           {
-            src: item.src,
+            src: displaySrc,
             alt: item.alt || "",
-            className: "jeeby-cms-gallery-preview"
+            className: "jeeby-cms-gallery-preview",
+            onError: () => setImgLoadError(true)
           }
         ),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-gallery-item-inputs", children: [
-          /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-gallery-item-inputs", children: [
+          /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-url-row", children: [
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+              "input",
+              {
+                id: index === 0 ? "block-input-" + blockId : void 0,
+                type: "url",
+                value: _nullishCoalesce(item.src, () => ( "")),
+                "aria-label": "Image URL for item " + (index + 1),
+                placeholder: "https://example.com/image.jpg",
+                onChange: (e) => onChange({
+                  ...data,
+                  items: updateItem(items, index, "src", e.target.value)
+                }),
+                onBlur: (e) => {
+                  const v = e.target.value.trim();
+                  if (v !== e.target.value) onChange({ ...data, items: updateItem(items, index, "src", v) });
+                }
+              }
+            ),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-image-url-or", "aria-hidden": "true", children: "or" }),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+              "button",
+              {
+                type: "button",
+                className: "jeeby-cms-btn-ghost jeeby-cms-gallery-upload-btn",
+                "aria-label": isUploading ? "Uploading item " + (index + 1) + "\u2026" : "Upload image for item " + (index + 1),
+                disabled: isUploading,
+                onClick: () => {
+                  var _a;
+                  if (filePickerOpen) filePickerOpen.current = true;
+                  (_a = fileInputRef.current) == null ? void 0 : _a.click();
+                },
+                children: isUploading ? "Uploading\u2026" : "Upload"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "input",
             {
-              id: index === 0 ? "block-input-" + blockId : void 0,
-              type: "url",
-              value: item.src ?? "",
-              "aria-label": "Image URL for item " + (index + 1),
-              placeholder: "https://example.com/image.jpg",
-              onChange: (e) => onChange({
-                ...data,
-                items: updateItem(items, index, "src", e.target.value)
-              })
+              ref: fileInputRef,
+              type: "file",
+              accept: "image/jpeg,image/png,image/gif,image/webp",
+              style: { display: "none" },
+              "aria-hidden": "true",
+              tabIndex: -1,
+              onChange: (e) => {
+                var _a;
+                if (filePickerOpen) filePickerOpen.current = false;
+                const file = (_a = e.target.files) == null ? void 0 : _a[0];
+                if (file) handleItemUpload(file);
+              },
+              onCancel: () => {
+                if (filePickerOpen) filePickerOpen.current = false;
+              }
             }
           ),
-          /* @__PURE__ */ jsxRuntime.jsx(
+          isUploading && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": Math.round(uploadProgress), "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress for item " + (index + 1), children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${uploadProgress}%` } }) }),
+          uploadError && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-upload-error-row", children: [
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: uploadError.message }),
+            uploadError.retryable && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: handleItemRetry, children: "Retry" })
+          ] }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: isUploading ? `Uploading \u2014 ${Math.round(uploadProgress)}%` : null }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "input",
             {
               type: "text",
-              value: item.alt ?? "",
+              value: _nullishCoalesce(item.alt, () => ( "")),
               "aria-label": "Alt text for item " + (index + 1),
               placeholder: "Describe the image",
               onChange: (e) => onChange({
@@ -24460,7 +24870,7 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
             }
           )
         ] }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             type: "button",
@@ -24470,27 +24880,42 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
               items: items.filter((_, i) => i !== index)
             }),
             className: "jeeby-cms-btn-ghost jeeby-cms-gallery-remove-btn",
-            children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-              /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-              /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+            children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
             ] })
           }
         )
       ] })
     }
   );
-}
+});
 function GalleryEditor({ data, onChange, blockId }) {
-  const items = (data == null ? void 0 : data.items) ?? [];
-  const [isEditing, setIsEditing] = React.useState(items.length === 0);
-  const containerRef = React.useRef(null);
-  const addButtonRef = React.useRef(null);
-  const suppressNextBlur = React.useRef(false);
+  const items = _nullishCoalesce((data == null ? void 0 : data.items), () => ( []));
+  const [isEditing, setIsEditing] = _react.useState.call(void 0, items.length === 0);
+  const containerRef = _react.useRef.call(void 0, null);
+  const addButtonRef = _react.useRef.call(void 0, null);
+  const { storage } = _jeebycms.useCMSFirebase.call(void 0, );
+  const batchInputRef = _react.useRef.call(void 0, null);
+  const filePickerOpen = _react.useRef.call(void 0, false);
+  const uploadCountRef = _react.useRef.call(void 0, 0);
+  const suppressNextBlur = _react.useRef.call(void 0, false);
+  const [batchError, setBatchError] = _react.useState.call(void 0, null);
+  const [activeUploads, setActiveUploads] = _react.useState.call(void 0, 0);
+  const handleUploadStart = _react.useCallback.call(void 0, () => {
+    uploadCountRef.current++;
+    setActiveUploads((c) => c + 1);
+  }, []);
+  const handleUploadEnd = _react.useCallback.call(void 0, () => {
+    uploadCountRef.current--;
+    setActiveUploads((c) => c - 1);
+  }, []);
   function handleContainerBlur() {
     if (suppressNextBlur.current) {
       suppressNextBlur.current = false;
       return;
     }
+    if (filePickerOpen.current || uploadCountRef.current > 0) return;
     setTimeout(() => {
       var _a;
       if (!((_a = containerRef.current) == null ? void 0 : _a.contains(document.activeElement))) {
@@ -24498,9 +24923,44 @@ function GalleryEditor({ data, onChange, blockId }) {
       }
     }, 0);
   }
+  async function handleBatchUpload(files) {
+    setBatchError(null);
+    const fileArray = Array.from(files);
+    const valid = fileArray.filter((f) => !validateImageFile(f));
+    const invalidCount = fileArray.length - valid.length;
+    if (valid.length === 0) {
+      setBatchError("No valid images \u2014 only JPEG, PNG, GIF, and WebP under 10 MB are supported.");
+      if (batchInputRef.current) batchInputRef.current.value = "";
+      filePickerOpen.current = false;
+      return;
+    }
+    try {
+      const results = await withConcurrency(
+        valid.map((file) => () => {
+          const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : _nullishCoalesce(MIME_TO_EXT[file.type], () => ( "jpg"));
+          const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+          return uploadFile(storage, file, path);
+        })
+      );
+      const newItems = results.filter((r) => r.status === "fulfilled").map((r) => ({ src: r.value, alt: "", id: crypto.randomUUID() }));
+      if (newItems.length > 0) {
+        onChange({ ...data, items: [...items, ...newItems] });
+      }
+      const totalFailed = invalidCount + results.filter((r) => r.status === "rejected").length;
+      if (totalFailed > 0) {
+        setBatchError(`${totalFailed} file${totalFailed !== 1 ? "s" : ""} could not be uploaded.`);
+      }
+    } catch (err) {
+      console.error("[jeeby-cms] Batch upload failed:", err);
+      setBatchError("Upload failed \u2014 check your connection and try again.");
+    } finally {
+      if (batchInputRef.current) batchInputRef.current.value = "";
+      filePickerOpen.current = false;
+    }
+  }
   if (!isEditing) {
     const itemsWithSrc = items.filter((item) => item.src);
-    return /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "div",
       {
         ref: containerRef,
@@ -24528,13 +24988,15 @@ function GalleryEditor({ data, onChange, blockId }) {
             });
           }
         },
-        children: itemsWithSrc.length > 0 ? /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-gallery-thumb-strip", children: itemsWithSrc.map((item, i) => /* @__PURE__ */ jsxRuntime.jsx("img", { src: item.src, alt: item.alt || "", className: "jeeby-cms-gallery-thumb" }, i)) }) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-gallery-empty-hint", children: items.length > 0 ? "Gallery \u2014 click to add image URLs" : "Empty gallery \u2014 click to add images" })
+        children: itemsWithSrc.length > 0 ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-gallery-thumb-strip", children: itemsWithSrc.map((item, i) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "img", { src: item.src, alt: item.alt || "", className: "jeeby-cms-gallery-thumb", onError: (e) => {
+          e.currentTarget.style.display = "none";
+        } }, i)) }) : /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-gallery-empty-hint", children: items.length > 0 ? "Gallery \u2014 click to add image URLs" : "Empty gallery \u2014 click to add images" })
       }
     );
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, onBlur: handleContainerBlur, className: "jeeby-cms-gallery-editor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx(
-      framerMotion.Reorder.Group,
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: containerRef, onBlur: handleContainerBlur, className: "jeeby-cms-gallery-editor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+      _framermotion.Reorder.Group,
       {
         axis: "y",
         values: items,
@@ -24542,7 +25004,7 @@ function GalleryEditor({ data, onChange, blockId }) {
         as: "ol",
         "aria-label": "Gallery images",
         style: { listStyle: "none", padding: 0, margin: 0 },
-        children: items.map((item, index) => /* @__PURE__ */ jsxRuntime.jsx(
+        children: items.map((item, index) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           GalleryItem,
           {
             item,
@@ -24550,58 +25012,112 @@ function GalleryEditor({ data, onChange, blockId }) {
             items,
             blockId,
             onChange,
-            data
+            data,
+            storage,
+            filePickerOpen,
+            onUploadStart: handleUploadStart,
+            onUploadEnd: handleUploadEnd
           },
-          item.id ?? item.src + "-" + index
+          _nullishCoalesce(item.id, () => ( item.src + "-" + index))
         ))
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-gallery-batch-row", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        "button",
+        {
+          ref: addButtonRef,
+          id: items.length === 0 ? "block-input-" + blockId : void 0,
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn",
+          onClick: () => onChange({
+            ...data,
+            items: [...items, { src: "", alt: "", id: crypto.randomUUID() }]
+          }),
+          children: "+ Add image"
+        }
+      ),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn",
+          onClick: () => {
+            var _a;
+            filePickerOpen.current = true;
+            (_a = batchInputRef.current) == null ? void 0 : _a.click();
+          },
+          children: "Upload multiple"
+        }
+      )
+    ] }),
+    batchError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: batchError }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "button",
       {
-        ref: addButtonRef,
-        id: items.length === 0 ? "block-input-" + blockId : void 0,
         type: "button",
-        className: "jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn",
-        onClick: () => onChange({
-          ...data,
-          items: [...items, { src: "", alt: "", id: crypto.randomUUID() }]
-        }),
-        children: "+ Add image"
+        className: "jeeby-cms-btn-ghost jeeby-cms-image-done-btn",
+        disabled: activeUploads > 0,
+        onClick: () => setIsEditing(false),
+        children: "Done"
+      }
+    ) }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+      "input",
+      {
+        ref: batchInputRef,
+        type: "file",
+        accept: "image/jpeg,image/png,image/gif,image/webp",
+        multiple: true,
+        style: { display: "none" },
+        "aria-hidden": "true",
+        tabIndex: -1,
+        onChange: (e) => {
+          var _a;
+          filePickerOpen.current = false;
+          if ((_a = e.target.files) == null ? void 0 : _a.length) handleBatchUpload(e.target.files);
+        },
+        onCancel: () => {
+          filePickerOpen.current = false;
+        }
       }
     )
   ] });
 }
+
+// src/admin/editors/ListEditor.js
+
+
 function IconBulletList2() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
 function IconOrderedList2() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
 function ListEditor({ data, onChange, blockId }) {
   var _a;
   const items = ((_a = data == null ? void 0 : data.items) == null ? void 0 : _a.length) ? data.items : [""];
-  const [isEditing, setIsEditing] = React.useState(false);
-  const ordered = (data == null ? void 0 : data.ordered) ?? false;
-  const inputRefs = React.useRef([]);
-  const containerRef = React.useRef(null);
+  const [isEditing, setIsEditing] = _react.useState.call(void 0, false);
+  const ordered = _nullishCoalesce((data == null ? void 0 : data.ordered), () => ( false));
+  const inputRefs = _react.useRef.call(void 0, []);
+  const containerRef = _react.useRef.call(void 0, null);
   function update(patch) {
     onChange({ items, ordered, ...patch });
   }
@@ -24650,7 +25166,7 @@ function ListEditor({ data, onChange, blockId }) {
   if (!isEditing) {
     const Tag = ordered ? "ol" : "ul";
     const visibleItems = items.filter((i) => i.trim() !== "");
-    return /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "div",
       {
         ref: containerRef,
@@ -24676,14 +25192,14 @@ function ListEditor({ data, onChange, blockId }) {
             });
           }
         },
-        children: visibleItems.length > 0 ? /* @__PURE__ */ jsxRuntime.jsx(Tag, { className: "jeeby-cms-list-preview", children: visibleItems.map((item, i) => /* @__PURE__ */ jsxRuntime.jsx("li", { children: item }, i)) }) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-list-empty-hint", children: "Empty list \u2014 click to add items" })
+        children: visibleItems.length > 0 ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, Tag, { className: "jeeby-cms-list-preview", children: visibleItems.map((item, i) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "li", { children: item }, i)) }) : /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-list-empty-hint", children: "Empty list \u2014 click to add items" })
       }
     );
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, onBlur: handleContainerBlur, children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-list-items", children: items.map((item, index) => /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-list-item-row", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-list-item-marker", "aria-hidden": "true", children: ordered ? `${index + 1}.` : "\u2022" }),
-      /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: containerRef, onBlur: handleContainerBlur, children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-list-items", children: items.map((item, index) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-list-item-row", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-list-item-marker", "aria-hidden": "true", children: ordered ? `${index + 1}.` : "\u2022" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "input",
         {
           ref: (el) => {
@@ -24699,7 +25215,7 @@ function ListEditor({ data, onChange, blockId }) {
           placeholder: "List item"
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           type: "button",
@@ -24707,14 +25223,14 @@ function ListEditor({ data, onChange, blockId }) {
           onClick: () => removeItem(index),
           disabled: items.length === 1 && items[0] === "",
           className: "jeeby-cms-btn-ghost jeeby-cms-list-item-remove",
-          children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-            /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-            /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+          children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
           ] })
         }
       )
     ] }, index)) }),
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "button",
       {
         type: "button",
@@ -24723,8 +25239,8 @@ function ListEditor({ data, onChange, blockId }) {
         children: "+ Add item"
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ jsxRuntime.jsxs("div", { role: "group", "aria-label": "List type", className: "jeeby-cms-toolbar", children: [
-      /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { role: "group", "aria-label": "List type", className: "jeeby-cms-toolbar", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           type: "button",
@@ -24733,10 +25249,10 @@ function ListEditor({ data, onChange, blockId }) {
           "aria-pressed": !ordered,
           className: "jeeby-cms-toolbar-btn",
           onClick: () => update({ ordered: false }),
-          children: /* @__PURE__ */ jsxRuntime.jsx(IconBulletList2, {})
+          children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconBulletList2, {})
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           type: "button",
@@ -24745,19 +25261,23 @@ function ListEditor({ data, onChange, blockId }) {
           "aria-pressed": ordered,
           className: "jeeby-cms-toolbar-btn",
           onClick: () => update({ ordered: true }),
-          children: /* @__PURE__ */ jsxRuntime.jsx(IconOrderedList2, {})
+          children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconOrderedList2, {})
         }
       )
     ] }) })
   ] });
 }
+
+// src/admin/editors/PullQuoteEditor.js
+
+
 function PullQuoteEditor({ data, onChange, blockId }) {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const quote = (data == null ? void 0 : data.quote) ?? "";
-  const attribution = (data == null ? void 0 : data.attribution) ?? "";
-  const containerRef = React.useRef(null);
-  const viewRef = React.useRef(null);
-  const textareaRef = React.useRef(null);
+  const [isEditing, setIsEditing] = _react.useState.call(void 0, false);
+  const quote = _nullishCoalesce((data == null ? void 0 : data.quote), () => ( ""));
+  const attribution = _nullishCoalesce((data == null ? void 0 : data.attribution), () => ( ""));
+  const containerRef = _react.useRef.call(void 0, null);
+  const viewRef = _react.useRef.call(void 0, null);
+  const textareaRef = _react.useRef.call(void 0, null);
   function update(patch) {
     onChange({ quote, attribution, ...patch });
   }
@@ -24794,7 +25314,7 @@ function PullQuoteEditor({ data, onChange, blockId }) {
     }
   }
   if (!isEditing) {
-    return /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "div",
       {
         ref: viewRef,
@@ -24810,16 +25330,16 @@ function PullQuoteEditor({ data, onChange, blockId }) {
             enterEditMode();
           }
         },
-        children: quote ? /* @__PURE__ */ jsxRuntime.jsxs("figure", { className: "jeeby-cms-pullquote-figure", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("blockquote", { className: "jeeby-cms-pullquote-blockquote", children: /* @__PURE__ */ jsxRuntime.jsx("p", { children: quote }) }),
-          attribution && /* @__PURE__ */ jsxRuntime.jsx("figcaption", { className: "jeeby-cms-pullquote-figcaption", children: attribution })
-        ] }) : /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-pullquote-empty-hint", children: "Pull quote \u2014 click to add text" })
+        children: quote ? /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "figure", { className: "jeeby-cms-pullquote-figure", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "blockquote", { className: "jeeby-cms-pullquote-blockquote", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { children: quote }) }),
+          attribution && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "figcaption", { className: "jeeby-cms-pullquote-figcaption", children: attribution })
+        ] }) : /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-pullquote-empty-hint", children: "Pull quote \u2014 click to add text" })
       }
     );
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { ref: containerRef, className: "jeeby-cms-pullquote-editor", onBlur: handleContainerBlur, children: [
-    /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Quote" }),
-    /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { ref: containerRef, className: "jeeby-cms-pullquote-editor", onBlur: handleContainerBlur, children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Quote" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "textarea",
       {
         ref: textareaRef,
@@ -24832,8 +25352,8 @@ function PullQuoteEditor({ data, onChange, blockId }) {
         rows: 3
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "pullquote-attr-" + blockId, className: "jeeby-cms-field-label jeeby-cms-pullquote-attr-label", children: "Attribution" }),
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "pullquote-attr-" + blockId, className: "jeeby-cms-field-label jeeby-cms-pullquote-attr-label", children: "Attribution" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "input",
       {
         type: "text",
@@ -24847,91 +25367,99 @@ function PullQuoteEditor({ data, onChange, blockId }) {
     )
   ] });
 }
+
+// src/admin/AddBlockButton.js
+
+
+
+// src/admin/BlockTypePicker.js
+
+
 function IconText() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "1", width: "12", height: "3", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5.5", y: "4", width: "3", height: "9", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "1", width: "12", height: "3", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5.5", y: "4", width: "3", height: "9", rx: "0.7" })
   ] }) });
 }
 function IconHeading() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "1", width: "3", height: "12", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "10", y: "1", width: "3", height: "12", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "4", y: "5.5", width: "6", height: "3", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "1", width: "3", height: "12", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "10", y: "1", width: "3", height: "12", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "4", y: "5.5", width: "6", height: "3", rx: "0.7" })
   ] }) });
 }
-function IconImage() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "2", width: "12", height: "10", rx: "1.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "4.5", cy: "5.5", r: "1.2", fill: "currentColor", stroke: "none" }),
-    /* @__PURE__ */ jsxRuntime.jsx("polyline", { points: "1,11 4,7.5 7,10 9.5,7.5 13,11" })
+function IconImage2() {
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "2", width: "12", height: "10", rx: "1.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "4.5", cy: "5.5", r: "1.2", fill: "currentColor", stroke: "none" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "polyline", { points: "1,11 4,7.5 7,10 9.5,7.5 13,11" })
   ] }) });
 }
 function IconVideo() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "2.5", width: "9", height: "9", rx: "1.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("polygon", { points: "10,5 13,7 10,9", fill: "currentColor", stroke: "none" }),
-    /* @__PURE__ */ jsxRuntime.jsx("polygon", { points: "5,4.5 9.5,7 5,9.5", fill: "currentColor", stroke: "none" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "2.5", width: "9", height: "9", rx: "1.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "polygon", { points: "10,5 13,7 10,9", fill: "currentColor", stroke: "none" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "polygon", { points: "5,4.5 9.5,7 5,9.5", fill: "currentColor", stroke: "none" })
   ] }) });
 }
 function IconGallery() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "1", width: "5.5", height: "5.5", rx: "1" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "7.5", y: "1", width: "5.5", height: "5.5", rx: "1" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "7.5", width: "5.5", height: "5.5", rx: "1" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "7.5", y: "7.5", width: "5.5", height: "5.5", rx: "1" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "1", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "7.5", y: "1", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "7.5", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "7.5", y: "7.5", width: "5.5", height: "5.5", rx: "1" })
   ] }) });
 }
 function IconPullQuote() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0.5", y: "2", width: "2", height: "10", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "4", y: "3", width: "9", height: "2", rx: "0.7", opacity: "0.9" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "4", y: "6.5", width: "9", height: "2", rx: "0.7", opacity: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "4", y: "10", width: "6", height: "2", rx: "0.7", opacity: "0.5" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0.5", y: "2", width: "2", height: "10", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "4", y: "3", width: "9", height: "2", rx: "0.7", opacity: "0.9" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "4", y: "6.5", width: "9", height: "2", rx: "0.7", opacity: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "4", y: "10", width: "6", height: "2", rx: "0.7", opacity: "0.5" })
   ] }) });
 }
 function IconBulletList3() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] }) });
 }
 function IconOrderedList3() {
-  return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] }) });
 }
 var BLOCK_TYPES = [
-  { type: "title", colorKey: "heading", label: "Heading", hint: "title or subtitle", icon: /* @__PURE__ */ jsxRuntime.jsx(IconHeading, {}), initialData: void 0 },
-  { type: "richtext", colorKey: "text", label: "Text", hint: "paragraphs with formatting", icon: /* @__PURE__ */ jsxRuntime.jsx(IconText, {}), initialData: void 0 },
-  { type: "list", colorKey: "list", label: "Bullet List", hint: "points without ranking", icon: /* @__PURE__ */ jsxRuntime.jsx(IconBulletList3, {}), initialData: { ordered: false, items: [""] } },
-  { type: "list", colorKey: "list", label: "Numbered List", hint: "steps or ranked items", icon: /* @__PURE__ */ jsxRuntime.jsx(IconOrderedList3, {}), initialData: { ordered: true, items: [""] } },
-  { type: "pullquote", colorKey: "text", label: "Pull Quote", hint: "highlighted quote or callout", icon: /* @__PURE__ */ jsxRuntime.jsx(IconPullQuote, {}), initialData: { quote: "", attribution: "" } },
-  { type: "image", colorKey: "media", label: "Image", hint: "photo or graphic", icon: /* @__PURE__ */ jsxRuntime.jsx(IconImage, {}), initialData: void 0 },
-  { type: "video", colorKey: "media", label: "Video", hint: "YouTube or Vimeo link", icon: /* @__PURE__ */ jsxRuntime.jsx(IconVideo, {}), initialData: void 0 },
-  { type: "gallery", colorKey: "media", label: "Gallery", hint: "photo grid", icon: /* @__PURE__ */ jsxRuntime.jsx(IconGallery, {}), initialData: void 0 }
+  { type: "title", colorKey: "heading", label: "Heading", hint: "title or subtitle", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconHeading, {}), initialData: void 0 },
+  { type: "richtext", colorKey: "text", label: "Text", hint: "paragraphs with formatting", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconText, {}), initialData: void 0 },
+  { type: "list", colorKey: "list", label: "Bullet List", hint: "points without ranking", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconBulletList3, {}), initialData: { ordered: false, items: [""] } },
+  { type: "list", colorKey: "list", label: "Numbered List", hint: "steps or ranked items", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconOrderedList3, {}), initialData: { ordered: true, items: [""] } },
+  { type: "pullquote", colorKey: "text", label: "Pull Quote", hint: "highlighted quote or callout", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconPullQuote, {}), initialData: { quote: "", attribution: "" } },
+  { type: "image", colorKey: "media", label: "Image", hint: "photo or graphic", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconImage2, {}), initialData: void 0 },
+  { type: "video", colorKey: "media", label: "Video", hint: "YouTube or Vimeo link", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconVideo, {}), initialData: void 0 },
+  { type: "gallery", colorKey: "media", label: "Gallery", hint: "photo grid", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconGallery, {}), initialData: void 0 }
 ];
 function BlockTypePicker({ onSelect, onClose }) {
-  const [activeIndex, setActiveIndex] = React.useState(0);
-  const listRef = React.useRef(null);
-  React.useEffect(() => {
+  const [activeIndex, setActiveIndex] = _react.useState.call(void 0, 0);
+  const listRef = _react.useRef.call(void 0, null);
+  _react.useEffect.call(void 0, () => {
     var _a;
     const firstOption = (_a = listRef.current) == null ? void 0 : _a.querySelector('[role="option"]');
     firstOption == null ? void 0 : firstOption.focus();
   }, []);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     function handleClickOutside(e) {
       if (listRef.current && !listRef.current.contains(e.target)) {
         onClose();
@@ -24961,7 +25489,7 @@ function BlockTypePicker({ onSelect, onClose }) {
       onClose();
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
     "ul",
     {
       ref: listRef,
@@ -24969,7 +25497,7 @@ function BlockTypePicker({ onSelect, onClose }) {
       "aria-label": "Choose block type",
       onKeyDown: handleKeyDown2,
       className: "jeeby-cms-block-type-picker",
-      children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ jsxRuntime.jsxs(
+      children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
         "li",
         {
           role: "option",
@@ -24980,9 +25508,9 @@ function BlockTypePicker({ onSelect, onClose }) {
           onMouseEnter: () => setActiveIndex(index),
           children: [
             bt.icon,
-            /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-block-type-info", children: [
-              /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-type-label", children: bt.label }),
-              /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-type-hint", children: bt.hint })
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "span", { className: "jeeby-cms-block-type-info", children: [
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-type-label", children: bt.label }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-type-hint", children: bt.hint })
             ] })
           ]
         },
@@ -24991,27 +25519,30 @@ function BlockTypePicker({ onSelect, onClose }) {
     }
   );
 }
+
+// src/admin/AddBlockButton.js
+
 function AddBlockButton({ onAdd, insertIndex }) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isHovered, setIsHovered] = React.useState(false);
-  const buttonRef = React.useRef(null);
-  const prefersReducedMotion = framerMotion.useReducedMotion();
+  const [isOpen, setIsOpen] = _react.useState.call(void 0, false);
+  const [isHovered, setIsHovered] = _react.useState.call(void 0, false);
+  const buttonRef = _react.useRef.call(void 0, null);
+  const prefersReducedMotion = _framermotion.useReducedMotion.call(void 0, );
   const showUI = isHovered || isOpen;
   function handleMouseLeave(e) {
     if (!(e.relatedTarget instanceof Node) || !e.currentTarget.contains(e.relatedTarget)) {
       setIsHovered(false);
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
     "div",
     {
       className: "jeeby-cms-add-block-seam",
       onMouseEnter: () => setIsHovered(true),
       onMouseLeave: handleMouseLeave,
       children: [
-        /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-add-block-hover-zone", "aria-hidden": "true" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-add-block-ui", children: [
-          /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-add-block-hover-zone", "aria-hidden": "true" }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-add-block-ui", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               ref: buttonRef,
@@ -25021,14 +25552,14 @@ function AddBlockButton({ onAdd, insertIndex }) {
               "aria-haspopup": "listbox",
               onClick: () => setIsOpen((v) => !v),
               className: "jeeby-cms-add-block-btn",
-              children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "12", height: "12", viewBox: "0 0 12 12", "aria-hidden": "true", focusable: "false", children: [
-                /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "6", y1: "0", x2: "6", y2: "12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
-                /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "0", y1: "6", x2: "12", y2: "6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+              children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "12", height: "12", viewBox: "0 0 12 12", "aria-hidden": "true", focusable: "false", children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "6", y1: "0", x2: "6", y2: "12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "0", y1: "6", x2: "12", y2: "6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
               ] })
             }
           ),
-          /* @__PURE__ */ jsxRuntime.jsx(
-            framerMotion.motion.div,
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+            _framermotion.motion.div,
             {
               className: "jeeby-cms-add-block-bar",
               "aria-hidden": "true",
@@ -25038,7 +25569,7 @@ function AddBlockButton({ onAdd, insertIndex }) {
             }
           )
         ] }),
-        isOpen && /* @__PURE__ */ jsxRuntime.jsx(
+        isOpen && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           BlockTypePicker,
           {
             onSelect: (type, initialData) => {
@@ -25057,13 +25588,16 @@ function AddBlockButton({ onAdd, insertIndex }) {
     }
   );
 }
+
+// src/admin/BlockGutter.js
+
 var DISPLAY_NAMES = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List" };
 function displayName(type) {
   return DISPLAY_NAMES[type] || type;
 }
 function BlockGutter({ block, onDelete, dragControls }) {
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-block-gutter", children: [
-    /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-block-gutter", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "button",
       {
         className: "jeeby-cms-drag-handle",
@@ -25073,31 +25607,34 @@ function BlockGutter({ block, onDelete, dragControls }) {
           e.preventDefault();
           dragControls.start(e);
         },
-        children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "10", height: "14", viewBox: "0 0 10 14", "aria-hidden": "true", focusable: "false", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2", cy: "2", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "8", cy: "2", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2", cy: "7", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "8", cy: "7", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "2", cy: "12", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "8", cy: "12", r: "1.25", fill: "currentColor" })
+        children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "10", height: "14", viewBox: "0 0 10 14", "aria-hidden": "true", focusable: "false", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2", cy: "2", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "8", cy: "2", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2", cy: "7", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "8", cy: "7", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "2", cy: "12", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "8", cy: "12", r: "1.25", fill: "currentColor" })
         ] })
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "button",
       {
         type: "button",
         className: "jeeby-cms-block-delete-btn",
         "aria-label": "Delete " + displayName(block.type) + " block",
         onClick: () => onDelete(block),
-        children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-          /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+        children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
         ] })
       }
     )
   ] });
 }
+
+// src/admin/BlockCanvas.js
+
 var DISPLAY_NAMES2 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List", pullquote: "Pull Quote" };
 function displayName2(type) {
   return DISPLAY_NAMES2[type] || type;
@@ -25111,11 +25648,11 @@ var EDITOR_MAP = {
   list: ListEditor,
   pullquote: PullQuoteEditor
 };
-var BlockCard = React.memo(function BlockCard2({ block, index, onChange, onDelete, onAddBlock }) {
-  const controls = framerMotion.useDragControls();
+var BlockCard = _react.memo.call(void 0, function BlockCard2({ block, index, onChange, onDelete, onAddBlock }) {
+  const controls = _framermotion.useDragControls.call(void 0, );
   const Editor2 = EDITOR_MAP[block.type] || EDITOR_MAP.richtext;
-  return /* @__PURE__ */ jsxRuntime.jsxs(
-    framerMotion.Reorder.Item,
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
+    _framermotion.Reorder.Item,
     {
       value: block,
       dragListener: false,
@@ -25124,62 +25661,62 @@ var BlockCard = React.memo(function BlockCard2({ block, index, onChange, onDelet
       style: { listStyle: "none" },
       whileDrag: { scale: 1.01, opacity: 0.9 },
       children: [
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-block-row", children: [
-          /* @__PURE__ */ jsxRuntime.jsx(BlockGutter, { block, onDelete, dragControls: controls }),
-          /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-block-row", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, BlockGutter, { block, onDelete, dragControls: controls }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "article",
             {
               className: "jeeby-cms-block-content",
               "aria-label": displayName2(block.type) + " block",
-              children: /* @__PURE__ */ jsxRuntime.jsx(Editor2, { data: block.data, onChange: (newData) => onChange(block.id, newData), blockId: block.id })
+              children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, Editor2, { data: block.data, onChange: (newData) => onChange(block.id, newData), blockId: block.id })
             }
           )
         ] }),
-        /* @__PURE__ */ jsxRuntime.jsx(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, index, initialData), insertIndex: index })
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, index, initialData), insertIndex: index })
       ]
     }
   );
 });
-var EmptyStatePreviews = React.memo(function EmptyStatePreviews2() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-canvas-empty-previews", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-canvas-empty-preview", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "0", width: "58", height: "9", rx: "2", opacity: "0.65" }),
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "17", width: "80", height: "4", rx: "1.5", opacity: "0.28" }),
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "25", width: "72", height: "4", rx: "1.5", opacity: "0.22" }),
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "33", width: "52", height: "4", rx: "1.5", opacity: "0.17" })
+var EmptyStatePreviews = _react.memo.call(void 0, function EmptyStatePreviews2() {
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-canvas-empty-previews", "aria-hidden": "true", children: [
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-canvas-empty-preview", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "0", width: "58", height: "9", rx: "2", opacity: "0.65" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "17", width: "80", height: "4", rx: "1.5", opacity: "0.28" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "25", width: "72", height: "4", rx: "1.5", opacity: "0.22" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "33", width: "52", height: "4", rx: "1.5", opacity: "0.17" })
       ] }) }),
-      /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Heading" })
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Heading" })
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-canvas-empty-preview", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "2", width: "80", height: "4", rx: "1.5", opacity: "0.45" }),
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "12", width: "76", height: "4", rx: "1.5", opacity: "0.4" }),
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "22", width: "80", height: "4", rx: "1.5", opacity: "0.4" }),
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "32", width: "80", height: "4", rx: "1.5", opacity: "0.35" })
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-canvas-empty-preview", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "2", width: "80", height: "4", rx: "1.5", opacity: "0.45" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "12", width: "76", height: "4", rx: "1.5", opacity: "0.4" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "22", width: "80", height: "4", rx: "1.5", opacity: "0.4" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "32", width: "80", height: "4", rx: "1.5", opacity: "0.35" })
       ] }) }),
-      /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Text" })
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Text" })
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-canvas-empty-preview", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxRuntime.jsxs("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "0", width: "80", height: "44", rx: "3", fillOpacity: "0.05", stroke: "currentColor", strokeOpacity: "0.25", strokeWidth: "1.5" }),
-        /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "16", cy: "14", r: "6", opacity: "0.22" }),
-        /* @__PURE__ */ jsxRuntime.jsx("polygon", { points: "0,44 20,24 34,34 52,20 66,30 80,23 80,44", opacity: "0.18" })
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-canvas-empty-preview", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "0", width: "80", height: "44", rx: "3", fillOpacity: "0.05", stroke: "currentColor", strokeOpacity: "0.25", strokeWidth: "1.5" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "16", cy: "14", r: "6", opacity: "0.22" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "polygon", { points: "0,44 20,24 34,34 52,20 66,30 80,23 80,44", opacity: "0.18" })
       ] }) }),
-      /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Image" })
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Image" })
     ] })
   ] });
 });
 function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
-  const [emptyPickerOpen, setEmptyPickerOpen] = React.useState(false);
-  const emptyBtnRef = React.useRef(null);
+  const [emptyPickerOpen, setEmptyPickerOpen] = _react.useState.call(void 0, false);
+  const emptyBtnRef = _react.useRef.call(void 0, null);
   if (blocks.length === 0) {
-    return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-canvas-empty", children: [
-      /* @__PURE__ */ jsxRuntime.jsx(EmptyStatePreviews, {}),
-      /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-canvas-empty-headline", children: "This page has no content yet" }),
-      /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-canvas-empty-body", children: "Add blocks to build your page \u2014 headings, paragraphs, images, and more." }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-canvas-empty-picker-anchor", children: [
-        /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-canvas-empty", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, EmptyStatePreviews, {}),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-canvas-empty-headline", children: "This page has no content yet" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-canvas-empty-body", children: "Add blocks to build your page \u2014 headings, paragraphs, images, and more." }),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-canvas-empty-picker-anchor", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             ref: emptyBtnRef,
@@ -25191,7 +25728,7 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
             children: "Add your first block"
           }
         ),
-        emptyPickerOpen && /* @__PURE__ */ jsxRuntime.jsx(
+        emptyPickerOpen && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           BlockTypePicker,
           {
             onSelect: (type, initialData) => {
@@ -25208,17 +25745,17 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
       ] })
     ] }) });
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-block-canvas", children: [
-    /* @__PURE__ */ jsxRuntime.jsx(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, -1, initialData), insertIndex: -1 }),
-    /* @__PURE__ */ jsxRuntime.jsx(
-      framerMotion.Reorder.Group,
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-block-canvas", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, -1, initialData), insertIndex: -1 }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+      _framermotion.Reorder.Group,
       {
         as: "ol",
         axis: "y",
         values: blocks,
         onReorder,
         "aria-label": "Page blocks",
-        children: blocks.map((block, index) => /* @__PURE__ */ jsxRuntime.jsx(
+        children: blocks.map((block, index) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           BlockCard,
           {
             block,
@@ -25233,9 +25770,12 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
     )
   ] });
 }
+
+// src/admin/UndoToast.js
+
 var DISPLAY_NAMES3 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery" };
 function UndoToast({ blockType, onUndo }) {
-  return /* @__PURE__ */ jsxRuntime.jsxs(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
     "div",
     {
       role: "status",
@@ -25243,8 +25783,8 @@ function UndoToast({ blockType, onUndo }) {
       "aria-atomic": "true",
       className: "jeeby-cms-undo-toast",
       children: [
-        /* @__PURE__ */ jsxRuntime.jsx("span", { children: (DISPLAY_NAMES3[blockType] || blockType) + " block deleted." }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: (DISPLAY_NAMES3[blockType] || blockType) + " block deleted." }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             type: "button",
@@ -25258,6 +25798,11 @@ function UndoToast({ blockType, onUndo }) {
     }
   );
 }
+
+// src/admin/ModalShell.js
+
+
+
 var _scrollLockCount = 0;
 function lockScroll() {
   if (_scrollLockCount === 0) document.body.style.overflow = "hidden";
@@ -25269,23 +25814,23 @@ function unlockScroll() {
 }
 var FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef, onClose, backdropStyle, children }) {
-  const dialogRef = React.useRef(null);
-  const reduced = framerMotion.useReducedMotion();
-  React.useEffect(() => {
+  const dialogRef = _react.useRef.call(void 0, null);
+  const reduced = _framermotion.useReducedMotion.call(void 0, );
+  _react.useEffect.call(void 0, () => {
     var _a, _b, _c;
     if (!open) {
       (_a = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _a.focus();
       return;
     }
-    const target = ((_b = dialogRef.current) == null ? void 0 : _b.querySelector("[data-autofocus]")) ?? ((_c = dialogRef.current) == null ? void 0 : _c.querySelector(FOCUSABLE));
+    const target = _nullishCoalesce(((_b = dialogRef.current) == null ? void 0 : _b.querySelector("[data-autofocus]")), () => ( ((_c = dialogRef.current) == null ? void 0 : _c.querySelector(FOCUSABLE))));
     target == null ? void 0 : target.focus();
   }, [open]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (!open) return;
     lockScroll();
     return unlockScroll;
   }, [open]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (!open) return;
     function handleKeyDown2(e) {
       if (e.key === "Escape") {
@@ -25311,8 +25856,8 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
     document.addEventListener("keydown", handleKeyDown2);
     return () => document.removeEventListener("keydown", handleKeyDown2);
   }, [open, onClose]);
-  return /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { children: open && /* @__PURE__ */ jsxRuntime.jsx(
-    framerMotion.motion.div,
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _framermotion.AnimatePresence, { children: open && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+    _framermotion.motion.div,
     {
       className: "jeeby-cms-modal-backdrop",
       style: backdropStyle,
@@ -25321,8 +25866,8 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
       animate: { opacity: 1 },
       exit: { opacity: 0 },
       transition: { duration: reduced ? 0.01 : 0.2, ease: [0.16, 1, 0.3, 1] },
-      children: /* @__PURE__ */ jsxRuntime.jsx(
-        framerMotion.motion.div,
+      children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        _framermotion.motion.div,
         {
           ref: dialogRef,
           role,
@@ -25341,8 +25886,11 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
     }
   ) });
 }
+
+// src/admin/UnsavedChangesWarning.js
+
 function UnsavedChangesWarning({ onLeave, onStay }) {
-  return /* @__PURE__ */ jsxRuntime.jsxs(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
     ModalShell,
     {
       role: "alertdialog",
@@ -25351,10 +25899,10 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
       onClose: onStay,
       backdropStyle: { zIndex: 300 },
       children: [
-        /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
-        /* @__PURE__ */ jsxRuntime.jsx("p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
@@ -25363,7 +25911,7 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
               children: "Leave without saving"
             }
           ),
-          /* @__PURE__ */ jsxRuntime.jsx(
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
@@ -25378,18 +25926,21 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
     }
   );
 }
+
+// src/admin/PublishConfirmModal.js
+
 function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, publishing, publishError }) {
-  return /* @__PURE__ */ jsxRuntime.jsxs(ModalShell, { open, labelId: "publish-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsxRuntime.jsxs("h2", { id: "publish-modal-heading", children: [
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, ModalShell, { open, labelId: "publish-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "h2", { id: "publish-modal-heading", children: [
       "Publish \u2018",
       pageName,
       "\u2019?"
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsx("p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
-    publishError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
-      /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
+    publishError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           type: "button",
@@ -25404,20 +25955,29 @@ function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, p
     ] })
   ] });
 }
+
+// src/admin/PublishToast.js
+
 function PublishToast() {
-  return /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
     "div",
     {
       role: "status",
       "aria-live": "polite",
       "aria-atomic": "true",
       className: "jeeby-cms-publish-toast",
-      children: /* @__PURE__ */ jsxRuntime.jsx("span", { children: "Page published successfully." })
+      children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: "Page published successfully." })
     }
   );
 }
-var SignOutGuardContext = React.createContext(null);
-var useSignOutGuard = () => React.useContext(SignOutGuardContext);
+
+// src/admin/SignOutGuardContext.js
+
+var SignOutGuardContext = _react.createContext.call(void 0, null);
+var useSignOutGuard = () => _react.useContext.call(void 0, SignOutGuardContext);
+
+// src/admin/PageEditor.js
+
 var DEFAULT_BLOCK_DATA = {
   title: { level: "h2", text: "" },
   richtext: { html: "" },
@@ -25427,44 +25987,44 @@ var DEFAULT_BLOCK_DATA = {
   list: { ordered: false, items: [""] }
 };
 function PageEditor({ slug }) {
-  const { db } = jeebyCms.useCMSFirebase();
+  const { db } = _jeebycms.useCMSFirebase.call(void 0, );
   const signOutGuard = useSignOutGuard();
-  const [blocks, setBlocks] = React.useState([]);
-  const [pageName, setPageName] = React.useState("");
-  const [loading, setLoading] = React.useState(true);
-  const [loadError, setLoadError] = React.useState(false);
-  const [saveStatus, setSaveStatus] = React.useState(null);
-  const [deletedBlock, setDeletedBlock] = React.useState(null);
-  const [showUnsavedWarning, setShowUnsavedWarning] = React.useState(false);
-  const [lastPublishedAt, setLastPublishedAt] = React.useState(null);
-  const [hasDraftChanges, setHasDraftChanges] = React.useState(false);
-  const [showPublishModal, setShowPublishModal] = React.useState(false);
-  const [publishStatus, setPublishStatus] = React.useState("idle");
-  const [publishError, setPublishError] = React.useState(null);
-  const [showPublishToast, setShowPublishToast] = React.useState(false);
-  const debounceRef = React.useRef(null);
-  const deleteTimerRef = React.useRef(null);
-  const blocksRef = React.useRef(blocks);
-  const pendingSaveRef = React.useRef(false);
-  const publishBtnRef = React.useRef(null);
-  const containerRef = React.useRef(null);
-  React.useEffect(() => {
+  const [blocks, setBlocks] = _react.useState.call(void 0, []);
+  const [pageName, setPageName] = _react.useState.call(void 0, "");
+  const [loading, setLoading] = _react.useState.call(void 0, true);
+  const [loadError, setLoadError] = _react.useState.call(void 0, false);
+  const [saveStatus, setSaveStatus] = _react.useState.call(void 0, null);
+  const [deletedBlock, setDeletedBlock] = _react.useState.call(void 0, null);
+  const [showUnsavedWarning, setShowUnsavedWarning] = _react.useState.call(void 0, false);
+  const [lastPublishedAt, setLastPublishedAt] = _react.useState.call(void 0, null);
+  const [hasDraftChanges, setHasDraftChanges] = _react.useState.call(void 0, false);
+  const [showPublishModal, setShowPublishModal] = _react.useState.call(void 0, false);
+  const [publishStatus, setPublishStatus] = _react.useState.call(void 0, "idle");
+  const [publishError, setPublishError] = _react.useState.call(void 0, null);
+  const [showPublishToast, setShowPublishToast] = _react.useState.call(void 0, false);
+  const debounceRef = _react.useRef.call(void 0, null);
+  const deleteTimerRef = _react.useRef.call(void 0, null);
+  const blocksRef = _react.useRef.call(void 0, blocks);
+  const pendingSaveRef = _react.useRef.call(void 0, false);
+  const publishBtnRef = _react.useRef.call(void 0, null);
+  const containerRef = _react.useRef.call(void 0, null);
+  _react.useEffect.call(void 0, () => {
     blocksRef.current = blocks;
   }, [blocks]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     let cancelled = false;
     async function load() {
       var _a;
       try {
         const page = await getPage(db, slug);
         if (!cancelled) {
-          setBlocks(((_a = page == null ? void 0 : page.draft) == null ? void 0 : _a.blocks) ?? []);
-          setPageName((page == null ? void 0 : page.name) ?? slug);
-          setLastPublishedAt((page == null ? void 0 : page.lastPublishedAt) ?? null);
-          setHasDraftChanges((page == null ? void 0 : page.hasDraftChanges) ?? false);
+          setBlocks(_nullishCoalesce(((_a = page == null ? void 0 : page.draft) == null ? void 0 : _a.blocks), () => ( [])));
+          setPageName(_nullishCoalesce((page == null ? void 0 : page.name), () => ( slug)));
+          setLastPublishedAt(_nullishCoalesce((page == null ? void 0 : page.lastPublishedAt), () => ( null)));
+          setHasDraftChanges(_nullishCoalesce((page == null ? void 0 : page.hasDraftChanges), () => ( false)));
           setLoading(false);
         }
-      } catch {
+      } catch (e8) {
         if (!cancelled) {
           setLoading(false);
           setLoadError(true);
@@ -25476,11 +26036,11 @@ function PageEditor({ slug }) {
       cancelled = true;
     };
   }, [db, slug]);
-  React.useEffect(() => () => {
+  _react.useEffect.call(void 0, () => () => {
     clearTimeout(debounceRef.current);
     clearTimeout(deleteTimerRef.current);
   }, []);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (loading) return;
     const el = containerRef.current;
     if (!el) return;
@@ -25503,7 +26063,7 @@ function PageEditor({ slug }) {
       admin.classList.remove("jeeby-cms-nav-hidden");
     };
   }, [loading]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (!signOutGuard) return;
     signOutGuard.setGuard({
       hasPending: () => hasDraftChanges || pendingSaveRef.current,
@@ -25514,12 +26074,12 @@ function PageEditor({ slug }) {
       signOutGuard.clearGuard();
     };
   }, [signOutGuard, hasDraftChanges, pageName, slug]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (!showPublishToast) return;
     const t = setTimeout(() => setShowPublishToast(false), 3e3);
     return () => clearTimeout(t);
   }, [showPublishToast]);
-  const scheduleSave = React.useCallback((updatedBlocks) => {
+  const scheduleSave = _react.useCallback.call(void 0, (updatedBlocks) => {
     pendingSaveRef.current = true;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -25529,18 +26089,18 @@ function PageEditor({ slug }) {
         setSaveStatus("saved");
         setHasDraftChanges(true);
         pendingSaveRef.current = false;
-      } catch {
+      } catch (e9) {
         setSaveStatus("error");
         pendingSaveRef.current = false;
       }
     }, 1e3);
   }, [db, slug]);
-  const handleBlockChange = React.useCallback((id, newData) => {
+  const handleBlockChange = _react.useCallback.call(void 0, (id, newData) => {
     const updated = blocksRef.current.map((b) => b.id === id ? { ...b, data: newData } : b);
     setBlocks(updated);
     scheduleSave(updated);
   }, [scheduleSave]);
-  const handleReorder = React.useCallback((newOrder) => {
+  const handleReorder = _react.useCallback.call(void 0, (newOrder) => {
     setBlocks(newOrder);
     pendingSaveRef.current = true;
     setSaveStatus("saving");
@@ -25552,11 +26112,11 @@ function PageEditor({ slug }) {
       pendingSaveRef.current = false;
     });
   }, [db, slug]);
-  const handleAddBlock = React.useCallback((type, insertIndex, initialData) => {
+  const handleAddBlock = _react.useCallback.call(void 0, (type, insertIndex, initialData) => {
     const newBlock = {
       id: crypto.randomUUID(),
       type,
-      data: initialData ? { ...initialData } : { ...DEFAULT_BLOCK_DATA[type] ?? DEFAULT_BLOCK_DATA.richtext }
+      data: initialData ? { ...initialData } : { ..._nullishCoalesce(DEFAULT_BLOCK_DATA[type], () => ( DEFAULT_BLOCK_DATA.richtext)) }
     };
     const next = [...blocksRef.current];
     next.splice(insertIndex + 1, 0, newBlock);
@@ -25567,7 +26127,7 @@ function PageEditor({ slug }) {
       (_a = document.getElementById("block-input-" + newBlock.id)) == null ? void 0 : _a.focus();
     });
   }, [scheduleSave]);
-  const handleDelete2 = React.useCallback((block) => {
+  const handleDelete2 = _react.useCallback.call(void 0, (block) => {
     const index = blocksRef.current.findIndex((b) => b.id === block.id);
     const afterDelete = blocksRef.current.filter((b) => b.id !== block.id);
     setBlocks(afterDelete);
@@ -25578,7 +26138,7 @@ function PageEditor({ slug }) {
       try {
         await saveDraft(db, slug, blocksRef.current.filter((b) => b.id !== block.id));
         setSaveStatus("saved");
-      } catch {
+      } catch (e10) {
         setSaveStatus("error");
       }
       setDeletedBlock(null);
@@ -25599,7 +26159,7 @@ function PageEditor({ slug }) {
     try {
       await saveDraft(db, slug, blocksRef.current);
       setSaveStatus("saved");
-    } catch {
+    } catch (e11) {
       setSaveStatus("error");
     }
   }
@@ -25616,7 +26176,7 @@ function PageEditor({ slug }) {
         if (updated == null ? void 0 : updated.lastPublishedAt) setLastPublishedAt(updated.lastPublishedAt);
       }).catch(() => {
       });
-    } catch {
+    } catch (e12) {
       setPublishStatus("error");
       setPublishError(true);
     }
@@ -25630,7 +26190,7 @@ function PageEditor({ slug }) {
     try {
       await savePage(db, slug, { name: newName });
       setPageName(newName);
-    } catch {
+    } catch (e13) {
       setSaveStatus("error");
     }
   }
@@ -25640,7 +26200,7 @@ function PageEditor({ slug }) {
       clearTimeout(debounceRef.current);
       pendingSaveRef.current = false;
       window.location.href = "/admin/pages/" + encodeURIComponent(newSlug);
-    } catch {
+    } catch (e14) {
       setSaveStatus("error");
     }
   }
@@ -25651,17 +26211,17 @@ function PageEditor({ slug }) {
     }
   }
   if (loading) {
-    return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsxRuntime.jsx("div", { role: "status", "aria-label": "Loading editor", className: "jeeby-cms-loading", children: /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { role: "status", "aria-label": "Loading editor", className: "jeeby-cms-loading", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
   }
   if (loadError) {
-    return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-editor-load-error", role: "alert", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-editor-load-error-title", children: "This page couldn\u2019t be loaded" }),
-      /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-editor-load-error-body", children: "Check your connection and try again." }),
-      /* @__PURE__ */ jsxRuntime.jsx("a", { href: "/admin/pages/" + encodeURIComponent(slug), className: "jeeby-cms-btn-primary", children: "Reload" })
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-editor-load-error", role: "alert", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-editor-load-error-title", children: "This page couldn\u2019t be loaded" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-editor-load-error-body", children: "Check your connection and try again." }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "a", { href: "/admin/pages/" + encodeURIComponent(slug), className: "jeeby-cms-btn-primary", children: "Reload" })
     ] }) });
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-editor", ref: containerRef, children: [
-    /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-editor", ref: containerRef, children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       EditorHeader,
       {
         pageName,
@@ -25678,7 +26238,7 @@ function PageEditor({ slug }) {
         publishBtnRef
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       BlockCanvas,
       {
         blocks,
@@ -25688,14 +26248,14 @@ function PageEditor({ slug }) {
         onAddBlock: handleAddBlock
       }
     ) }),
-    deletedBlock && /* @__PURE__ */ jsxRuntime.jsx(
+    deletedBlock && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       UndoToast,
       {
         blockType: deletedBlock.block.type,
         onUndo: handleUndo
       }
     ),
-    showUnsavedWarning && /* @__PURE__ */ jsxRuntime.jsx(
+    showUnsavedWarning && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       UnsavedChangesWarning,
       {
         onLeave: () => {
@@ -25706,7 +26266,7 @@ function PageEditor({ slug }) {
         }
       }
     ),
-    showPublishModal && /* @__PURE__ */ jsxRuntime.jsx(
+    showPublishModal && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       PublishConfirmModal,
       {
         open: showPublishModal,
@@ -25718,16 +26278,25 @@ function PageEditor({ slug }) {
         publishError
       }
     ),
-    showPublishToast && /* @__PURE__ */ jsxRuntime.jsx(PublishToast, {})
+    showPublishToast && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, PublishToast, {})
   ] });
 }
+
+// src/admin/index.js
+
+
+
+// src/admin/LoginPage.js
+
+
+
 function LoginPage({ siteName }) {
-  const { signIn } = jeebyCms.useAuth();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState(null);
-  const [submitting, setSubmitting] = React.useState(false);
-  const [showPassword, setShowPassword] = React.useState(false);
+  const { signIn } = _jeebycms.useAuth.call(void 0, );
+  const [email, setEmail] = _react.useState.call(void 0, "");
+  const [password, setPassword] = _react.useState.call(void 0, "");
+  const [error, setError] = _react.useState.call(void 0, null);
+  const [submitting, setSubmitting] = _react.useState.call(void 0, false);
+  const [showPassword, setShowPassword] = _react.useState.call(void 0, false);
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
@@ -25740,12 +26309,12 @@ function LoginPage({ siteName }) {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsx("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-login-card", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-login-brand", children: /* @__PURE__ */ jsxRuntime.jsx("h1", { className: "jeeby-cms-login-heading", children: siteName ?? "Admin" }) }),
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-login-form-pane", children: /* @__PURE__ */ jsxRuntime.jsxs("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-email", children: "Email address" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-login-card", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-login-brand", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h1", { className: "jeeby-cms-login-heading", children: _nullishCoalesce(siteName, () => ( "Admin")) }) }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-login-form-pane", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "cms-email", children: "Email address" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "input",
           {
             id: "cms-email",
@@ -25757,10 +26326,10 @@ function LoginPage({ siteName }) {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-password", children: "Password" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-password-wrapper", children: [
-          /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "cms-password", children: "Password" }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-password-wrapper", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "input",
             {
               id: "cms-password",
@@ -25771,7 +26340,7 @@ function LoginPage({ siteName }) {
               onChange: (e) => setPassword(e.target.value)
             }
           ),
-          /* @__PURE__ */ jsxRuntime.jsx(
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
@@ -25781,24 +26350,24 @@ function LoginPage({ siteName }) {
               onClick: () => setShowPassword((v) => !v),
               children: showPassword ? (
                 /* Eye-off icon — password visible, click to hide */
-                /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M2 2l12 12" }),
-                  /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 3-3 3 3 0 0 0-.4-1.5" }),
-                  /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M9.88 3.28A8.9 8.9 0 0 0 8 3C4.5 3 1.5 5.5 1 8c.3 1.3 1 2.5 2 3.4" }),
-                  /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M12.6 10.7C13.6 9.8 14.4 9 15 8c-.5-2.5-3.5-5-7-5" })
+                /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M2 2l12 12" }),
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 3-3 3 3 0 0 0-.4-1.5" }),
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M9.88 3.28A8.9 8.9 0 0 0 8 3C4.5 3 1.5 5.5 1 8c.3 1.3 1 2.5 2 3.4" }),
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M12.6 10.7C13.6 9.8 14.4 9 15 8c-.5-2.5-3.5-5-7-5" })
                 ] })
               ) : (
                 /* Eye icon — password hidden, click to show */
-                /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M1 8C1.5 5.5 4.5 3 8 3s6.5 2.5 7 5c-.5 2.5-3.5 5-7 5S1.5 10.5 1 8z" }),
-                  /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "8", cy: "8", r: "2.5" })
+                /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M1 8C1.5 5.5 4.5 3 8 3s6.5 2.5 7 5c-.5 2.5-3.5 5-7 5S1.5 10.5 1 8z" }),
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "8", cy: "8", r: "2.5" })
                 ] })
               )
             }
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           type: "submit",
@@ -25809,14 +26378,17 @@ function LoginPage({ siteName }) {
           children: submitting ? "Signing in\u2026" : "Sign in"
         }
       ),
-      error && /* @__PURE__ */ jsxRuntime.jsx("p", { className: "jeeby-cms-auth-error", role: "alert", "aria-live": "assertive", children: error })
+      error && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-auth-error", role: "alert", "aria-live": "assertive", children: error })
     ] }) })
   ] }) });
 }
+
+// src/admin/AdminNav.js
+
 function AdminNav({ onSignOut, siteName }) {
-  return /* @__PURE__ */ jsxRuntime.jsxs("header", { className: "jeeby-cms-nav", role: "banner", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
-    /* @__PURE__ */ jsxRuntime.jsx("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "header", { className: "jeeby-cms-nav", role: "banner", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "button",
       {
         type: "button",
@@ -25827,19 +26399,29 @@ function AdminNav({ onSignOut, siteName }) {
     ) })
   ] });
 }
+
+// src/admin/PageManager.js
+
+
+
+
+// src/admin/CreatePageModal.js
+
+
+
 function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
-  const { db, templates } = jeebyCms.useCMSFirebase();
-  const [name, setName] = React.useState("");
-  const [slug, setSlug] = React.useState("");
-  const [slugTouched, setSlugTouched] = React.useState(false);
-  const [template, setTemplate] = React.useState("");
-  const [slugError, setSlugError] = React.useState(null);
-  const [submitting, setSubmitting] = React.useState(false);
-  const debounceRef = React.useRef(null);
+  const { db, templates } = _jeebycms.useCMSFirebase.call(void 0, );
+  const [name, setName] = _react.useState.call(void 0, "");
+  const [slug, setSlug] = _react.useState.call(void 0, "");
+  const [slugTouched, setSlugTouched] = _react.useState.call(void 0, false);
+  const [template, setTemplate] = _react.useState.call(void 0, "");
+  const [slugError, setSlugError] = _react.useState.call(void 0, null);
+  const [submitting, setSubmitting] = _react.useState.call(void 0, false);
+  const debounceRef = _react.useRef.call(void 0, null);
   function toKebabSlug(str) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (open) {
       setName("");
       setSlug("");
@@ -25891,12 +26473,12 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs(ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "create-modal-heading", children: "Create New Page" }),
-    /* @__PURE__ */ jsxRuntime.jsxs("form", { onSubmit: handleSubmit, noValidate: true, children: [
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-name", children: "Page name" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { id: "create-modal-heading", children: "Create New Page" }),
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "form", { onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "cms-page-name", children: "Page name" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "input",
           {
             id: "cms-page-name",
@@ -25910,9 +26492,9 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-slug", children: "Slug" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "cms-page-slug", children: "Slug" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "input",
           {
             id: "cms-page-slug",
@@ -25926,19 +26508,19 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
             "aria-describedby": "cms-slug-hint cms-slug-error"
           }
         ),
-        /* @__PURE__ */ jsxRuntime.jsx("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
-        slugError && /* @__PURE__ */ jsxRuntime.jsx("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
+        slugError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
       ] }),
-      templates.length > 0 && /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "cms-page-template", children: "Template" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
-          /* @__PURE__ */ jsxRuntime.jsx("option", { value: "", children: "Select a template" }),
-          templates.map((t) => /* @__PURE__ */ jsxRuntime.jsx("option", { value: t.name, children: t.name }, t.name))
+      templates.length > 0 && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { htmlFor: "cms-page-template", children: "Template" }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "option", { value: "", children: "Select a template" }),
+          templates.map((t) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "option", { value: t.name, children: t.name }, t.name))
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-modal-actions", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             type: "submit",
@@ -25953,9 +26535,14 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     ] })
   ] });
 }
+
+// src/admin/DeletePageModal.js
+
+
+
 function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
-  const { db } = jeebyCms.useCMSFirebase();
-  const [deleting, setDeleting] = React.useState(false);
+  const { db } = _jeebycms.useCMSFirebase.call(void 0, );
+  const [deleting, setDeleting] = _react.useState.call(void 0, false);
   async function handleDelete2() {
     setDeleting(true);
     try {
@@ -25968,16 +26555,16 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
       setDeleting(false);
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs(ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "delete-modal-heading", children: "Delete page?" }),
-    /* @__PURE__ */ jsxRuntime.jsxs("p", { children: [
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { id: "delete-modal-heading", children: "Delete page?" }),
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "p", { children: [
       "Delete ",
       page == null ? void 0 : page.slug,
       "? This cannot be undone."
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
-      /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
         "button",
         {
           type: "button",
@@ -25992,6 +26579,9 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
     ] })
   ] });
 }
+
+// src/admin/PageManager.js
+
 function formatDate(ts2) {
   if (!ts2) return "Not yet";
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
@@ -26008,11 +26598,11 @@ var STATUS_PROPS = {
   changes: { label: "Changes", cls: "jeeby-cms-doc-status jeeby-cms-doc-status--changes" }
 };
 var SORT_OPTIONS = [
-  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ jsxRuntime.jsx(IconRecent, {}) },
-  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ jsxRuntime.jsx(IconAlpha, {}) },
-  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ jsxRuntime.jsx(IconDraft, {}) },
-  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ jsxRuntime.jsx(IconChanges, {}) },
-  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ jsxRuntime.jsx(IconPublished, {}) }
+  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconRecent, {}) },
+  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconAlpha, {}) },
+  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconDraft, {}) },
+  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconChanges, {}) },
+  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconPublished, {}) }
 ];
 function tsToMs(ts2) {
   if (!ts2) return 0;
@@ -26058,64 +26648,70 @@ function applySortFilter(pages, key) {
   }
 }
 function IconRecent() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "7", cy: "7", r: "5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M7 4.5v2.7l1.8 1.8" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M7 4.5v2.7l1.8 1.8" })
   ] });
 }
 function IconAlpha() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
   ] });
 }
 function IconDraft() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
-    /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
   ] });
 }
 function IconChanges() {
-  return /* @__PURE__ */ jsxRuntime.jsx("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
 }
 function IconPublished() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "7", cy: "7", r: "5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M4.5 7l2 2L9.5 5" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M4.5 7l2 2L9.5 5" })
   ] });
 }
 function IconSortLines() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
-    /* @__PURE__ */ jsxRuntime.jsx("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
   ] });
 }
 function IconSearch() {
-  return /* @__PURE__ */ jsxRuntime.jsxs("svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
-    /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M8.5 8.5l2.5 2.5" })
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M8.5 8.5l2.5 2.5" })
   ] });
 }
 function IconClear() {
-  return /* @__PURE__ */ jsxRuntime.jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
 }
 function IconChevronDown() {
-  return /* @__PURE__ */ jsxRuntime.jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M2 3.5l3 3 3-3" }) });
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M2 3.5l3 3 3-3" }) });
+}
+function IconChevronLeft() {
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M6.5 2l-3 3 3 3" }) });
+}
+function IconChevronRight() {
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M3.5 2l3 3-3 3" }) });
 }
 function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
-  const [activeIndex, setActiveIndex] = React.useState(() => {
+  const [activeIndex, setActiveIndex] = _react.useState.call(void 0, () => {
     const idx = SORT_OPTIONS.findIndex((o) => o.key === sortMode);
     return idx >= 0 ? idx : 0;
   });
-  const listRef = React.useRef(null);
-  React.useEffect(() => {
+  const listRef = _react.useRef.call(void 0, null);
+  _react.useEffect.call(void 0, () => {
     var _a, _b;
     (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[activeIndex]) == null ? void 0 : _b.focus();
   }, []);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     function handleClickOutside(e) {
       if (listRef.current && !listRef.current.contains(e.target) && (!triggerRef.current || !triggerRef.current.contains(e.target))) {
         onClose();
@@ -26149,7 +26745,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       (_e = triggerRef.current) == null ? void 0 : _e.focus();
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
     "ul",
     {
       ref: listRef,
@@ -26157,7 +26753,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       "aria-label": "Sort and filter pages",
       onKeyDown: handleKeyDown2,
       className: "jeeby-cms-sort-picker",
-      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ jsxRuntime.jsxs(
+      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
         "li",
         {
           role: "menuitemradio",
@@ -26171,12 +26767,12 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
             (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[index]) == null ? void 0 : _b.focus();
           },
           children: [
-            /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
-            /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-block-type-info", children: [
-              /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-type-label", children: opt.label }),
-              /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "span", { className: "jeeby-cms-block-type-info", children: [
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-type-label", children: opt.label }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
             ] }),
-            opt.key === sortMode && /* @__PURE__ */ jsxRuntime.jsx("svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
+            opt.key === sortMode && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
           ]
         },
         opt.key
@@ -26187,48 +26783,48 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
 var PAGE_SIZE = 20;
 var ALL_PAGES_TTL = 6e4;
 function PageManager() {
-  const { db, templates } = jeebyCms.useCMSFirebase();
-  const [pages, setPages] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [announcement, setAnnouncement] = React.useState("");
-  const [editingSlug, setEditingSlug] = React.useState(null);
-  const [editField, setEditField] = React.useState(null);
-  const [editValue, setEditValue] = React.useState("");
-  const [editError, setEditError] = React.useState(null);
-  const debounceRef = React.useRef(null);
-  const isSavingRef = React.useRef(false);
-  const fetchGenRef = React.useRef(0);
-  const newPageBtnRef = React.useRef(null);
-  const editTriggerRefs = React.useRef({});
-  const [showCreateModal, setShowCreateModal] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState(null);
-  const deleteBtnRef = React.useRef(null);
-  const [sortMode, setSortMode] = React.useState("recent");
-  const [sortPickerOpen, setSortPickerOpen] = React.useState(false);
-  const sortTriggerRef = React.useRef(null);
-  const prefersReducedMotion = framerMotion.useReducedMotion();
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [debouncedQuery, setDebouncedQuery] = React.useState("");
+  const { db, templates } = _jeebycms.useCMSFirebase.call(void 0, );
+  const [pages, setPages] = _react.useState.call(void 0, []);
+  const [loading, setLoading] = _react.useState.call(void 0, true);
+  const [error, setError] = _react.useState.call(void 0, null);
+  const [announcement, setAnnouncement] = _react.useState.call(void 0, "");
+  const [editingSlug, setEditingSlug] = _react.useState.call(void 0, null);
+  const [editField, setEditField] = _react.useState.call(void 0, null);
+  const [editValue, setEditValue] = _react.useState.call(void 0, "");
+  const [editError, setEditError] = _react.useState.call(void 0, null);
+  const debounceRef = _react.useRef.call(void 0, null);
+  const isSavingRef = _react.useRef.call(void 0, false);
+  const fetchGenRef = _react.useRef.call(void 0, 0);
+  const newPageBtnRef = _react.useRef.call(void 0, null);
+  const editTriggerRefs = _react.useRef.call(void 0, {});
+  const [showCreateModal, setShowCreateModal] = _react.useState.call(void 0, false);
+  const [deleteTarget, setDeleteTarget] = _react.useState.call(void 0, null);
+  const deleteBtnRef = _react.useRef.call(void 0, null);
+  const [sortMode, setSortMode] = _react.useState.call(void 0, "recent");
+  const [sortPickerOpen, setSortPickerOpen] = _react.useState.call(void 0, false);
+  const sortTriggerRef = _react.useRef.call(void 0, null);
+  const prefersReducedMotion = _framermotion.useReducedMotion.call(void 0, );
+  const [searchQuery, setSearchQuery] = _react.useState.call(void 0, "");
+  const [debouncedQuery, setDebouncedQuery] = _react.useState.call(void 0, "");
   const isPaginated = sortMode === "recent" && !debouncedQuery.trim();
-  const [pageNum, setPageNum] = React.useState(1);
-  const [hasNextPage, setHasNextPage] = React.useState(false);
-  const cursorsRef = React.useRef([null]);
-  const allPagesCacheRef = React.useRef(null);
-  const prefetchRef = React.useRef(null);
+  const [pageNum, setPageNum] = _react.useState.call(void 0, 1);
+  const [hasNextPage, setHasNextPage] = _react.useState.call(void 0, false);
+  const cursorsRef = _react.useRef.call(void 0, [null]);
+  const allPagesCacheRef = _react.useRef.call(void 0, null);
+  const prefetchRef = _react.useRef.call(void 0, null);
   const showSearch = isPaginated ? hasNextPage || pages.length >= 8 : pages.length >= 8;
-  const processedPages = React.useMemo(
+  const processedPages = _react.useMemo.call(void 0, 
     () => applySearch(applySortFilter(pages, sortMode), debouncedQuery),
     [pages, sortMode, debouncedQuery]
   );
-  const displayedPages = React.useMemo(
+  const displayedPages = _react.useMemo.call(void 0, 
     () => isPaginated ? processedPages : processedPages.slice((pageNum - 1) * PAGE_SIZE, pageNum * PAGE_SIZE),
     [isPaginated, processedPages, pageNum]
   );
   const totalPages = isPaginated ? null : Math.max(1, Math.ceil(processedPages.length / PAGE_SIZE));
   const canGoPrev = pageNum > 1;
-  const canGoNext = isPaginated ? hasNextPage : pageNum < (totalPages ?? 1);
-  const loadPages = React.useCallback(async () => {
+  const canGoNext = isPaginated ? hasNextPage : pageNum < (_nullishCoalesce(totalPages, () => ( 1)));
+  const loadPages = _react.useCallback.call(void 0, async () => {
     const gen = ++fetchGenRef.current;
     if (isPaginated) {
       const pre = prefetchRef.current;
@@ -26255,7 +26851,7 @@ function PageManager() {
     setError(null);
     try {
       if (isPaginated) {
-        const cursor = cursorsRef.current[pageNum - 1] ?? null;
+        const cursor = _nullishCoalesce(cursorsRef.current[pageNum - 1], () => ( null));
         const { pages: result, nextCursor, hasMore } = await listPagesPaginated(db, { pageSize: PAGE_SIZE, cursor });
         if (gen !== fetchGenRef.current) return;
         setPages(result);
@@ -26290,38 +26886,38 @@ function PageManager() {
       if (gen === fetchGenRef.current) setLoading(false);
     }
   }, [db, isPaginated, pageNum]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     loadPages();
   }, [loadPages]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     setPageNum(1);
     cursorsRef.current = [null];
     setHasNextPage(false);
     prefetchRef.current = null;
   }, [sortMode, debouncedQuery]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (displayedPages.length === 0 && pageNum > 1 && !loading) {
       setPageNum((p) => p - 1);
     }
   }, [displayedPages.length, pageNum, loading]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (announcement) {
       const t = setTimeout(() => setAnnouncement(""), 3e3);
       return () => clearTimeout(t);
     }
   }, [announcement]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 200);
     return () => clearTimeout(t);
   }, [searchQuery]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (debouncedQuery.trim()) {
       setAnnouncement(
         processedPages.length === 0 ? "No pages match." : `${processedPages.length} page${processedPages.length !== 1 ? "s" : ""} found.`
       );
     }
   }, [debouncedQuery, processedPages.length]);
-  React.useEffect(() => {
+  _react.useEffect.call(void 0, () => {
     if (!showSearch) setSearchQuery("");
   }, [showSearch]);
   function startEdit(slug, field, currentValue) {
@@ -26344,9 +26940,9 @@ function PageManager() {
       debounceRef.current = setTimeout(() => {
         const page = pages.find((p) => p.slug === editingSlug);
         const template = templates && (page == null ? void 0 : page.template) ? templates.find((t) => t.name === page.template) : null;
-        const pattern = (template == null ? void 0 : template.pattern) ?? null;
+        const pattern = _nullishCoalesce((template == null ? void 0 : template.pattern), () => ( null));
         if (!validateSlug(pattern, val)) {
-          const templateName = (template == null ? void 0 : template.name) ?? "selected template";
+          const templateName = _nullishCoalesce((template == null ? void 0 : template.name), () => ( "selected template"));
           setEditError(`Slug does not match the ${templateName} pattern.`);
         } else {
           setEditError(null);
@@ -26386,9 +26982,9 @@ function PageManager() {
         }
         const page = pages.find((p) => p.slug === currentSlug);
         const template = templates && (page == null ? void 0 : page.template) ? templates.find((t) => t.name === page.template) : null;
-        const pattern = (template == null ? void 0 : template.pattern) ?? null;
+        const pattern = _nullishCoalesce((template == null ? void 0 : template.pattern), () => ( null));
         if (!validateSlug(pattern, trimmed)) {
-          const templateName = (template == null ? void 0 : template.name) ?? "selected template";
+          const templateName = _nullishCoalesce((template == null ? void 0 : template.name), () => ( "selected template"));
           setEditError(`Slug does not match the ${templateName} pattern.`);
           return;
         }
@@ -26443,8 +27039,8 @@ function PageManager() {
     setPageNum((p) => Math.max(1, p - 1));
   }
   if (loading && pages.length === 0) {
-    return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -26452,28 +27048,28 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsxRuntime.jsx("h2", { children: "Pages" }) }),
-      /* @__PURE__ */ jsxRuntime.jsx("div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ jsxRuntime.jsxs("table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("thead", { children: /* @__PURE__ */ jsxRuntime.jsxs("tr", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Name" }),
-          /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Slug" }),
-          /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Status" }),
-          /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Last Published" }),
-          /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Actions" })
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { children: "Pages" }) }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "thead", { children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "tr", { children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Name" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Slug" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Status" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Last Published" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Actions" })
         ] }) }),
-        /* @__PURE__ */ jsxRuntime.jsx("tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxRuntime.jsxs("tr", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
-          /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
-          /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-skeleton", style: { width: "72px", height: "22px", borderRadius: "999px" } }) }),
-          /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
-          /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "tr", { children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-skeleton", style: { width: "72px", height: "22px", borderRadius: "999px" } }) }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
         ] }, i)) })
       ] }) }) })
     ] });
   }
   if (error && pages.length === 0) {
-    return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -26481,10 +27077,10 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsxRuntime.jsx("h2", { children: "Pages" }) }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("p", { children: error }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { children: "Pages" }) }),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { children: error }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             type: "button",
@@ -26497,8 +27093,8 @@ function PageManager() {
     ] });
   }
   if (pages.length === 0 && !loading) {
-    return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -26506,10 +27102,10 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-pages-empty", children: [
-        /* @__PURE__ */ jsxRuntime.jsx("h2", { children: "No pages yet." }),
-        /* @__PURE__ */ jsxRuntime.jsx("p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
-        /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-pages-empty", children: [
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { children: "No pages yet." }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             ref: newPageBtnRef,
@@ -26520,14 +27116,14 @@ function PageManager() {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsx(CreatePageModal, { open: showCreateModal, onClose: () => setShowCreateModal(false), onCreated: () => {
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, CreatePageModal, { open: showCreateModal, onClose: () => setShowCreateModal(false), onCreated: () => {
         loadPages();
         setAnnouncement("Page created successfully.");
       }, triggerRef: newPageBtnRef })
     ] });
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-manager", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-manager", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
       position: "absolute",
       width: "1px",
       height: "1px",
@@ -26535,13 +27131,13 @@ function PageManager() {
       clip: "rect(0,0,0,0)",
       whiteSpace: "nowrap"
     }, children: announcement }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-list-header", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("h2", { children: "Pages" }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-page-list-controls", children: [
+    /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-list-header", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { children: "Pages" }),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-page-list-controls", children: [
         pages.length > 0 && (() => {
           const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode) || SORT_OPTIONS[0];
-          return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-sort-anchor", children: [
-            /* @__PURE__ */ jsxRuntime.jsxs(
+          return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-sort-anchor", children: [
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
               "button",
               {
                 ref: sortTriggerRef,
@@ -26553,13 +27149,13 @@ function PageManager() {
                 "data-filter-active": currentOpt.isFilter ? "true" : void 0,
                 onClick: () => setSortPickerOpen((v) => !v),
                 children: [
-                  /* @__PURE__ */ jsxRuntime.jsx(IconSortLines, {}),
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconSortLines, {}),
                   currentOpt.label,
-                  /* @__PURE__ */ jsxRuntime.jsx(IconChevronDown, {})
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconChevronDown, {})
                 ]
               }
             ),
-            sortPickerOpen && /* @__PURE__ */ jsxRuntime.jsx(
+            sortPickerOpen && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               SortPicker,
               {
                 sortMode,
@@ -26574,7 +27170,7 @@ function PageManager() {
             )
           ] });
         })(),
-        /* @__PURE__ */ jsxRuntime.jsx(
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
           "button",
           {
             ref: newPageBtnRef,
@@ -26586,8 +27182,8 @@ function PageManager() {
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { initial: false, children: showSearch && /* @__PURE__ */ jsxRuntime.jsx(
-      framerMotion.motion.div,
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _framermotion.AnimatePresence, { initial: false, children: showSearch && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+      _framermotion.motion.div,
       {
         className: "jeeby-cms-search-bar",
         initial: { opacity: 0, height: 0 },
@@ -26595,9 +27191,9 @@ function PageManager() {
         exit: { opacity: 0, height: 0 },
         transition: { duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.16, 1, 0.3, 1] },
         style: { overflow: "hidden" },
-        children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-search-inner", role: "search", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntime.jsx(IconSearch, {}) }),
-          /* @__PURE__ */ jsxRuntime.jsx(
+        children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-search-inner", role: "search", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconSearch, {}) }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "input",
             {
               type: "search",
@@ -26609,36 +27205,36 @@ function PageManager() {
               maxLength: 200
             }
           ),
-          searchQuery && /* @__PURE__ */ jsxRuntime.jsx(
+          searchQuery && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
               className: "jeeby-cms-search-clear",
               "aria-label": "Clear search",
               onClick: () => setSearchQuery(""),
-              children: /* @__PURE__ */ jsxRuntime.jsx(IconClear, {})
+              children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconClear, {})
             }
           )
         ] })
       }
     ) }),
-    /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { mode: "wait", initial: false, children: /* @__PURE__ */ jsxRuntime.jsx(
-      framerMotion.motion.div,
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _framermotion.AnimatePresence, { mode: "wait", initial: false, children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+      _framermotion.motion.div,
       {
         className: "jeeby-cms-pages-table-wrap",
         initial: { opacity: 0, y: prefersReducedMotion ? 0 : 5 },
         animate: { opacity: 1, y: 0 },
         exit: { opacity: 0, transition: { duration: prefersReducedMotion ? 0 : 0.16 } },
         transition: { duration: prefersReducedMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] },
-        children: /* @__PURE__ */ jsxRuntime.jsxs("table", { className: "jeeby-cms-pages-table", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("thead", { children: /* @__PURE__ */ jsxRuntime.jsxs("tr", { children: [
-            /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Name" }),
-            /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Slug" }),
-            /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Status" }),
-            /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Last Published" }),
-            /* @__PURE__ */ jsxRuntime.jsx("th", { scope: "col", children: "Actions" })
+        children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "table", { className: "jeeby-cms-pages-table", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "thead", { children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "tr", { children: [
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Name" }),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Slug" }),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Status" }),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Last Published" }),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "th", { scope: "col", children: "Actions" })
           ] }) }),
-          /* @__PURE__ */ jsxRuntime.jsx("tbody", { children: (() => {
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "tbody", { children: (() => {
             if (displayedPages.length === 0) {
               const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode);
               const hasFilter = currentOpt == null ? void 0 : currentOpt.isFilter;
@@ -26646,9 +27242,9 @@ function PageManager() {
               const queryChars = [...debouncedQuery];
               const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join("") + "\u2026" : debouncedQuery;
               const emptyMsg = hasSearch && hasFilter ? "No pages match this search and filter." : hasSearch ? `No pages match "${shortQuery}".` : "No pages match this filter.";
-              return /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsxs("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
-                /* @__PURE__ */ jsxRuntime.jsx("span", { children: emptyMsg }),
-                hasSearch && /* @__PURE__ */ jsxRuntime.jsx(
+              return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "tr", { children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: emptyMsg }),
+                hasSearch && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                   "button",
                   {
                     type: "button",
@@ -26660,7 +27256,7 @@ function PageManager() {
                     children: "Clear search"
                   }
                 ),
-                hasFilter && /* @__PURE__ */ jsxRuntime.jsx(
+                hasFilter && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                   "button",
                   {
                     type: "button",
@@ -26674,13 +27270,13 @@ function PageManager() {
                 )
               ] }) });
             }
-            return /* @__PURE__ */ jsxRuntime.jsx(framerMotion.AnimatePresence, { children: displayedPages.map((page) => /* @__PURE__ */ jsxRuntime.jsxs(React.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntime.jsxs(
-                framerMotion.motion.tr,
+            return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _framermotion.AnimatePresence, { children: displayedPages.map((page) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, _react.Fragment, { children: [
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
+                _framermotion.motion.tr,
                 {
                   exit: { opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } },
                   children: [
-                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsxRuntime.jsx(
+                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                       "input",
                       {
                         type: "text",
@@ -26693,9 +27289,9 @@ function PageManager() {
                         onBlur: commitEdit,
                         autoFocus: true
                       }
-                    ) : /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-cell-read", children: [
-                      /* @__PURE__ */ jsxRuntime.jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
-                      /* @__PURE__ */ jsxRuntime.jsx(
+                    ) : /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "span", { className: "jeeby-cms-cell-read", children: [
+                      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
+                      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                         "button",
                         {
                           ref: (el) => {
@@ -26709,7 +27305,7 @@ function PageManager() {
                         }
                       )
                     ] }) }),
-                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsxRuntime.jsx(
+                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                       "input",
                       {
                         type: "text",
@@ -26722,9 +27318,9 @@ function PageManager() {
                         onBlur: commitEdit,
                         autoFocus: true
                       }
-                    ) : /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "jeeby-cms-cell-read", children: [
-                      /* @__PURE__ */ jsxRuntime.jsx("span", { children: page.slug }),
-                      /* @__PURE__ */ jsxRuntime.jsx(
+                    ) : /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "span", { className: "jeeby-cms-cell-read", children: [
+                      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: page.slug }),
+                      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                         "button",
                         {
                           ref: (el) => {
@@ -26738,13 +27334,13 @@ function PageManager() {
                         }
                       )
                     ] }) }),
-                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: (() => {
+                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: (() => {
                       const { label, cls } = STATUS_PROPS[pageStatus(page)];
-                      return /* @__PURE__ */ jsxRuntime.jsx("span", { className: cls, children: label });
+                      return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: cls, children: label });
                     })() }),
-                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: formatDate(page.lastPublishedAt) }),
-                    /* @__PURE__ */ jsxRuntime.jsx("td", { children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-table-actions", children: [
-                      /* @__PURE__ */ jsxRuntime.jsx(
+                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: formatDate(page.lastPublishedAt) }),
+                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-table-actions", children: [
+                      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                         "a",
                         {
                           href: "/admin/pages/" + encodeURIComponent(page.slug),
@@ -26753,7 +27349,7 @@ function PageManager() {
                           children: "Edit"
                         }
                       ),
-                      /* @__PURE__ */ jsxRuntime.jsx(
+                      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                         "button",
                         {
                           type: "button",
@@ -26770,7 +27366,7 @@ function PageManager() {
                   ]
                 }
               ),
-              editError && editingSlug === page.slug && /* @__PURE__ */ jsxRuntime.jsx("tr", { children: /* @__PURE__ */ jsxRuntime.jsx("td", { colSpan: 5, children: /* @__PURE__ */ jsxRuntime.jsx(
+              editError && editingSlug === page.slug && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "tr", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "td", { colSpan: 5, children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
                 "p",
                 {
                   id: `cms-rename-error-${page.slug}`,
@@ -26785,8 +27381,8 @@ function PageManager() {
       },
       `${sortMode}|${debouncedQuery}|${pageNum}`
     ) }),
-    (canGoPrev || canGoNext) && /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
-      /* @__PURE__ */ jsxRuntime.jsx(
+    (canGoPrev || canGoNext) && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
         "button",
         {
           type: "button",
@@ -26794,11 +27390,14 @@ function PageManager() {
           onClick: goToPrevPage,
           disabled: !canGoPrev || loading,
           "aria-label": "Previous page",
-          children: "\u2190 Prev"
+          children: [
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconChevronLeft, {}),
+            " Prev"
+          ]
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-pagination-label", "aria-current": "page", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
-      /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-pagination-label", "aria-live": "polite", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
         "button",
         {
           type: "button",
@@ -26806,11 +27405,14 @@ function PageManager() {
           onClick: goToNextPage,
           disabled: !canGoNext || loading,
           "aria-label": "Next page",
-          children: "Next \u2192"
+          children: [
+            "Next ",
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, IconChevronRight, {})
+          ]
         }
       )
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       CreatePageModal,
       {
         open: showCreateModal,
@@ -26824,7 +27426,7 @@ function PageManager() {
         triggerRef: newPageBtnRef
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx(
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       DeletePageModal,
       {
         page: deleteTarget,
@@ -26842,8 +27444,11 @@ function PageManager() {
     )
   ] });
 }
+
+// src/admin/SignOutModal.js
+
 function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishing, publishError }) {
-  return /* @__PURE__ */ jsxRuntime.jsxs(
+  return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
     ModalShell,
     {
       role: "alertdialog",
@@ -26852,14 +27457,14 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
       onClose: onCancel,
       backdropStyle: { zIndex: 300 },
       children: [
-        /* @__PURE__ */ jsxRuntime.jsx("h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
-        /* @__PURE__ */ jsxRuntime.jsxs("p", { id: "signout-modal-body", children: [
-          /* @__PURE__ */ jsxRuntime.jsx("strong", { children: pageName }),
+        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "p", { id: "signout-modal-body", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: pageName }),
           " has changes saved as a draft but not yet published. Publish now to make them live, or sign out and publish later."
         ] }),
-        publishError && /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", className: "jeeby-cms-inline-error", style: { marginTop: 8 }, children: "Publish failed. Sign out anyway or try again." }),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsxRuntime.jsx(
+        publishError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", style: { marginTop: 8 }, children: "Publish failed. Sign out anyway or try again." }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
@@ -26869,7 +27474,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
               children: "Sign out anyway"
             }
           ),
-          /* @__PURE__ */ jsxRuntime.jsx(
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
@@ -26880,7 +27485,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
               children: "Cancel"
             }
           ),
-          /* @__PURE__ */ jsxRuntime.jsx(
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
             "button",
             {
               type: "button",
@@ -26896,13 +27501,16 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
     }
   );
 }
+
+// src/admin/index.js
+
 function AdminPanel({ children, siteName }) {
-  const { user, loading, signOut } = jeebyCms.useAuth();
-  const guardRef = React.useRef(null);
-  const [signOutModal, setSignOutModal] = React.useState(null);
-  const [publishing, setPublishing] = React.useState(false);
-  const [publishError, setPublishError] = React.useState(false);
-  const guardContext = React.useMemo(() => ({
+  const { user, loading, signOut } = _jeebycms.useAuth.call(void 0, );
+  const guardRef = _react.useRef.call(void 0, null);
+  const [signOutModal, setSignOutModal] = _react.useState.call(void 0, null);
+  const [publishing, setPublishing] = _react.useState.call(void 0, false);
+  const [publishError, setPublishError] = _react.useState.call(void 0, false);
+  const guardContext = _react.useMemo.call(void 0, () => ({
     setGuard: (guard) => {
       guardRef.current = guard;
     },
@@ -26929,7 +27537,7 @@ function AdminPanel({ children, siteName }) {
       setSignOutModal(null);
       await signOut();
       window.location.replace("/admin");
-    } catch {
+    } catch (e15) {
       setPublishing(false);
       setPublishError(true);
     }
@@ -26940,19 +27548,19 @@ function AdminPanel({ children, siteName }) {
     window.location.replace("/admin");
   }
   if (loading) {
-    return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-admin", children: [
-      /* @__PURE__ */ jsxRuntime.jsx("header", { className: "jeeby-cms-nav", role: "banner", children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }) }),
-      /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
+    return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-admin", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "header", { className: "jeeby-cms-nav", role: "banner", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }) }),
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
     ] });
   }
   if (!user) {
-    return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsxRuntime.jsx(LoginPage, { siteName }) });
+    return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, LoginPage, { siteName }) });
   }
-  return /* @__PURE__ */ jsxRuntime.jsx(SignOutGuardContext.Provider, { value: guardContext, children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "jeeby-cms-admin", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
-    /* @__PURE__ */ jsxRuntime.jsx(AdminNav, { onSignOut: handleSignOutRequest, siteName }),
-    /* @__PURE__ */ jsxRuntime.jsx("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsxRuntime.jsx(PageManager, {}) }),
-    signOutModal && /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, SignOutGuardContext.Provider, { value: guardContext, children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-admin", children: [
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, AdminNav, { onSignOut: handleSignOutRequest, siteName }),
+    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: _nullishCoalesce(children, () => ( /* @__PURE__ */ _jsxruntime.jsx.call(void 0, PageManager, {}))) }),
+    signOutModal && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       SignOutModal,
       {
         pageName: signOutModal.pageName,
@@ -26970,5 +27578,6 @@ function AdminPanel({ children, siteName }) {
   ] }) });
 }
 
-exports.AdminPanel = AdminPanel;
-exports.PageEditor = PageEditor;
+
+
+exports.AdminPanel = AdminPanel; exports.PageEditor = PageEditor;

@@ -4,16 +4,48 @@
 //   uploadFile(storage, file, path, onProgress?) => Promise<downloadURL string>
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 
+const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
+const ALLOWED_MIME   = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+const ALLOWED_EXT    = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp'])
+
+// Fallback extension lookup for files whose name has no dot.
+export const MIME_TO_EXT = {
+  'image/jpeg': 'jpg',
+  'image/png':  'png',
+  'image/gif':  'gif',
+  'image/webp': 'webp',
+}
+
+// Validate an image File before uploading.
+// Returns an error string if the file should be rejected, or null if it is valid.
+export function validateImageFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase()
+  if (!ALLOWED_MIME.has(file.type) && !ALLOWED_EXT.has(ext)) {
+    return 'Only JPEG, PNG, GIF, and WebP images are supported.'
+  }
+  if (file.size === 0) return 'The selected file is empty.'
+  if (file.size > MAX_FILE_BYTES) {
+    return `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB) — 10 MB maximum.`
+  }
+  return null
+}
+
 // Upload a file to Firebase Storage with optional progress tracking.
-// - storage: Firebase Storage instance (from useCMSFirebase())
-// - file: File or Blob
-// - path: full storage path (e.g. 'media/images/photo.jpg') — caller controls path
+// - storage:   Firebase Storage instance (from useCMSFirebase())
+// - file:      File or Blob
+// - path:      full storage path (e.g. 'media/images/photo.jpg') — caller controls path
 // - onProgress: optional callback called with upload percent (0-100)
+// - cancelRef: optional ref — populated with a cancel() function while the upload
+//              is in progress; cleared on completion. Call cancelRef.current?.() to
+//              abort (e.g. from a useEffect cleanup on unmount).
 // Returns a Promise that resolves to the public download URL string.
-export function uploadFile(storage, file, path, onProgress) {
+// Rejects with err.code === 'storage/canceled' if cancelled via cancelRef.
+export function uploadFile(storage, file, path, onProgress, cancelRef) {
   return new Promise((resolve, reject) => {
     const storageRef = ref(storage, path)
     const task = uploadBytesResumable(storageRef, file)
+
+    if (cancelRef) cancelRef.current = () => task.cancel()
 
     task.on(
       'state_changed',
@@ -27,6 +59,7 @@ export function uploadFile(storage, file, path, onProgress) {
       },
       (error) => reject(error),
       async () => {
+        if (cancelRef) cancelRef.current = null
         try {
           const url = await getDownloadURL(task.snapshot.ref)
           resolve(url)

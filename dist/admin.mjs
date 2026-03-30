@@ -1,13 +1,24 @@
 "use client";
-import React, { forwardRef, createContext, memo, useContext, useMemo, useState, useRef, useEffect, useDebugValue, useLayoutEffect, useCallback, Fragment as Fragment$1 } from 'react';
-import { useCMSFirebase, useAuth } from 'jeeby-cms';
-import { updateDoc, serverTimestamp, getDoc, setDoc, doc, collection, orderBy, startAfter, limit, getDocs, query, deleteDoc } from 'firebase/firestore';
-import { jsxs, Fragment, jsx } from 'react/jsx-runtime';
-import { useDragControls, Reorder, useReducedMotion, motion, AnimatePresence } from 'framer-motion';
-import ReactDOM from 'react-dom';
-import { useSyncExternalStore } from 'use-sync-external-store/shim/index.js';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js';
 
+// src/admin/PageEditor.js
+import { useState as useState13, useEffect as useEffect11, useRef as useRef14, useCallback as useCallback2 } from "react";
+import { useCMSFirebase as useCMSFirebase3 } from "jeeby-cms";
+
+// src/firebase/firestore.js
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  startAfter
+} from "firebase/firestore";
 function pageRef(db, slug) {
   return doc(db, "pages", slug);
 }
@@ -70,6 +81,10 @@ function validateSlug(pattern, slug) {
   const regexStr = pattern.replace(/\[\.\.\.[\w]+\]/g, ".*").replace(/\[[\w]+\]/g, "[^/]+").replace(/\//g, "\\/");
   return new RegExp("^" + regexStr + "$").test(slug);
 }
+
+// src/admin/EditorHeader.js
+import { useState, useEffect } from "react";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 function formatPublishedDate(ts2) {
   if (!ts2) return null;
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
@@ -295,20 +310,28 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
     ] })
   ] });
 }
+
+// src/admin/BlockCanvas.js
+import { useState as useState12, useRef as useRef12, memo as memo4 } from "react";
+import { useDragControls as useDragControls2, Reorder as Reorder2 } from "framer-motion";
+
+// src/admin/editors/TitleEditor.js
+import { useState as useState2, useRef, useEffect as useEffect2 } from "react";
+import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 var HEADING_SIZES = { h2: "28px", h3: "24px", h4: "20px", h5: "16px", h6: "14px" };
 var LEVELS = ["h2", "h3", "h4", "h5", "h6"];
 var LEVEL_LABELS = { h2: "Heading 2", h3: "Heading 3", h4: "Heading 4", h5: "Heading 5", h6: "Heading 6" };
 function HeadingLevelIcon({ level }) {
   const num = level.slice(1);
-  return /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-heading-icon-h", children: "H" }),
-    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-heading-icon-n", children: num })
+  return /* @__PURE__ */ jsxs2("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx2("span", { className: "jeeby-cms-heading-icon-h", children: "H" }),
+    /* @__PURE__ */ jsx2("span", { className: "jeeby-cms-heading-icon-n", children: num })
   ] });
 }
 function HeadingLevelPicker({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [dropdownStyle, setDropdownStyle] = useState({});
-  const [hoverIndex, setHoverIndex] = useState(LEVELS.indexOf(value));
+  const [open, setOpen] = useState2(false);
+  const [dropdownStyle, setDropdownStyle] = useState2({});
+  const [hoverIndex, setHoverIndex] = useState2(LEVELS.indexOf(value));
   const wrapperRef = useRef(null);
   const triggerRef = useRef(null);
   const listRef = useRef(null);
@@ -321,7 +344,7 @@ function HeadingLevelPicker({ value, onChange }) {
     setDropdownStyle(computeDropdownStyle());
     setOpen(true);
   }
-  useEffect(() => {
+  useEffect2(() => {
     var _a;
     if (!open) return;
     function handleClickOutside(e) {
@@ -340,7 +363,7 @@ function HeadingLevelPicker({ value, onChange }) {
       scrollEl == null ? void 0 : scrollEl.removeEventListener("scroll", handleScroll);
     };
   }, [open]);
-  useEffect(() => {
+  useEffect2(() => {
     var _a, _b;
     if (open) {
       const idx = LEVELS.indexOf(value);
@@ -377,8 +400,8 @@ function HeadingLevelPicker({ value, onChange }) {
       (_f = triggerRef.current) == null ? void 0 : _f.focus();
     }
   }
-  return /* @__PURE__ */ jsxs("div", { ref: wrapperRef, className: "jeeby-cms-heading-picker-wrapper", children: [
-    /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsxs2("div", { ref: wrapperRef, className: "jeeby-cms-heading-picker-wrapper", children: [
+    /* @__PURE__ */ jsxs2(
       "button",
       {
         ref: triggerRef,
@@ -390,12 +413,12 @@ function HeadingLevelPicker({ value, onChange }) {
         onClick: () => open ? setOpen(false) : openPicker(),
         onKeyDown: handleTriggerKeyDown,
         children: [
-          /* @__PURE__ */ jsx(HeadingLevelIcon, { level: value }),
-          /* @__PURE__ */ jsx("span", { className: "jeeby-cms-heading-picker-chevron", "aria-hidden": "true", children: "\u25BE" })
+          /* @__PURE__ */ jsx2(HeadingLevelIcon, { level: value }),
+          /* @__PURE__ */ jsx2("span", { className: "jeeby-cms-heading-picker-chevron", "aria-hidden": "true", children: "\u25BE" })
         ]
       }
     ),
-    open && /* @__PURE__ */ jsx("div", { className: "jeeby-cms-heading-picker-dropdown-wrap", style: dropdownStyle, children: /* @__PURE__ */ jsx(
+    open && /* @__PURE__ */ jsx2("div", { className: "jeeby-cms-heading-picker-dropdown-wrap", style: dropdownStyle, children: /* @__PURE__ */ jsx2(
       "ul",
       {
         ref: listRef,
@@ -403,7 +426,7 @@ function HeadingLevelPicker({ value, onChange }) {
         "aria-label": "Choose heading level",
         onKeyDown: handleListKeyDown,
         className: "jeeby-cms-block-type-picker jeeby-cms-heading-picker-dropdown",
-        children: LEVELS.map((l, i) => /* @__PURE__ */ jsxs(
+        children: LEVELS.map((l, i) => /* @__PURE__ */ jsxs2(
           "li",
           {
             role: "option",
@@ -417,8 +440,8 @@ function HeadingLevelPicker({ value, onChange }) {
               (_a = triggerRef.current) == null ? void 0 : _a.focus();
             },
             children: [
-              /* @__PURE__ */ jsx(HeadingLevelIcon, { level: l }),
-              /* @__PURE__ */ jsx("span", { children: LEVEL_LABELS[l] })
+              /* @__PURE__ */ jsx2(HeadingLevelIcon, { level: l }),
+              /* @__PURE__ */ jsx2("span", { children: LEVEL_LABELS[l] })
             ]
           },
           l
@@ -434,7 +457,7 @@ function TitleEditor({ data, onChange, blockId }) {
     isInternalChange.current = true;
     onChange({ ...data, text: e.currentTarget.textContent });
   }
-  useEffect(() => {
+  useEffect2(() => {
     if (!isInternalChange.current && divRef.current && (data == null ? void 0 : data.text) !== void 0) {
       if (divRef.current.textContent !== data.text) {
         divRef.current.textContent = data.text;
@@ -442,8 +465,8 @@ function TitleEditor({ data, onChange, blockId }) {
     }
     isInternalChange.current = false;
   }, [data == null ? void 0 : data.text]);
-  return /* @__PURE__ */ jsxs("div", { children: [
-    /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs2("div", { children: [
+    /* @__PURE__ */ jsx2(
       "div",
       {
         ref: divRef,
@@ -464,7 +487,7 @@ function TitleEditor({ data, onChange, blockId }) {
         "data-placeholder": "Type a heading..."
       }
     ),
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx2("div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ jsx2(
       HeadingLevelPicker,
       {
         value: (data == null ? void 0 : data.level) ?? "h2",
@@ -473,6 +496,16 @@ function TitleEditor({ data, onChange, blockId }) {
     ) })
   ] });
 }
+
+// src/admin/editors/TextEditor.js
+import { useState as useState4, useRef as useRef3, useEffect as useEffect4 } from "react";
+
+// node_modules/@tiptap/react/dist/index.js
+import { createContext, useContext, useMemo } from "react";
+import React, { forwardRef } from "react";
+import ReactDOM from "react-dom";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { Fragment as Fragment3, jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 
 // node_modules/orderedmap/dist/index.js
 function OrderedMap(content) {
@@ -6874,7 +6907,8 @@ function splitBlockAs(splitNode) {
         atEnd = $from.end(d) == $from.pos + ($from.depth - d);
         atStart = $from.start(d) == $from.pos - ($from.depth - d);
         deflt = defaultBlockAt($from.node(d - 1).contentMatchAt($from.indexAfter(d - 1)));
-        types.unshift((atEnd && deflt ? { type: deflt } : null));
+        let splitType = splitNode && splitNode($to.parent, atEnd, $from);
+        types.unshift(splitType || (atEnd && deflt ? { type: deflt } : null));
         splitDepth = d;
         break;
       } else {
@@ -6914,6 +6948,11 @@ var selectParentNode = (state, dispatch) => {
   pos = $from.before(same);
   if (dispatch)
     dispatch(state.tr.setSelection(NodeSelection.create(state.doc, pos)));
+  return true;
+};
+var selectAll = (state, dispatch) => {
+  if (dispatch)
+    dispatch(state.tr.setSelection(new AllSelection(state.doc)));
   return true;
 };
 function joinMaybeClear(state, $pos, dispatch) {
@@ -7050,11 +7089,31 @@ function chainCommands(...commands) {
     return false;
   };
 }
-chainCommands(deleteSelection, joinBackward, selectNodeBackward);
-chainCommands(deleteSelection, joinForward, selectNodeForward);
-({
-  "Enter": chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock)});
-typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform) : typeof os != "undefined" && os.platform ? os.platform() == "darwin" : false;
+var backspace = chainCommands(deleteSelection, joinBackward, selectNodeBackward);
+var del = chainCommands(deleteSelection, joinForward, selectNodeForward);
+var pcBaseKeymap = {
+  "Enter": chainCommands(newlineInCode, createParagraphNear, liftEmptyBlock, splitBlock),
+  "Mod-Enter": exitCode,
+  "Backspace": backspace,
+  "Mod-Backspace": backspace,
+  "Shift-Backspace": backspace,
+  "Delete": del,
+  "Mod-Delete": del,
+  "Mod-a": selectAll
+};
+var macBaseKeymap = {
+  "Ctrl-h": pcBaseKeymap["Backspace"],
+  "Alt-Backspace": pcBaseKeymap["Mod-Backspace"],
+  "Ctrl-d": pcBaseKeymap["Delete"],
+  "Ctrl-Alt-Backspace": pcBaseKeymap["Mod-Delete"],
+  "Alt-Delete": pcBaseKeymap["Mod-Delete"],
+  "Alt-d": pcBaseKeymap["Mod-Delete"],
+  "Ctrl-a": selectTextblockStart,
+  "Ctrl-e": selectTextblockEnd
+};
+for (let key in pcBaseKeymap)
+  macBaseKeymap[key] = pcBaseKeymap[key];
+var mac = typeof navigator != "undefined" ? /Mac|iP(hone|[oa]d)/.test(navigator.platform) : typeof os != "undefined" && os.platform ? os.platform() == "darwin" : false;
 
 // node_modules/prosemirror-schema-list/dist/index.js
 function wrapInList(listType, attrs = null) {
@@ -10061,7 +10120,8 @@ function updateSelection(view, selection, origin) {
   if (view.state.selection.eq(selection))
     return;
   let tr2 = view.state.tr.setSelection(selection);
-  tr2.setMeta("pointer", true);
+  if (origin == "pointer")
+    tr2.setMeta("pointer", true);
   view.dispatch(tr2);
 }
 function selectClickedLeaf(view, inside) {
@@ -10069,7 +10129,7 @@ function selectClickedLeaf(view, inside) {
     return false;
   let $pos = view.state.doc.resolve(inside), node = $pos.nodeAfter;
   if (node && node.isAtom && NodeSelection.isSelectable(node)) {
-    updateSelection(view, new NodeSelection($pos));
+    updateSelection(view, new NodeSelection($pos), "pointer");
     return true;
   }
   return false;
@@ -10092,7 +10152,7 @@ function selectClickedNode(view, inside) {
     }
   }
   if (selectAt != null) {
-    updateSelection(view, NodeSelection.create(view.state.doc, selectAt));
+    updateSelection(view, NodeSelection.create(view.state.doc, selectAt), "pointer");
     return true;
   } else {
     return false;
@@ -10113,7 +10173,7 @@ function defaultTripleClick(view, inside, event) {
   let doc4 = view.state.doc;
   if (inside == -1) {
     if (doc4.inlineContent) {
-      updateSelection(view, TextSelection.create(doc4, 0, doc4.content.size));
+      updateSelection(view, TextSelection.create(doc4, 0, doc4.content.size), "pointer");
       return true;
     }
     return false;
@@ -10123,9 +10183,9 @@ function defaultTripleClick(view, inside, event) {
     let node = i > $pos.depth ? $pos.nodeAfter : $pos.node(i);
     let nodePos = $pos.before(i);
     if (node.inlineContent)
-      updateSelection(view, TextSelection.create(doc4, nodePos + 1, nodePos + 1 + node.content.size));
+      updateSelection(view, TextSelection.create(doc4, nodePos + 1, nodePos + 1 + node.content.size), "pointer");
     else if (NodeSelection.isSelectable(node))
-      updateSelection(view, NodeSelection.create(doc4, nodePos));
+      updateSelection(view, NodeSelection.create(doc4, nodePos), "pointer");
     else
       continue;
     return true;
@@ -10242,7 +10302,7 @@ var MouseDown = class {
     // thus doesn't get a reaction from ProseMirror. This
     // works around that.
     chrome && !this.view.state.selection.visible && Math.min(Math.abs(pos.pos - this.view.state.selection.from), Math.abs(pos.pos - this.view.state.selection.to)) <= 2)) {
-      updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)));
+      updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)), "pointer");
       event.preventDefault();
     } else {
       setSelectionOrigin(this.view, "pointer");
@@ -12798,6 +12858,7 @@ var blur = () => ({ editor, view }) => {
   requestAnimationFrame(() => {
     var _a;
     if (!editor.isDestroyed) {
+      ;
       view.dom.blur();
       (_a = window == null ? void 0 : window.getSelection()) == null ? void 0 : _a.removeAllRanges();
     }
@@ -13050,9 +13111,11 @@ var focus = (position = null, options = {}) => ({ editor, view, tr: tr2, dispatc
   };
   const delayedFocus = () => {
     if (isiOS() || isAndroid()) {
+      ;
       view.dom.focus();
     }
     if (isSafari() && !isiOS() && !isAndroid()) {
+      ;
       view.dom.focus({ preventScroll: true });
     }
     requestAnimationFrame(() => {
@@ -13227,6 +13290,7 @@ var insertContentAt = (position, value, options) => ({ tr: tr2, dispatch, editor
         error,
         disableCollaboration: () => {
           if ("collaboration" in editor.storage && typeof editor.storage.collaboration === "object" && editor.storage.collaboration) {
+            ;
             editor.storage.collaboration.isDisabled = true;
           }
         }
@@ -16611,7 +16675,7 @@ img.ProseMirror-separator {
   display: block;
 }`;
 function createStyleTag(style2, nonce, suffix) {
-  const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${""}]`);
+  const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${suffix ? `-${suffix}` : ""}]`);
   if (tiptapStyleTag !== null) {
     return tiptapStyleTag;
   }
@@ -16619,7 +16683,7 @@ function createStyleTag(style2, nonce, suffix) {
   if (nonce) {
     styleNode.setAttribute("nonce", nonce);
   }
-  styleNode.setAttribute(`data-tiptap-style${""}`, "");
+  styleNode.setAttribute(`data-tiptap-style${suffix ? `-${suffix}` : ""}`, "");
   styleNode.innerHTML = style2;
   document.getElementsByTagName("head")[0].appendChild(styleNode);
   return styleNode;
@@ -16972,6 +17036,7 @@ var Editor = class extends EventEmitter {
         error: e,
         disableCollaboration: () => {
           if ("collaboration" in this.storage && typeof this.storage.collaboration === "object" && this.storage.collaboration) {
+            ;
             this.storage.collaboration.isDisabled = true;
           }
           this.options.extensions = this.options.extensions.filter((extension) => extension.name !== "collaboration");
@@ -17892,6 +17957,10 @@ function markPasteRule(config) {
   });
 }
 
+// node_modules/@tiptap/react/dist/index.js
+import { useDebugValue as useDebugValue2, useEffect as useEffect22, useRef as useRef2, useState as useState22 } from "react";
+import { useSyncExternalStore as useSyncExternalStore2 } from "use-sync-external-store/shim/index.js";
+
 // node_modules/fast-equals/dist/es/index.mjs
 var { getOwnPropertyNames, getOwnPropertySymbols } = Object;
 var { hasOwnProperty } = Object.prototype;
@@ -18300,24 +18369,24 @@ function createIsEqual({ circular, comparator, createState, equals, strict }) {
   };
 }
 var deepEqual = createCustomEqual();
-createCustomEqual({ strict: true });
-createCustomEqual({ circular: true });
-createCustomEqual({
+var strictDeepEqual = createCustomEqual({ strict: true });
+var circularDeepEqual = createCustomEqual({ circular: true });
+var strictCircularDeepEqual = createCustomEqual({
   circular: true,
   strict: true
 });
-createCustomEqual({
+var shallowEqual = createCustomEqual({
   createInternalComparator: () => sameValueZeroEqual
 });
-createCustomEqual({
+var strictShallowEqual = createCustomEqual({
   strict: true,
   createInternalComparator: () => sameValueZeroEqual
 });
-createCustomEqual({
+var circularShallowEqual = createCustomEqual({
   circular: true,
   createInternalComparator: () => sameValueZeroEqual
 });
-createCustomEqual({
+var strictCircularShallowEqual = createCustomEqual({
   circular: true,
   createInternalComparator: () => sameValueZeroEqual,
   strict: true
@@ -18329,13 +18398,32 @@ function createCustomEqual(options = {}) {
   const equals = createCustomInternalComparator ? createCustomInternalComparator(comparator) : createInternalEqualityComparator(comparator);
   return createIsEqual({ circular, comparator, createState, equals, strict });
 }
+
+// node_modules/@tiptap/react/dist/index.js
+import { useDebugValue, useEffect as useEffect3, useLayoutEffect, useState as useState3 } from "react";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+import { jsx as jsx22, jsxs as jsxs22 } from "react/jsx-runtime";
+import { createContext as createContext2, createElement, useContext as useContext2 } from "react";
+import { jsx as jsx32 } from "react/jsx-runtime";
+import React3 from "react";
+import { jsx as jsx4 } from "react/jsx-runtime";
+import React4 from "react";
+import { version as reactVersion } from "react";
+import { flushSync } from "react-dom";
+import { jsx as jsx5 } from "react/jsx-runtime";
+import { jsx as jsx6 } from "react/jsx-runtime";
+import { createElement as createElement2, createRef, memo } from "react";
+import { jsx as jsx7 } from "react/jsx-runtime";
+import { createContext as createContext3, useContext as useContext3, useMemo as useMemo2 } from "react";
+import { jsx as jsx8 } from "react/jsx-runtime";
 var mergeRefs = (...refs) => {
   return (node) => {
-    refs.forEach((ref) => {
-      if (typeof ref === "function") {
-        ref(node);
-      } else if (ref) {
-        ref.current = node;
+    refs.forEach((ref2) => {
+      if (typeof ref2 === "function") {
+        ref2(node);
+      } else if (ref2) {
+        ;
+        ref2.current = node;
       }
     });
   };
@@ -18346,7 +18434,7 @@ var Portals = ({ contentComponent }) => {
     contentComponent.getSnapshot,
     contentComponent.getServerSnapshot
   );
-  return /* @__PURE__ */ jsx(Fragment, { children: Object.values(renderers) });
+  return /* @__PURE__ */ jsx3(Fragment3, { children: Object.values(renderers) });
 };
 function getInstance() {
   const subscribers = /* @__PURE__ */ new Set();
@@ -18466,26 +18554,26 @@ var PureEditorContent = class extends React.Component {
   }
   render() {
     const { editor, innerRef, ...rest } = this.props;
-    return /* @__PURE__ */ jsxs(Fragment, { children: [
-      /* @__PURE__ */ jsx("div", { ref: mergeRefs(innerRef, this.editorContentRef), ...rest }),
-      (editor == null ? void 0 : editor.contentComponent) && /* @__PURE__ */ jsx(Portals, { contentComponent: editor.contentComponent })
+    return /* @__PURE__ */ jsxs3(Fragment3, { children: [
+      /* @__PURE__ */ jsx3("div", { ref: mergeRefs(innerRef, this.editorContentRef), ...rest }),
+      (editor == null ? void 0 : editor.contentComponent) && /* @__PURE__ */ jsx3(Portals, { contentComponent: editor.contentComponent })
     ] });
   }
 };
 var EditorContentWithKey = forwardRef(
-  (props, ref) => {
+  (props, ref2) => {
     const key = React.useMemo(() => {
       return Math.floor(Math.random() * 4294967295).toString();
     }, [props.editor]);
     return React.createElement(PureEditorContent, {
       key,
-      innerRef: ref,
+      innerRef: ref2,
       ...props
     });
   }
 );
 var EditorContent = React.memo(EditorContentWithKey);
-var useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+var useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect3;
 var EditorStateManager = class {
   constructor(initialEditor) {
     this.transactionNumber = 0;
@@ -18545,7 +18633,7 @@ var EditorStateManager = class {
 };
 function useEditorState(options) {
   var _a;
-  const [editorStateManager] = useState(() => new EditorStateManager(options.editor));
+  const [editorStateManager] = useState3(() => new EditorStateManager(options.editor));
   const selectedState = useSyncExternalStoreWithSelector(
     editorStateManager.subscribe,
     editorStateManager.getSnapshot,
@@ -18793,16 +18881,16 @@ var EditorInstanceManager = class _EditorInstanceManager {
   }
 };
 function useEditor(options = {}, deps = []) {
-  const mostRecentOptions = useRef(options);
+  const mostRecentOptions = useRef2(options);
   mostRecentOptions.current = options;
-  const [instanceManager] = useState(() => new EditorInstanceManager(mostRecentOptions));
-  const editor = useSyncExternalStore(
+  const [instanceManager] = useState22(() => new EditorInstanceManager(mostRecentOptions));
+  const editor = useSyncExternalStore2(
     instanceManager.subscribe,
     instanceManager.getEditor,
     instanceManager.getServerSnapshot
   );
-  useDebugValue(editor);
-  useEffect(instanceManager.onRender(deps));
+  useDebugValue2(editor);
+  useEffect22(instanceManager.onRender(deps));
   useEditorState({
     editor,
     selector: ({ transactionNumber }) => {
@@ -18820,25 +18908,25 @@ function useEditor(options = {}, deps = []) {
 var EditorContext = createContext({
   editor: null
 });
-EditorContext.Consumer;
-var ReactNodeViewContext = createContext({
+var EditorConsumer = EditorContext.Consumer;
+var ReactNodeViewContext = createContext2({
   onDragStart: () => {
   },
   nodeViewContentChildren: void 0,
   nodeViewContentRef: () => {
   }
 });
-var useReactNodeView = () => useContext(ReactNodeViewContext);
-React.forwardRef((props, ref) => {
+var useReactNodeView = () => useContext2(ReactNodeViewContext);
+var NodeViewWrapper = React3.forwardRef((props, ref2) => {
   const { onDragStart } = useReactNodeView();
   const Tag = props.as || "div";
   return (
     // @ts-ignore
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx4(
       Tag,
       {
         ...props,
-        ref,
+        ref: ref2,
         "data-node-view-wrapper": "",
         onDragStart,
         style: {
@@ -18849,33 +18937,33 @@ React.forwardRef((props, ref) => {
     )
   );
 });
-React.createContext({
+var ReactMarkViewContext = React4.createContext({
   markViewContentRef: () => {
   }
 });
-var TiptapContext = createContext({
+var TiptapContext = createContext3({
   get editor() {
     throw new Error("useTiptap must be used within a <Tiptap> provider");
   }
 });
 TiptapContext.displayName = "TiptapContext";
-var useTiptap = () => useContext(TiptapContext);
+var useTiptap = () => useContext3(TiptapContext);
 function TiptapWrapper({ editor, instance, children }) {
   const resolvedEditor = editor != null ? editor : instance;
   if (!resolvedEditor) {
     throw new Error("Tiptap: An editor instance is required. Pass a non-null `editor` prop.");
   }
-  const tiptapContextValue = useMemo(() => ({ editor: resolvedEditor }), [resolvedEditor]);
-  const legacyContextValue = useMemo(() => ({ editor: resolvedEditor }), [resolvedEditor]);
-  return /* @__PURE__ */ jsx(EditorContext.Provider, { value: legacyContextValue, children: /* @__PURE__ */ jsx(TiptapContext.Provider, { value: tiptapContextValue, children }) });
+  const tiptapContextValue = useMemo2(() => ({ editor: resolvedEditor }), [resolvedEditor]);
+  const legacyContextValue = useMemo2(() => ({ editor: resolvedEditor }), [resolvedEditor]);
+  return /* @__PURE__ */ jsx8(EditorContext.Provider, { value: legacyContextValue, children: /* @__PURE__ */ jsx8(TiptapContext.Provider, { value: tiptapContextValue, children }) });
 }
 TiptapWrapper.displayName = "Tiptap";
 function TiptapContent({ ...rest }) {
   const { editor } = useTiptap();
-  return /* @__PURE__ */ jsx(EditorContent, { editor, ...rest });
+  return /* @__PURE__ */ jsx8(EditorContent, { editor, ...rest });
 }
 TiptapContent.displayName = "Tiptap.Content";
-Object.assign(TiptapWrapper, {
+var Tiptap = Object.assign(TiptapWrapper, {
   /**
    * The Tiptap Content component that renders the EditorContent with the editor instance from the context.
    * @see TiptapContent
@@ -22331,7 +22419,7 @@ var TaskList = Node3.create({
     };
   }
 });
-Extension.create({
+var ListKit = Extension.create({
   name: "listKit",
   addExtensions() {
     const extensions = [];
@@ -23452,9 +23540,11 @@ function buildCommand(redo2, scroll) {
 }
 var undo = buildCommand(false, true);
 var redo = buildCommand(true, true);
+var undoNoScroll = buildCommand(false, false);
+var redoNoScroll = buildCommand(true, false);
 
 // node_modules/@tiptap/extensions/dist/index.js
-Extension.create({
+var CharacterCount = Extension.create({
   name: "characterCount",
   addOptions() {
     return {
@@ -23562,7 +23652,7 @@ var Dropcursor = Extension.create({
     return [dropCursor(this.options)];
   }
 });
-Extension.create({
+var Focus = Extension.create({
   name: "focus",
   addOptions() {
     return {
@@ -23643,7 +23733,7 @@ var DEFAULT_DATA_ATTRIBUTE = "placeholder";
 function preparePlaceholderAttribute(attr) {
   return attr.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "").replace(/^[0-9-]+/, "").replace(/^-+/, "").toLowerCase();
 }
-Extension.create({
+var Placeholder = Extension.create({
   name: "placeholder",
   addOptions() {
     return {
@@ -23701,7 +23791,7 @@ Extension.create({
     ];
   }
 });
-Extension.create({
+var Selection2 = Extension.create({
   name: "selection",
   addOptions() {
     return {
@@ -23887,6 +23977,9 @@ var StarterKit = Extension.create({
   }
 });
 var index_default2 = StarterKit;
+
+// src/admin/editors/TextEditor.js
+import { jsx as jsx9, jsxs as jsxs4 } from "react/jsx-runtime";
 var TabEscape = Extension.create({
   name: "tabEscape",
   addKeyboardShortcuts() {
@@ -23897,41 +23990,41 @@ var TabEscape = Extension.create({
   }
 });
 function IconBold() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--bold", "aria-hidden": "true", children: "B" });
+  return /* @__PURE__ */ jsx9("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--bold", "aria-hidden": "true", children: "B" });
 }
 function IconItalic() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--italic", "aria-hidden": "true", children: "I" });
+  return /* @__PURE__ */ jsx9("span", { className: "jeeby-cms-toolbar-icon jeeby-cms-toolbar-icon--italic", "aria-hidden": "true", children: "I" });
 }
 function IconLink() {
-  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx("path", { d: "M6.5 9.5a3.5 3.5 0 0 0 4.95 0l2-2a3.5 3.5 0 0 0-4.95-4.95l-1 1" }),
-    /* @__PURE__ */ jsx("path", { d: "M9.5 6.5a3.5 3.5 0 0 0-4.95 0l-2 2a3.5 3.5 0 0 0 4.95 4.95l1-1" })
+  return /* @__PURE__ */ jsxs4("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx9("path", { d: "M6.5 9.5a3.5 3.5 0 0 0 4.95 0l2-2a3.5 3.5 0 0 0-4.95-4.95l-1 1" }),
+    /* @__PURE__ */ jsx9("path", { d: "M9.5 6.5a3.5 3.5 0 0 0-4.95 0l-2 2a3.5 3.5 0 0 0 4.95 4.95l1-1" })
   ] });
 }
 function IconBulletList() {
-  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ jsxs4("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx9("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ jsx9("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx9("circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ jsx9("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx9("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ jsx9("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
 function IconOrderedList() {
-  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ jsxs4("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx9("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ jsx9("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx9("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx9("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx9("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx9("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx9("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx9("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx9("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
-var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PURE__ */ jsx(
+var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PURE__ */ jsx9(
   "button",
   {
     type: "button",
@@ -23943,15 +24036,15 @@ var ToolbarButton = ({ label, isActive: isActive2, onClick, icon }) => /* @__PUR
     children: icon
   }
 );
-var ToolbarSeparator = () => /* @__PURE__ */ jsx("div", { className: "jeeby-cms-toolbar-separator", role: "separator", "aria-orientation": "vertical" });
+var ToolbarSeparator = () => /* @__PURE__ */ jsx9("div", { className: "jeeby-cms-toolbar-separator", role: "separator", "aria-orientation": "vertical" });
 function isEmptyHtml(html) {
   if (!html) return true;
   return html.replace(/<[^>]*>/g, "").trim() === "";
 }
 function TextEditor({ data, onChange, blockId }) {
-  const [linkInputOpen, setLinkInputOpen] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
-  const linkInputRef = useRef(null);
+  const [linkInputOpen, setLinkInputOpen] = useState4(false);
+  const [linkUrl, setLinkUrl] = useState4("");
+  const linkInputRef = useRef3(null);
   const editor = useEditor({
     extensions: [
       index_default2,
@@ -23964,12 +24057,12 @@ function TextEditor({ data, onChange, blockId }) {
       onChange({ html: editor2.getHTML() });
     }
   });
-  useEffect(() => {
+  useEffect4(() => {
     if (editor && (data == null ? void 0 : data.html) !== void 0 && data.html !== editor.getHTML()) {
       editor.commands.setContent(data.html, false);
     }
   }, [data == null ? void 0 : data.html]);
-  useEffect(() => {
+  useEffect4(() => {
     var _a;
     if (linkInputOpen) (_a = linkInputRef.current) == null ? void 0 : _a.focus();
   }, [linkInputOpen]);
@@ -23995,8 +24088,8 @@ function TextEditor({ data, onChange, blockId }) {
     setLinkUrl("");
     editor.commands.focus();
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-text-editor-wrapper", children: [
-    /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsxs4("div", { className: "jeeby-cms-text-editor-wrapper", children: [
+    /* @__PURE__ */ jsxs4(
       "div",
       {
         id: "block-input-" + blockId,
@@ -24005,61 +24098,61 @@ function TextEditor({ data, onChange, blockId }) {
         tabIndex: -1,
         onFocus: () => editor == null ? void 0 : editor.commands.focus(),
         children: [
-          isEmptyHtml(data == null ? void 0 : data.html) && /* @__PURE__ */ jsx("div", { className: "jeeby-cms-text-placeholder", "aria-hidden": "true", children: "Start writing..." }),
-          /* @__PURE__ */ jsx(EditorContent, { editor })
+          isEmptyHtml(data == null ? void 0 : data.html) && /* @__PURE__ */ jsx9("div", { className: "jeeby-cms-text-placeholder", "aria-hidden": "true", children: "Start writing..." }),
+          /* @__PURE__ */ jsx9(EditorContent, { editor })
         ]
       }
     ),
-    editor && /* @__PURE__ */ jsx("div", { className: "jeeby-cms-text-editor-toolbar-reveal", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-text-editor-toolbar-inner", children: [
-      /* @__PURE__ */ jsxs(
+    editor && /* @__PURE__ */ jsx9("div", { className: "jeeby-cms-text-editor-toolbar-reveal", children: /* @__PURE__ */ jsxs4("div", { className: "jeeby-cms-text-editor-toolbar-inner", children: [
+      /* @__PURE__ */ jsxs4(
         "div",
         {
           role: "toolbar",
           "aria-label": "Text formatting",
           className: "jeeby-cms-toolbar",
           children: [
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsx9(
               ToolbarButton,
               {
                 label: "Bold",
-                icon: /* @__PURE__ */ jsx(IconBold, {}),
+                icon: /* @__PURE__ */ jsx9(IconBold, {}),
                 isActive: editor.isActive("bold"),
                 onClick: () => editor.chain().focus().toggleBold().run()
               }
             ),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsx9(
               ToolbarButton,
               {
                 label: "Italic",
-                icon: /* @__PURE__ */ jsx(IconItalic, {}),
+                icon: /* @__PURE__ */ jsx9(IconItalic, {}),
                 isActive: editor.isActive("italic"),
                 onClick: () => editor.chain().focus().toggleItalic().run()
               }
             ),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsx9(
               ToolbarButton,
               {
                 label: editor.isActive("link") ? "Remove link" : "Add link",
-                icon: /* @__PURE__ */ jsx(IconLink, {}),
+                icon: /* @__PURE__ */ jsx9(IconLink, {}),
                 isActive: editor.isActive("link") || linkInputOpen,
                 onClick: handleLinkClick
               }
             ),
-            /* @__PURE__ */ jsx(ToolbarSeparator, {}),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsx9(ToolbarSeparator, {}),
+            /* @__PURE__ */ jsx9(
               ToolbarButton,
               {
                 label: "Bullet list",
-                icon: /* @__PURE__ */ jsx(IconBulletList, {}),
+                icon: /* @__PURE__ */ jsx9(IconBulletList, {}),
                 isActive: editor.isActive("bulletList"),
                 onClick: () => editor.chain().focus().toggleBulletList().run()
               }
             ),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsx9(
               ToolbarButton,
               {
                 label: "Ordered list",
-                icon: /* @__PURE__ */ jsx(IconOrderedList, {}),
+                icon: /* @__PURE__ */ jsx9(IconOrderedList, {}),
                 isActive: editor.isActive("orderedList"),
                 onClick: () => editor.chain().focus().toggleOrderedList().run()
               }
@@ -24067,8 +24160,8 @@ function TextEditor({ data, onChange, blockId }) {
           ]
         }
       ),
-      linkInputOpen && /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-link-input-row", children: [
-        /* @__PURE__ */ jsx(
+      linkInputOpen && /* @__PURE__ */ jsxs4("div", { className: "jeeby-cms-link-input-row", children: [
+        /* @__PURE__ */ jsx9(
           "input",
           {
             ref: linkInputRef,
@@ -24090,7 +24183,7 @@ function TextEditor({ data, onChange, blockId }) {
             }
           }
         ),
-        /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx9(
           "button",
           {
             type: "button",
@@ -24099,7 +24192,7 @@ function TextEditor({ data, onChange, blockId }) {
             children: "Apply"
           }
         ),
-        /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx9(
           "button",
           {
             type: "button",
@@ -24112,17 +24205,112 @@ function TextEditor({ data, onChange, blockId }) {
     ] }) })
   ] });
 }
+
+// src/admin/editors/ImageEditor.js
+import { useState as useState5, useRef as useRef4, useEffect as useEffect5, memo as memo2 } from "react";
+
+// src/firebase/storage.js
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+var MAX_FILE_BYTES = 10 * 1024 * 1024;
+var ALLOWED_MIME = /* @__PURE__ */ new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+var ALLOWED_EXT = /* @__PURE__ */ new Set(["jpg", "jpeg", "png", "gif", "webp"]);
+var MIME_TO_EXT = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp"
+};
+function validateImageFile(file) {
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (!ALLOWED_MIME.has(file.type) && !ALLOWED_EXT.has(ext)) {
+    return "Only JPEG, PNG, GIF, and WebP images are supported.";
+  }
+  if (file.size === 0) return "The selected file is empty.";
+  if (file.size > MAX_FILE_BYTES) {
+    return `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB) \u2014 10 MB maximum.`;
+  }
+  return null;
+}
+function uploadFile(storage, file, path, onProgress, cancelRef) {
+  return new Promise((resolve, reject) => {
+    const storageRef = ref(storage, path);
+    const task = uploadBytesResumable(storageRef, file);
+    if (cancelRef) cancelRef.current = () => task.cancel();
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        if (onProgress) {
+          const percent = Math.round(
+            snapshot.bytesTransferred / snapshot.totalBytes * 100
+          );
+          onProgress(percent);
+        }
+      },
+      (error) => reject(error),
+      async () => {
+        if (cancelRef) cancelRef.current = null;
+        try {
+          const url = await getDownloadURL(task.snapshot.ref);
+          resolve(url);
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
+}
+
+// src/admin/editors/ImageEditor.js
+import { useCMSFirebase } from "jeeby-cms";
+import { Fragment as Fragment4, jsx as jsx10, jsxs as jsxs5 } from "react/jsx-runtime";
+function IconImage() {
+  return /* @__PURE__ */ jsxs5("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx10("rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
+    /* @__PURE__ */ jsx10("circle", { cx: "11", cy: "13", r: "2.5" }),
+    /* @__PURE__ */ jsx10("path", { d: "M3 22 l7-7 5 5 4-4 10 9" })
+  ] });
+}
+function IconPencil() {
+  return /* @__PURE__ */ jsxs5("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx10("path", { d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" }),
+    /* @__PURE__ */ jsx10("path", { d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" })
+  ] });
+}
 function ImageEditor({ data, onChange, blockId }) {
-  const [imgError, setImgError] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const containerRef = useRef(null);
-  const urlInputRef = useRef(null);
-  const viewButtonRef = useRef(null);
-  const hasImage = (data == null ? void 0 : data.src) && !imgError;
-  useEffect(() => {
+  const [imgError, setImgError] = useState5(false);
+  const [isEditing, setIsEditing] = useState5(false);
+  const containerRef = useRef4(null);
+  const urlInputRef = useRef4(null);
+  const viewButtonRef = useRef4(null);
+  const { storage } = useCMSFirebase();
+  const [uploadProgress, setUploadProgress] = useState5(null);
+  const isUploading = typeof uploadProgress === "number";
+  const uploadError = uploadProgress !== null && !isUploading ? uploadProgress : null;
+  const fileInputRef = useRef4(null);
+  const pendingFileRef = useRef4(null);
+  const isPickingFile = useRef4(false);
+  const [previewSrc, setPreviewSrc] = useState5(null);
+  const uploadCancelRef = useRef4(null);
+  useEffect5(() => {
+    return () => {
+      if (previewSrc) URL.revokeObjectURL(previewSrc);
+    };
+  }, [previewSrc]);
+  useEffect5(() => {
+    return () => {
+      var _a;
+      (_a = uploadCancelRef.current) == null ? void 0 : _a.call(uploadCancelRef);
+    };
+  }, []);
+  const displaySrc = previewSrc ?? (data == null ? void 0 : data.src);
+  const hasImage = displaySrc && !imgError;
+  useEffect5(() => {
     if (imgError) setIsEditing(true);
   }, [imgError]);
-  useEffect(() => {
+  useEffect5(() => {
+    setImgError(false);
+  }, [data == null ? void 0 : data.src]);
+  useEffect5(() => {
     var _a;
     if (isEditing) (_a = urlInputRef.current) == null ? void 0 : _a.focus();
   }, [isEditing]);
@@ -24132,8 +24320,45 @@ function ImageEditor({ data, onChange, blockId }) {
   function enterEditMode() {
     setIsEditing(true);
   }
+  function exitEditMode() {
+    setIsEditing(false);
+    requestAnimationFrame(() => {
+      var _a;
+      return (_a = viewButtonRef.current) == null ? void 0 : _a.focus();
+    });
+  }
+  async function handleUpload(file) {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadProgress({ message: validationError, retryable: false });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    pendingFileRef.current = file;
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewSrc(previewUrl);
+    setUploadProgress(0);
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : MIME_TO_EXT[file.type] ?? "jpg";
+      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef);
+      onChange({ ...data, src: url });
+      setUploadProgress(null);
+    } catch (err) {
+      if (err.code === "storage/canceled") return;
+      console.error("[jeeby-cms] Image upload failed:", err);
+      setUploadProgress({ message: "Upload failed \u2014 check your connection and try again.", retryable: true });
+    } finally {
+      setPreviewSrc(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+  function handleRetry() {
+    if (pendingFileRef.current) handleUpload(pendingFileRef.current);
+  }
   function handleContainerBlur(e) {
     var _a;
+    if (isUploading || isPickingFile.current) return;
     if (!(e.relatedTarget instanceof Node) || !((_a = containerRef.current) == null ? void 0 : _a.contains(e.relatedTarget))) {
       setIsEditing(false);
       requestAnimationFrame(() => {
@@ -24142,19 +24367,78 @@ function ImageEditor({ data, onChange, blockId }) {
       });
     }
   }
-  const IconImage2 = () => /* @__PURE__ */ jsxs("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
-    /* @__PURE__ */ jsx("circle", { cx: "11", cy: "13", r: "2.5" }),
-    /* @__PURE__ */ jsx("path", { d: "M3 22 l7-7 5 5 4-4 10 9" })
+  const uploadControls = /* @__PURE__ */ jsxs5(Fragment4, { children: [
+    /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-url-row", children: [
+      /* @__PURE__ */ jsx10(
+        "input",
+        {
+          ref: urlInputRef,
+          id: urlInputId,
+          type: "url",
+          value: (data == null ? void 0 : data.src) ?? "",
+          placeholder: "https://example.com/image.jpg",
+          onChange: (e) => {
+            setImgError(false);
+            onChange({ ...data, src: e.target.value });
+          },
+          onBlur: (e) => {
+            const v = e.target.value.trim();
+            if (v !== e.target.value) onChange({ ...data, src: v });
+          }
+        }
+      ),
+      /* @__PURE__ */ jsx10("span", { className: "jeeby-cms-image-url-or", "aria-hidden": "true", children: "or" }),
+      /* @__PURE__ */ jsx10(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-upload-btn",
+          "aria-label": isUploading ? "Uploading image\u2026" : "Upload image from device",
+          disabled: isUploading,
+          onClick: () => {
+            var _a;
+            isPickingFile.current = true;
+            (_a = fileInputRef.current) == null ? void 0 : _a.click();
+          },
+          children: isUploading ? "Uploading\u2026" : "Upload"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx10(
+      "input",
+      {
+        ref: fileInputRef,
+        type: "file",
+        accept: "image/jpeg,image/png,image/gif,image/webp",
+        style: { display: "none" },
+        "aria-hidden": "true",
+        tabIndex: -1,
+        onChange: (e) => {
+          var _a;
+          isPickingFile.current = false;
+          const file = (_a = e.target.files) == null ? void 0 : _a[0];
+          if (file) handleUpload(file);
+        },
+        onCancel: () => {
+          isPickingFile.current = false;
+        }
+      }
+    ),
+    isUploading && /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": Math.round(uploadProgress), "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress", children: /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${uploadProgress}%` } }) }),
+    uploadError && /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-upload-error-row", children: [
+      /* @__PURE__ */ jsx10("p", { role: "alert", className: "jeeby-cms-inline-error", children: uploadError.message }),
+      uploadError.retryable && /* @__PURE__ */ jsx10("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: handleRetry, children: "Retry" })
+    ] }),
+    /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: isUploading ? `Uploading \u2014 ${Math.round(uploadProgress)}%` : null })
   ] });
   if (!hasImage && !isEditing) {
-    return /* @__PURE__ */ jsxs(
+    return /* @__PURE__ */ jsxs5(
       "div",
       {
         role: "button",
         tabIndex: 0,
         id: urlInputId,
-        "aria-label": "Image \u2014 click to add image URL",
+        "aria-label": "Image \u2014 click to add image by URL or upload from device",
         className: "jeeby-cms-image-empty",
         onClick: enterEditMode,
         onKeyDown: (e) => {
@@ -24164,34 +24448,24 @@ function ImageEditor({ data, onChange, blockId }) {
           }
         },
         children: [
-          /* @__PURE__ */ jsx("div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx(IconImage2, {}) }),
-          /* @__PURE__ */ jsx("p", { className: "jeeby-cms-image-empty-hint", children: "Image \u2014 click to add image URL" })
+          /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx10(IconImage, {}) }),
+          /* @__PURE__ */ jsxs5("p", { className: "jeeby-cms-image-empty-hint", children: [
+            "Add image",
+            /* @__PURE__ */ jsx10("span", { className: "jeeby-cms-image-empty-sub", children: "Paste a URL or upload from your device" })
+          ] })
         ]
       }
     );
   }
   if (!hasImage) {
-    return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "jeeby-cms-image-empty", onBlur: handleContainerBlur, children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx(IconImage2, {}) }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-image-empty-inputs", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
-        /* @__PURE__ */ jsx(
-          "input",
-          {
-            ref: urlInputRef,
-            id: urlInputId,
-            type: "url",
-            value: (data == null ? void 0 : data.src) ?? "",
-            placeholder: "https://example.com/image.jpg",
-            onChange: (e) => {
-              setImgError(false);
-              onChange({ ...data, src: e.target.value });
-            }
-          }
-        ),
-        (data == null ? void 0 : data.src) && imgError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
-        /* @__PURE__ */ jsx("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
-        /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsxs5("div", { ref: containerRef, className: "jeeby-cms-image-empty", onBlur: handleContainerBlur, children: [
+      /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-image-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx10(IconImage, {}) }),
+      /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-empty-inputs", children: [
+        /* @__PURE__ */ jsx10("label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
+        uploadControls,
+        imgError && /* @__PURE__ */ jsx10("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
+        /* @__PURE__ */ jsx10("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
+        /* @__PURE__ */ jsx10(
           "input",
           {
             id: altInputId,
@@ -24202,12 +24476,22 @@ function ImageEditor({ data, onChange, blockId }) {
             onChange: (e) => onChange({ ...data, alt: e.target.value })
           }
         ),
-        /* @__PURE__ */ jsx("p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image is purely decorative." })
+        /* @__PURE__ */ jsx10("p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image adds no meaning (e.g., a background pattern)." }),
+        /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ jsx10(
+          "button",
+          {
+            type: "button",
+            className: "jeeby-cms-btn-ghost jeeby-cms-image-done-btn",
+            disabled: isUploading,
+            onClick: exitEditMode,
+            children: "Done"
+          }
+        ) })
       ] })
     ] });
   }
   if (!isEditing) {
-    return /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsx10(
       "div",
       {
         ref: viewButtonRef,
@@ -24223,47 +24507,40 @@ function ImageEditor({ data, onChange, blockId }) {
             enterEditMode();
           }
         },
-        children: /* @__PURE__ */ jsx("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsx(
-          "img",
-          {
-            src: data.src,
-            alt: (data == null ? void 0 : data.alt) ?? "",
-            onError: () => setImgError(true),
-            className: "jeeby-cms-image-preview"
-          }
-        ) })
+        children: /* @__PURE__ */ jsxs5("figure", { className: "jeeby-cms-image-figure", children: [
+          /* @__PURE__ */ jsx10(
+            "img",
+            {
+              src: displaySrc,
+              alt: (data == null ? void 0 : data.alt) ?? "",
+              onError: () => setImgError(true),
+              className: "jeeby-cms-image-preview"
+            }
+          ),
+          /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-edit-overlay", "aria-hidden": "true", children: [
+            /* @__PURE__ */ jsx10(IconPencil, {}),
+            /* @__PURE__ */ jsx10("span", { children: "Edit image" })
+          ] })
+        ] })
       }
     );
   }
-  return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "jeeby-cms-image-editor", onBlur: handleContainerBlur, children: [
-    /* @__PURE__ */ jsx("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs5("div", { ref: containerRef, className: "jeeby-cms-image-editor", onBlur: handleContainerBlur, children: [
+    /* @__PURE__ */ jsx10("figure", { className: "jeeby-cms-image-figure", children: /* @__PURE__ */ jsx10(
       "img",
       {
-        src: data.src,
+        src: displaySrc,
         alt: (data == null ? void 0 : data.alt) ?? "",
         onError: () => setImgError(true),
         className: "jeeby-cms-image-preview"
       }
     ) }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-image-fields", children: [
-      /* @__PURE__ */ jsx("label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
-      /* @__PURE__ */ jsx(
-        "input",
-        {
-          ref: urlInputRef,
-          id: urlInputId,
-          type: "url",
-          value: (data == null ? void 0 : data.src) ?? "",
-          placeholder: "https://example.com/image.jpg",
-          onChange: (e) => {
-            setImgError(false);
-            onChange({ ...data, src: e.target.value });
-          }
-        }
-      ),
-      imgError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
-      /* @__PURE__ */ jsx("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
-      /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-fields", children: [
+      /* @__PURE__ */ jsx10("label", { htmlFor: urlInputId, className: "jeeby-cms-field-label", children: "Image URL" }),
+      uploadControls,
+      imgError && /* @__PURE__ */ jsx10("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Image not found \u2014 check the URL is correct and publicly accessible." }),
+      /* @__PURE__ */ jsx10("label", { htmlFor: altInputId, className: "jeeby-cms-field-label jeeby-cms-image-alt-label", children: "Alt text" }),
+      /* @__PURE__ */ jsx10(
         "input",
         {
           id: altInputId,
@@ -24274,10 +24551,26 @@ function ImageEditor({ data, onChange, blockId }) {
           onChange: (e) => onChange({ ...data, alt: e.target.value })
         }
       ),
-      /* @__PURE__ */ jsx("p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image is purely decorative." })
+      /* @__PURE__ */ jsx10("p", { id: altHintId, className: "jeeby-cms-field-hint", children: "Leave blank only if the image adds no meaning (e.g., a background pattern)." }),
+      /* @__PURE__ */ jsx10("div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ jsx10(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-image-done-btn",
+          disabled: isUploading,
+          onClick: exitEditMode,
+          children: "Done"
+        }
+      ) })
     ] })
   ] });
 }
+
+// src/admin/editors/VideoEditor.js
+import { useState as useState6, useRef as useRef6, useEffect as useEffect7 } from "react";
+
+// src/blocks/Video.js
+import { createElement as createElement3, useRef as useRef5, useEffect as useEffect6 } from "react";
 function toEmbedUrl(url) {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -24288,15 +24581,18 @@ function toEmbedUrl(url) {
   if (loomMatch) return `https://www.loom.com/embed/${loomMatch[1]}`;
   return url;
 }
+
+// src/admin/editors/VideoEditor.js
+import { jsx as jsx11, jsxs as jsxs6 } from "react/jsx-runtime";
 function VideoEditor({ data, onChange, blockId }) {
   const rawUrl = (data == null ? void 0 : data.url) ?? "";
   const embedUrl = rawUrl ? toEmbedUrl(rawUrl) : null;
   const isRecognized = rawUrl && embedUrl !== rawUrl;
   const showError = rawUrl.length > 0 && !isRecognized;
-  const [isEditing, setIsEditing] = useState(false);
-  const containerRef = useRef(null);
-  const urlInputRef = useRef(null);
-  useEffect(() => {
+  const [isEditing, setIsEditing] = useState6(false);
+  const containerRef = useRef6(null);
+  const urlInputRef = useRef6(null);
+  useEffect7(() => {
     if (showError) setIsEditing(true);
   }, [showError]);
   function enterEditMode() {
@@ -24312,12 +24608,12 @@ function VideoEditor({ data, onChange, blockId }) {
       setIsEditing(false);
     }
   }
-  const IconVideo2 = () => /* @__PURE__ */ jsxs("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
-    /* @__PURE__ */ jsx("polygon", { fill: "currentColor", stroke: "none", points: "13,11 23,16 13,21" })
+  const IconVideo2 = () => /* @__PURE__ */ jsxs6("svg", { width: "32", height: "32", viewBox: "0 0 32 32", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx11("rect", { x: "3", y: "5", width: "26", height: "22", rx: "3" }),
+    /* @__PURE__ */ jsx11("polygon", { fill: "currentColor", stroke: "none", points: "13,11 23,16 13,21" })
   ] });
   if (!isRecognized && !isEditing) {
-    return /* @__PURE__ */ jsxs(
+    return /* @__PURE__ */ jsxs6(
       "div",
       {
         role: "button",
@@ -24333,18 +24629,18 @@ function VideoEditor({ data, onChange, blockId }) {
           }
         },
         children: [
-          /* @__PURE__ */ jsx("div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx(IconVideo2, {}) }),
-          /* @__PURE__ */ jsx("p", { className: "jeeby-cms-video-empty-hint", children: "Video \u2014 click to add video URL" })
+          /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx11(IconVideo2, {}) }),
+          /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-video-empty-hint", children: "Video \u2014 click to add video URL" })
         ]
       }
     );
   }
   if (!isRecognized) {
-    return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "jeeby-cms-video-empty", onBlur: handleContainerBlur, children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx(IconVideo2, {}) }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-video-empty-inputs", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Video URL" }),
-        /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsxs6("div", { ref: containerRef, className: "jeeby-cms-video-empty", onBlur: handleContainerBlur, children: [
+      /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-video-empty-area", "aria-hidden": "true", children: /* @__PURE__ */ jsx11(IconVideo2, {}) }),
+      /* @__PURE__ */ jsxs6("div", { className: "jeeby-cms-video-empty-inputs", children: [
+        /* @__PURE__ */ jsx11("label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Video URL" }),
+        /* @__PURE__ */ jsx11(
           "input",
           {
             ref: urlInputRef,
@@ -24357,13 +24653,13 @@ function VideoEditor({ data, onChange, blockId }) {
             className: "jeeby-cms-video-url-input"
           }
         ),
-        /* @__PURE__ */ jsx("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" }),
-        showError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Unrecognised video URL" })
+        /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" }),
+        showError && /* @__PURE__ */ jsx11("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Unrecognised video URL" })
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsxs("div", { children: [
-    /* @__PURE__ */ jsx("div", { style: { aspectRatio: "16/9", width: "100%" }, children: /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs6("div", { children: [
+    /* @__PURE__ */ jsx11("div", { style: { aspectRatio: "16/9", width: "100%" }, children: /* @__PURE__ */ jsx11(
       "iframe",
       {
         title: "Video preview",
@@ -24372,8 +24668,8 @@ function VideoEditor({ data, onChange, blockId }) {
         style: { width: "100%", height: "100%", border: 0, borderRadius: "4px" }
       }
     ) }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-aux", children: [
-      /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsxs6("div", { className: "jeeby-cms-block-aux", children: [
+      /* @__PURE__ */ jsx11(
         "input",
         {
           id: "block-input-" + blockId,
@@ -24385,16 +24681,87 @@ function VideoEditor({ data, onChange, blockId }) {
           style: { width: "100%", minHeight: "44px" }
         }
       ),
-      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" })
+      /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-field-hint", children: "YouTube, Vimeo, or Loom URLs are supported" })
     ] })
   ] });
 }
+
+// src/admin/editors/GalleryEditor.js
+import { useState as useState7, useRef as useRef7, useEffect as useEffect8, useCallback, memo as memo3 } from "react";
+import { Reorder, useDragControls } from "framer-motion";
+import { useCMSFirebase as useCMSFirebase2 } from "jeeby-cms";
+import { jsx as jsx12, jsxs as jsxs7 } from "react/jsx-runtime";
 function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item);
 }
-function GalleryItem({ item, index, items, blockId, onChange, data }) {
+async function withConcurrency(factories, limit2 = 3) {
+  const results = [];
+  for (let i = 0; i < factories.length; i += limit2) {
+    const batch = await Promise.allSettled(factories.slice(i, i + limit2).map((fn) => fn()));
+    results.push(...batch);
+  }
+  return results;
+}
+var GalleryItem = memo3(function GalleryItem2({ item, index, items, blockId, onChange, data, storage, filePickerOpen, onUploadStart, onUploadEnd }) {
   const controls = useDragControls();
-  return /* @__PURE__ */ jsx(
+  const [uploadProgress, setUploadProgress] = useState7(null);
+  const isUploading = typeof uploadProgress === "number";
+  const uploadError = uploadProgress !== null && !isUploading ? uploadProgress : null;
+  const fileInputRef = useRef7(null);
+  const pendingFileRef = useRef7(null);
+  const [previewSrc, setPreviewSrc] = useState7(null);
+  const uploadCancelRef = useRef7(null);
+  const [imgLoadError, setImgLoadError] = useState7(false);
+  useEffect8(() => {
+    return () => {
+      if (previewSrc) URL.revokeObjectURL(previewSrc);
+    };
+  }, [previewSrc]);
+  useEffect8(() => {
+    setImgLoadError(false);
+  }, [item.src]);
+  useEffect8(() => {
+    return () => {
+      var _a;
+      (_a = uploadCancelRef.current) == null ? void 0 : _a.call(uploadCancelRef);
+    };
+  }, []);
+  const displaySrc = previewSrc ?? item.src;
+  async function handleItemUpload(file) {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadProgress({ message: validationError, retryable: false });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    onUploadStart == null ? void 0 : onUploadStart();
+    pendingFileRef.current = file;
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewSrc(previewUrl);
+    setUploadProgress(0);
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : MIME_TO_EXT[file.type] ?? "jpg";
+      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef);
+      onChange({
+        ...data,
+        items: items.map((it, i) => i === index ? { ...it, src: url } : it)
+      });
+      setUploadProgress(null);
+    } catch (err) {
+      if (err.code === "storage/canceled") return;
+      console.error("[jeeby-cms] Gallery item upload failed:", err);
+      setUploadProgress({ message: "Upload failed \u2014 check your connection and try again.", retryable: true });
+    } finally {
+      setPreviewSrc(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      onUploadEnd == null ? void 0 : onUploadEnd();
+    }
+  }
+  function handleItemRetry() {
+    if (pendingFileRef.current) handleItemUpload(pendingFileRef.current);
+  }
+  return /* @__PURE__ */ jsx12(
     Reorder.Item,
     {
       value: item,
@@ -24402,8 +24769,8 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
       dragControls: controls,
       as: "li",
       style: { listStyle: "none" },
-      children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-gallery-item-row", children: [
-        /* @__PURE__ */ jsx(
+      children: /* @__PURE__ */ jsxs7("div", { className: "jeeby-cms-gallery-item-row", children: [
+        /* @__PURE__ */ jsx12(
           "button",
           {
             className: "jeeby-cms-drag-handle",
@@ -24416,30 +24783,79 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
             children: "\u283F"
           }
         ),
-        item.src && /* @__PURE__ */ jsx(
+        displaySrc && !imgLoadError && /* @__PURE__ */ jsx12(
           "img",
           {
-            src: item.src,
+            src: displaySrc,
             alt: item.alt || "",
-            className: "jeeby-cms-gallery-preview"
+            className: "jeeby-cms-gallery-preview",
+            onError: () => setImgLoadError(true)
           }
         ),
-        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-gallery-item-inputs", children: [
-          /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsxs7("div", { className: "jeeby-cms-gallery-item-inputs", children: [
+          /* @__PURE__ */ jsxs7("div", { className: "jeeby-cms-image-url-row", children: [
+            /* @__PURE__ */ jsx12(
+              "input",
+              {
+                id: index === 0 ? "block-input-" + blockId : void 0,
+                type: "url",
+                value: item.src ?? "",
+                "aria-label": "Image URL for item " + (index + 1),
+                placeholder: "https://example.com/image.jpg",
+                onChange: (e) => onChange({
+                  ...data,
+                  items: updateItem(items, index, "src", e.target.value)
+                }),
+                onBlur: (e) => {
+                  const v = e.target.value.trim();
+                  if (v !== e.target.value) onChange({ ...data, items: updateItem(items, index, "src", v) });
+                }
+              }
+            ),
+            /* @__PURE__ */ jsx12("span", { className: "jeeby-cms-image-url-or", "aria-hidden": "true", children: "or" }),
+            /* @__PURE__ */ jsx12(
+              "button",
+              {
+                type: "button",
+                className: "jeeby-cms-btn-ghost jeeby-cms-gallery-upload-btn",
+                "aria-label": isUploading ? "Uploading item " + (index + 1) + "\u2026" : "Upload image for item " + (index + 1),
+                disabled: isUploading,
+                onClick: () => {
+                  var _a;
+                  if (filePickerOpen) filePickerOpen.current = true;
+                  (_a = fileInputRef.current) == null ? void 0 : _a.click();
+                },
+                children: isUploading ? "Uploading\u2026" : "Upload"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx12(
             "input",
             {
-              id: index === 0 ? "block-input-" + blockId : void 0,
-              type: "url",
-              value: item.src ?? "",
-              "aria-label": "Image URL for item " + (index + 1),
-              placeholder: "https://example.com/image.jpg",
-              onChange: (e) => onChange({
-                ...data,
-                items: updateItem(items, index, "src", e.target.value)
-              })
+              ref: fileInputRef,
+              type: "file",
+              accept: "image/jpeg,image/png,image/gif,image/webp",
+              style: { display: "none" },
+              "aria-hidden": "true",
+              tabIndex: -1,
+              onChange: (e) => {
+                var _a;
+                if (filePickerOpen) filePickerOpen.current = false;
+                const file = (_a = e.target.files) == null ? void 0 : _a[0];
+                if (file) handleItemUpload(file);
+              },
+              onCancel: () => {
+                if (filePickerOpen) filePickerOpen.current = false;
+              }
             }
           ),
-          /* @__PURE__ */ jsx(
+          isUploading && /* @__PURE__ */ jsx12("div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": Math.round(uploadProgress), "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress for item " + (index + 1), children: /* @__PURE__ */ jsx12("div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${uploadProgress}%` } }) }),
+          uploadError && /* @__PURE__ */ jsxs7("div", { className: "jeeby-cms-upload-error-row", children: [
+            /* @__PURE__ */ jsx12("p", { role: "alert", className: "jeeby-cms-inline-error", children: uploadError.message }),
+            uploadError.retryable && /* @__PURE__ */ jsx12("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: handleItemRetry, children: "Retry" })
+          ] }),
+          /* @__PURE__ */ jsx12("div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: isUploading ? `Uploading \u2014 ${Math.round(uploadProgress)}%` : null }),
+          /* @__PURE__ */ jsx12(
             "input",
             {
               type: "text",
@@ -24453,7 +24869,7 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
             }
           )
         ] }),
-        /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx12(
           "button",
           {
             type: "button",
@@ -24463,27 +24879,42 @@ function GalleryItem({ item, index, items, blockId, onChange, data }) {
               items: items.filter((_, i) => i !== index)
             }),
             className: "jeeby-cms-btn-ghost jeeby-cms-gallery-remove-btn",
-            children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-              /* @__PURE__ */ jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-              /* @__PURE__ */ jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+            children: /* @__PURE__ */ jsxs7("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+              /* @__PURE__ */ jsx12("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+              /* @__PURE__ */ jsx12("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
             ] })
           }
         )
       ] })
     }
   );
-}
+});
 function GalleryEditor({ data, onChange, blockId }) {
   const items = (data == null ? void 0 : data.items) ?? [];
-  const [isEditing, setIsEditing] = useState(items.length === 0);
-  const containerRef = useRef(null);
-  const addButtonRef = useRef(null);
-  const suppressNextBlur = useRef(false);
+  const [isEditing, setIsEditing] = useState7(items.length === 0);
+  const containerRef = useRef7(null);
+  const addButtonRef = useRef7(null);
+  const { storage } = useCMSFirebase2();
+  const batchInputRef = useRef7(null);
+  const filePickerOpen = useRef7(false);
+  const uploadCountRef = useRef7(0);
+  const suppressNextBlur = useRef7(false);
+  const [batchError, setBatchError] = useState7(null);
+  const [activeUploads, setActiveUploads] = useState7(0);
+  const handleUploadStart = useCallback(() => {
+    uploadCountRef.current++;
+    setActiveUploads((c) => c + 1);
+  }, []);
+  const handleUploadEnd = useCallback(() => {
+    uploadCountRef.current--;
+    setActiveUploads((c) => c - 1);
+  }, []);
   function handleContainerBlur() {
     if (suppressNextBlur.current) {
       suppressNextBlur.current = false;
       return;
     }
+    if (filePickerOpen.current || uploadCountRef.current > 0) return;
     setTimeout(() => {
       var _a;
       if (!((_a = containerRef.current) == null ? void 0 : _a.contains(document.activeElement))) {
@@ -24491,9 +24922,44 @@ function GalleryEditor({ data, onChange, blockId }) {
       }
     }, 0);
   }
+  async function handleBatchUpload(files) {
+    setBatchError(null);
+    const fileArray = Array.from(files);
+    const valid = fileArray.filter((f) => !validateImageFile(f));
+    const invalidCount = fileArray.length - valid.length;
+    if (valid.length === 0) {
+      setBatchError("No valid images \u2014 only JPEG, PNG, GIF, and WebP under 10 MB are supported.");
+      if (batchInputRef.current) batchInputRef.current.value = "";
+      filePickerOpen.current = false;
+      return;
+    }
+    try {
+      const results = await withConcurrency(
+        valid.map((file) => () => {
+          const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : MIME_TO_EXT[file.type] ?? "jpg";
+          const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+          return uploadFile(storage, file, path);
+        })
+      );
+      const newItems = results.filter((r) => r.status === "fulfilled").map((r) => ({ src: r.value, alt: "", id: crypto.randomUUID() }));
+      if (newItems.length > 0) {
+        onChange({ ...data, items: [...items, ...newItems] });
+      }
+      const totalFailed = invalidCount + results.filter((r) => r.status === "rejected").length;
+      if (totalFailed > 0) {
+        setBatchError(`${totalFailed} file${totalFailed !== 1 ? "s" : ""} could not be uploaded.`);
+      }
+    } catch (err) {
+      console.error("[jeeby-cms] Batch upload failed:", err);
+      setBatchError("Upload failed \u2014 check your connection and try again.");
+    } finally {
+      if (batchInputRef.current) batchInputRef.current.value = "";
+      filePickerOpen.current = false;
+    }
+  }
   if (!isEditing) {
     const itemsWithSrc = items.filter((item) => item.src);
-    return /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsx12(
       "div",
       {
         ref: containerRef,
@@ -24521,12 +24987,14 @@ function GalleryEditor({ data, onChange, blockId }) {
             });
           }
         },
-        children: itemsWithSrc.length > 0 ? /* @__PURE__ */ jsx("div", { className: "jeeby-cms-gallery-thumb-strip", children: itemsWithSrc.map((item, i) => /* @__PURE__ */ jsx("img", { src: item.src, alt: item.alt || "", className: "jeeby-cms-gallery-thumb" }, i)) }) : /* @__PURE__ */ jsx("p", { className: "jeeby-cms-gallery-empty-hint", children: items.length > 0 ? "Gallery \u2014 click to add image URLs" : "Empty gallery \u2014 click to add images" })
+        children: itemsWithSrc.length > 0 ? /* @__PURE__ */ jsx12("div", { className: "jeeby-cms-gallery-thumb-strip", children: itemsWithSrc.map((item, i) => /* @__PURE__ */ jsx12("img", { src: item.src, alt: item.alt || "", className: "jeeby-cms-gallery-thumb", onError: (e) => {
+          e.currentTarget.style.display = "none";
+        } }, i)) }) : /* @__PURE__ */ jsx12("p", { className: "jeeby-cms-gallery-empty-hint", children: items.length > 0 ? "Gallery \u2014 click to add image URLs" : "Empty gallery \u2014 click to add images" })
       }
     );
   }
-  return /* @__PURE__ */ jsxs("div", { ref: containerRef, onBlur: handleContainerBlur, className: "jeeby-cms-gallery-editor", children: [
-    /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs7("div", { ref: containerRef, onBlur: handleContainerBlur, className: "jeeby-cms-gallery-editor", children: [
+    /* @__PURE__ */ jsx12(
       Reorder.Group,
       {
         axis: "y",
@@ -24535,7 +25003,7 @@ function GalleryEditor({ data, onChange, blockId }) {
         as: "ol",
         "aria-label": "Gallery images",
         style: { listStyle: "none", padding: 0, margin: 0 },
-        children: items.map((item, index) => /* @__PURE__ */ jsx(
+        children: items.map((item, index) => /* @__PURE__ */ jsx12(
           GalleryItem,
           {
             item,
@@ -24543,58 +25011,112 @@ function GalleryEditor({ data, onChange, blockId }) {
             items,
             blockId,
             onChange,
-            data
+            data,
+            storage,
+            filePickerOpen,
+            onUploadStart: handleUploadStart,
+            onUploadEnd: handleUploadEnd
           },
           item.id ?? item.src + "-" + index
         ))
       }
     ),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsxs7("div", { className: "jeeby-cms-gallery-batch-row", children: [
+      /* @__PURE__ */ jsx12(
+        "button",
+        {
+          ref: addButtonRef,
+          id: items.length === 0 ? "block-input-" + blockId : void 0,
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn",
+          onClick: () => onChange({
+            ...data,
+            items: [...items, { src: "", alt: "", id: crypto.randomUUID() }]
+          }),
+          children: "+ Add image"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn",
+          onClick: () => {
+            var _a;
+            filePickerOpen.current = true;
+            (_a = batchInputRef.current) == null ? void 0 : _a.click();
+          },
+          children: "Upload multiple"
+        }
+      )
+    ] }),
+    batchError && /* @__PURE__ */ jsx12("p", { role: "alert", className: "jeeby-cms-inline-error", children: batchError }),
+    /* @__PURE__ */ jsx12("div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ jsx12(
       "button",
       {
-        ref: addButtonRef,
-        id: items.length === 0 ? "block-input-" + blockId : void 0,
         type: "button",
-        className: "jeeby-cms-btn-ghost jeeby-cms-gallery-add-btn",
-        onClick: () => onChange({
-          ...data,
-          items: [...items, { src: "", alt: "", id: crypto.randomUUID() }]
-        }),
-        children: "+ Add image"
+        className: "jeeby-cms-btn-ghost jeeby-cms-image-done-btn",
+        disabled: activeUploads > 0,
+        onClick: () => setIsEditing(false),
+        children: "Done"
+      }
+    ) }),
+    /* @__PURE__ */ jsx12(
+      "input",
+      {
+        ref: batchInputRef,
+        type: "file",
+        accept: "image/jpeg,image/png,image/gif,image/webp",
+        multiple: true,
+        style: { display: "none" },
+        "aria-hidden": "true",
+        tabIndex: -1,
+        onChange: (e) => {
+          var _a;
+          filePickerOpen.current = false;
+          if ((_a = e.target.files) == null ? void 0 : _a.length) handleBatchUpload(e.target.files);
+        },
+        onCancel: () => {
+          filePickerOpen.current = false;
+        }
       }
     )
   ] });
 }
+
+// src/admin/editors/ListEditor.js
+import { useRef as useRef8, useState as useState8 } from "react";
+import { jsx as jsx13, jsxs as jsxs8 } from "react/jsx-runtime";
 function IconBulletList2() {
-  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ jsxs8("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx13("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ jsx13("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx13("circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ jsx13("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx13("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ jsx13("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
 function IconOrderedList2() {
-  return /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ jsxs8("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx13("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ jsx13("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx13("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx13("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx13("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx13("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx13("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx13("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx13("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] });
 }
 function ListEditor({ data, onChange, blockId }) {
   var _a;
   const items = ((_a = data == null ? void 0 : data.items) == null ? void 0 : _a.length) ? data.items : [""];
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState8(false);
   const ordered = (data == null ? void 0 : data.ordered) ?? false;
-  const inputRefs = useRef([]);
-  const containerRef = useRef(null);
+  const inputRefs = useRef8([]);
+  const containerRef = useRef8(null);
   function update(patch) {
     onChange({ items, ordered, ...patch });
   }
@@ -24643,7 +25165,7 @@ function ListEditor({ data, onChange, blockId }) {
   if (!isEditing) {
     const Tag = ordered ? "ol" : "ul";
     const visibleItems = items.filter((i) => i.trim() !== "");
-    return /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsx13(
       "div",
       {
         ref: containerRef,
@@ -24669,14 +25191,14 @@ function ListEditor({ data, onChange, blockId }) {
             });
           }
         },
-        children: visibleItems.length > 0 ? /* @__PURE__ */ jsx(Tag, { className: "jeeby-cms-list-preview", children: visibleItems.map((item, i) => /* @__PURE__ */ jsx("li", { children: item }, i)) }) : /* @__PURE__ */ jsx("p", { className: "jeeby-cms-list-empty-hint", children: "Empty list \u2014 click to add items" })
+        children: visibleItems.length > 0 ? /* @__PURE__ */ jsx13(Tag, { className: "jeeby-cms-list-preview", children: visibleItems.map((item, i) => /* @__PURE__ */ jsx13("li", { children: item }, i)) }) : /* @__PURE__ */ jsx13("p", { className: "jeeby-cms-list-empty-hint", children: "Empty list \u2014 click to add items" })
       }
     );
   }
-  return /* @__PURE__ */ jsxs("div", { ref: containerRef, onBlur: handleContainerBlur, children: [
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-list-items", children: items.map((item, index) => /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-list-item-row", children: [
-      /* @__PURE__ */ jsx("span", { className: "jeeby-cms-list-item-marker", "aria-hidden": "true", children: ordered ? `${index + 1}.` : "\u2022" }),
-      /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs8("div", { ref: containerRef, onBlur: handleContainerBlur, children: [
+    /* @__PURE__ */ jsx13("div", { className: "jeeby-cms-list-items", children: items.map((item, index) => /* @__PURE__ */ jsxs8("div", { className: "jeeby-cms-list-item-row", children: [
+      /* @__PURE__ */ jsx13("span", { className: "jeeby-cms-list-item-marker", "aria-hidden": "true", children: ordered ? `${index + 1}.` : "\u2022" }),
+      /* @__PURE__ */ jsx13(
         "input",
         {
           ref: (el) => {
@@ -24692,7 +25214,7 @@ function ListEditor({ data, onChange, blockId }) {
           placeholder: "List item"
         }
       ),
-      /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx13(
         "button",
         {
           type: "button",
@@ -24700,14 +25222,14 @@ function ListEditor({ data, onChange, blockId }) {
           onClick: () => removeItem(index),
           disabled: items.length === 1 && items[0] === "",
           className: "jeeby-cms-btn-ghost jeeby-cms-list-item-remove",
-          children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-            /* @__PURE__ */ jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-            /* @__PURE__ */ jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+          children: /* @__PURE__ */ jsxs8("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+            /* @__PURE__ */ jsx13("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+            /* @__PURE__ */ jsx13("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
           ] })
         }
       )
     ] }, index)) }),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx13(
       "button",
       {
         type: "button",
@@ -24716,8 +25238,8 @@ function ListEditor({ data, onChange, blockId }) {
         children: "+ Add item"
       }
     ),
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ jsxs("div", { role: "group", "aria-label": "List type", className: "jeeby-cms-toolbar", children: [
-      /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx13("div", { className: "jeeby-cms-block-aux", children: /* @__PURE__ */ jsxs8("div", { role: "group", "aria-label": "List type", className: "jeeby-cms-toolbar", children: [
+      /* @__PURE__ */ jsx13(
         "button",
         {
           type: "button",
@@ -24726,10 +25248,10 @@ function ListEditor({ data, onChange, blockId }) {
           "aria-pressed": !ordered,
           className: "jeeby-cms-toolbar-btn",
           onClick: () => update({ ordered: false }),
-          children: /* @__PURE__ */ jsx(IconBulletList2, {})
+          children: /* @__PURE__ */ jsx13(IconBulletList2, {})
         }
       ),
-      /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx13(
         "button",
         {
           type: "button",
@@ -24738,19 +25260,23 @@ function ListEditor({ data, onChange, blockId }) {
           "aria-pressed": ordered,
           className: "jeeby-cms-toolbar-btn",
           onClick: () => update({ ordered: true }),
-          children: /* @__PURE__ */ jsx(IconOrderedList2, {})
+          children: /* @__PURE__ */ jsx13(IconOrderedList2, {})
         }
       )
     ] }) })
   ] });
 }
+
+// src/admin/editors/PullQuoteEditor.js
+import { useState as useState9, useRef as useRef9 } from "react";
+import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
 function PullQuoteEditor({ data, onChange, blockId }) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState9(false);
   const quote = (data == null ? void 0 : data.quote) ?? "";
   const attribution = (data == null ? void 0 : data.attribution) ?? "";
-  const containerRef = useRef(null);
-  const viewRef = useRef(null);
-  const textareaRef = useRef(null);
+  const containerRef = useRef9(null);
+  const viewRef = useRef9(null);
+  const textareaRef = useRef9(null);
   function update(patch) {
     onChange({ quote, attribution, ...patch });
   }
@@ -24787,7 +25313,7 @@ function PullQuoteEditor({ data, onChange, blockId }) {
     }
   }
   if (!isEditing) {
-    return /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsx14(
       "div",
       {
         ref: viewRef,
@@ -24803,16 +25329,16 @@ function PullQuoteEditor({ data, onChange, blockId }) {
             enterEditMode();
           }
         },
-        children: quote ? /* @__PURE__ */ jsxs("figure", { className: "jeeby-cms-pullquote-figure", children: [
-          /* @__PURE__ */ jsx("blockquote", { className: "jeeby-cms-pullquote-blockquote", children: /* @__PURE__ */ jsx("p", { children: quote }) }),
-          attribution && /* @__PURE__ */ jsx("figcaption", { className: "jeeby-cms-pullquote-figcaption", children: attribution })
-        ] }) : /* @__PURE__ */ jsx("p", { className: "jeeby-cms-pullquote-empty-hint", children: "Pull quote \u2014 click to add text" })
+        children: quote ? /* @__PURE__ */ jsxs9("figure", { className: "jeeby-cms-pullquote-figure", children: [
+          /* @__PURE__ */ jsx14("blockquote", { className: "jeeby-cms-pullquote-blockquote", children: /* @__PURE__ */ jsx14("p", { children: quote }) }),
+          attribution && /* @__PURE__ */ jsx14("figcaption", { className: "jeeby-cms-pullquote-figcaption", children: attribution })
+        ] }) : /* @__PURE__ */ jsx14("p", { className: "jeeby-cms-pullquote-empty-hint", children: "Pull quote \u2014 click to add text" })
       }
     );
   }
-  return /* @__PURE__ */ jsxs("div", { ref: containerRef, className: "jeeby-cms-pullquote-editor", onBlur: handleContainerBlur, children: [
-    /* @__PURE__ */ jsx("label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Quote" }),
-    /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs9("div", { ref: containerRef, className: "jeeby-cms-pullquote-editor", onBlur: handleContainerBlur, children: [
+    /* @__PURE__ */ jsx14("label", { htmlFor: "block-input-" + blockId, className: "jeeby-cms-field-label", children: "Quote" }),
+    /* @__PURE__ */ jsx14(
       "textarea",
       {
         ref: textareaRef,
@@ -24825,8 +25351,8 @@ function PullQuoteEditor({ data, onChange, blockId }) {
         rows: 3
       }
     ),
-    /* @__PURE__ */ jsx("label", { htmlFor: "pullquote-attr-" + blockId, className: "jeeby-cms-field-label jeeby-cms-pullquote-attr-label", children: "Attribution" }),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx14("label", { htmlFor: "pullquote-attr-" + blockId, className: "jeeby-cms-field-label jeeby-cms-pullquote-attr-label", children: "Attribution" }),
+    /* @__PURE__ */ jsx14(
       "input",
       {
         type: "text",
@@ -24840,91 +25366,99 @@ function PullQuoteEditor({ data, onChange, blockId }) {
     )
   ] });
 }
+
+// src/admin/AddBlockButton.js
+import { useState as useState11, useRef as useRef11 } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+
+// src/admin/BlockTypePicker.js
+import { useState as useState10, useEffect as useEffect9, useRef as useRef10 } from "react";
+import { jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
 function IconText() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "12", height: "3", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "5.5", y: "4", width: "3", height: "9", rx: "0.7" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "1", y: "1", width: "12", height: "3", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5.5", y: "4", width: "3", height: "9", rx: "0.7" })
   ] }) });
 }
 function IconHeading() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "3", height: "12", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "10", y: "1", width: "3", height: "12", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "4", y: "5.5", width: "6", height: "3", rx: "0.7" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "1", y: "1", width: "3", height: "12", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "10", y: "1", width: "3", height: "12", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "4", y: "5.5", width: "6", height: "3", rx: "0.7" })
   ] }) });
 }
-function IconImage() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "2", width: "12", height: "10", rx: "1.5" }),
-    /* @__PURE__ */ jsx("circle", { cx: "4.5", cy: "5.5", r: "1.2", fill: "currentColor", stroke: "none" }),
-    /* @__PURE__ */ jsx("polyline", { points: "1,11 4,7.5 7,10 9.5,7.5 13,11" })
+function IconImage2() {
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "1", y: "2", width: "12", height: "10", rx: "1.5" }),
+    /* @__PURE__ */ jsx15("circle", { cx: "4.5", cy: "5.5", r: "1.2", fill: "currentColor", stroke: "none" }),
+    /* @__PURE__ */ jsx15("polyline", { points: "1,11 4,7.5 7,10 9.5,7.5 13,11" })
   ] }) });
 }
 function IconVideo() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "2.5", width: "9", height: "9", rx: "1.5" }),
-    /* @__PURE__ */ jsx("polygon", { points: "10,5 13,7 10,9", fill: "currentColor", stroke: "none" }),
-    /* @__PURE__ */ jsx("polygon", { points: "5,4.5 9.5,7 5,9.5", fill: "currentColor", stroke: "none" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "1", y: "2.5", width: "9", height: "9", rx: "1.5" }),
+    /* @__PURE__ */ jsx15("polygon", { points: "10,5 13,7 10,9", fill: "currentColor", stroke: "none" }),
+    /* @__PURE__ */ jsx15("polygon", { points: "5,4.5 9.5,7 5,9.5", fill: "currentColor", stroke: "none" })
   ] }) });
 }
 function IconGallery() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "1", width: "5.5", height: "5.5", rx: "1" }),
-    /* @__PURE__ */ jsx("rect", { x: "7.5", y: "1", width: "5.5", height: "5.5", rx: "1" }),
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "7.5", width: "5.5", height: "5.5", rx: "1" }),
-    /* @__PURE__ */ jsx("rect", { x: "7.5", y: "7.5", width: "5.5", height: "5.5", rx: "1" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "1", y: "1", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ jsx15("rect", { x: "7.5", y: "1", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ jsx15("rect", { x: "1", y: "7.5", width: "5.5", height: "5.5", rx: "1" }),
+    /* @__PURE__ */ jsx15("rect", { x: "7.5", y: "7.5", width: "5.5", height: "5.5", rx: "1" })
   ] }) });
 }
 function IconPullQuote() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
-    /* @__PURE__ */ jsx("rect", { x: "0.5", y: "2", width: "2", height: "10", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "4", y: "3", width: "9", height: "2", rx: "0.7", opacity: "0.9" }),
-    /* @__PURE__ */ jsx("rect", { x: "4", y: "6.5", width: "9", height: "2", rx: "0.7", opacity: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "4", y: "10", width: "6", height: "2", rx: "0.7", opacity: "0.5" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "0.5", y: "2", width: "2", height: "10", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "4", y: "3", width: "9", height: "2", rx: "0.7", opacity: "0.9" }),
+    /* @__PURE__ */ jsx15("rect", { x: "4", y: "6.5", width: "9", height: "2", rx: "0.7", opacity: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "4", y: "10", width: "6", height: "2", rx: "0.7", opacity: "0.5" })
   ] }) });
 }
 function IconBulletList3() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "8", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx15("circle", { cx: "2.5", cy: "3.5", r: "1.2" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("circle", { cx: "2.5", cy: "8", r: "1.2" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("circle", { cx: "2.5", cy: "12.5", r: "1.2" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] }) });
 }
 function IconOrderedList3() {
-  return /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
-    /* @__PURE__ */ jsx("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
-    /* @__PURE__ */ jsx("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
+  return /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsxs10("svg", { width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", children: [
+    /* @__PURE__ */ jsx15("rect", { x: "2.5", y: "1.5", width: "1.5", height: "4", rx: "0.5" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5", y: "2.5", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "1.5", y: "6.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx15("rect", { x: "1.5", y: "8.5", width: "3.5", height: "1.4", rx: "0.4" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5", y: "7", width: "9", height: "2", rx: "0.7" }),
+    /* @__PURE__ */ jsx15("rect", { x: "1.5", y: "11.2", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx15("rect", { x: "1.5", y: "12.6", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx15("rect", { x: "1.5", y: "14", width: "3.5", height: "1.2", rx: "0.4" }),
+    /* @__PURE__ */ jsx15("rect", { x: "5", y: "11.5", width: "9", height: "2", rx: "0.7" })
   ] }) });
 }
 var BLOCK_TYPES = [
-  { type: "title", colorKey: "heading", label: "Heading", hint: "title or subtitle", icon: /* @__PURE__ */ jsx(IconHeading, {}), initialData: void 0 },
-  { type: "richtext", colorKey: "text", label: "Text", hint: "paragraphs with formatting", icon: /* @__PURE__ */ jsx(IconText, {}), initialData: void 0 },
-  { type: "list", colorKey: "list", label: "Bullet List", hint: "points without ranking", icon: /* @__PURE__ */ jsx(IconBulletList3, {}), initialData: { ordered: false, items: [""] } },
-  { type: "list", colorKey: "list", label: "Numbered List", hint: "steps or ranked items", icon: /* @__PURE__ */ jsx(IconOrderedList3, {}), initialData: { ordered: true, items: [""] } },
-  { type: "pullquote", colorKey: "text", label: "Pull Quote", hint: "highlighted quote or callout", icon: /* @__PURE__ */ jsx(IconPullQuote, {}), initialData: { quote: "", attribution: "" } },
-  { type: "image", colorKey: "media", label: "Image", hint: "photo or graphic", icon: /* @__PURE__ */ jsx(IconImage, {}), initialData: void 0 },
-  { type: "video", colorKey: "media", label: "Video", hint: "YouTube or Vimeo link", icon: /* @__PURE__ */ jsx(IconVideo, {}), initialData: void 0 },
-  { type: "gallery", colorKey: "media", label: "Gallery", hint: "photo grid", icon: /* @__PURE__ */ jsx(IconGallery, {}), initialData: void 0 }
+  { type: "title", colorKey: "heading", label: "Heading", hint: "title or subtitle", icon: /* @__PURE__ */ jsx15(IconHeading, {}), initialData: void 0 },
+  { type: "richtext", colorKey: "text", label: "Text", hint: "paragraphs with formatting", icon: /* @__PURE__ */ jsx15(IconText, {}), initialData: void 0 },
+  { type: "list", colorKey: "list", label: "Bullet List", hint: "points without ranking", icon: /* @__PURE__ */ jsx15(IconBulletList3, {}), initialData: { ordered: false, items: [""] } },
+  { type: "list", colorKey: "list", label: "Numbered List", hint: "steps or ranked items", icon: /* @__PURE__ */ jsx15(IconOrderedList3, {}), initialData: { ordered: true, items: [""] } },
+  { type: "pullquote", colorKey: "text", label: "Pull Quote", hint: "highlighted quote or callout", icon: /* @__PURE__ */ jsx15(IconPullQuote, {}), initialData: { quote: "", attribution: "" } },
+  { type: "image", colorKey: "media", label: "Image", hint: "photo or graphic", icon: /* @__PURE__ */ jsx15(IconImage2, {}), initialData: void 0 },
+  { type: "video", colorKey: "media", label: "Video", hint: "YouTube or Vimeo link", icon: /* @__PURE__ */ jsx15(IconVideo, {}), initialData: void 0 },
+  { type: "gallery", colorKey: "media", label: "Gallery", hint: "photo grid", icon: /* @__PURE__ */ jsx15(IconGallery, {}), initialData: void 0 }
 ];
 function BlockTypePicker({ onSelect, onClose }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const listRef = useRef(null);
-  useEffect(() => {
+  const [activeIndex, setActiveIndex] = useState10(0);
+  const listRef = useRef10(null);
+  useEffect9(() => {
     var _a;
     const firstOption = (_a = listRef.current) == null ? void 0 : _a.querySelector('[role="option"]');
     firstOption == null ? void 0 : firstOption.focus();
   }, []);
-  useEffect(() => {
+  useEffect9(() => {
     function handleClickOutside(e) {
       if (listRef.current && !listRef.current.contains(e.target)) {
         onClose();
@@ -24954,7 +25488,7 @@ function BlockTypePicker({ onSelect, onClose }) {
       onClose();
     }
   }
-  return /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsx15(
     "ul",
     {
       ref: listRef,
@@ -24962,7 +25496,7 @@ function BlockTypePicker({ onSelect, onClose }) {
       "aria-label": "Choose block type",
       onKeyDown: handleKeyDown2,
       className: "jeeby-cms-block-type-picker",
-      children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ jsxs(
+      children: BLOCK_TYPES.map((bt, index) => /* @__PURE__ */ jsxs10(
         "li",
         {
           role: "option",
@@ -24973,9 +25507,9 @@ function BlockTypePicker({ onSelect, onClose }) {
           onMouseEnter: () => setActiveIndex(index),
           children: [
             bt.icon,
-            /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-block-type-info", children: [
-              /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-type-label", children: bt.label }),
-              /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-type-hint", children: bt.hint })
+            /* @__PURE__ */ jsxs10("span", { className: "jeeby-cms-block-type-info", children: [
+              /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-type-label", children: bt.label }),
+              /* @__PURE__ */ jsx15("span", { className: "jeeby-cms-block-type-hint", children: bt.hint })
             ] })
           ]
         },
@@ -24984,10 +25518,13 @@ function BlockTypePicker({ onSelect, onClose }) {
     }
   );
 }
+
+// src/admin/AddBlockButton.js
+import { jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
 function AddBlockButton({ onAdd, insertIndex }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const buttonRef = useRef(null);
+  const [isOpen, setIsOpen] = useState11(false);
+  const [isHovered, setIsHovered] = useState11(false);
+  const buttonRef = useRef11(null);
   const prefersReducedMotion = useReducedMotion();
   const showUI = isHovered || isOpen;
   function handleMouseLeave(e) {
@@ -24995,16 +25532,16 @@ function AddBlockButton({ onAdd, insertIndex }) {
       setIsHovered(false);
     }
   }
-  return /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsxs11(
     "div",
     {
       className: "jeeby-cms-add-block-seam",
       onMouseEnter: () => setIsHovered(true),
       onMouseLeave: handleMouseLeave,
       children: [
-        /* @__PURE__ */ jsx("div", { className: "jeeby-cms-add-block-hover-zone", "aria-hidden": "true" }),
-        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-add-block-ui", children: [
-          /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx16("div", { className: "jeeby-cms-add-block-hover-zone", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsxs11("div", { className: "jeeby-cms-add-block-ui", children: [
+          /* @__PURE__ */ jsx16(
             "button",
             {
               ref: buttonRef,
@@ -25014,13 +25551,13 @@ function AddBlockButton({ onAdd, insertIndex }) {
               "aria-haspopup": "listbox",
               onClick: () => setIsOpen((v) => !v),
               className: "jeeby-cms-add-block-btn",
-              children: /* @__PURE__ */ jsxs("svg", { width: "12", height: "12", viewBox: "0 0 12 12", "aria-hidden": "true", focusable: "false", children: [
-                /* @__PURE__ */ jsx("line", { x1: "6", y1: "0", x2: "6", y2: "12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
-                /* @__PURE__ */ jsx("line", { x1: "0", y1: "6", x2: "12", y2: "6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+              children: /* @__PURE__ */ jsxs11("svg", { width: "12", height: "12", viewBox: "0 0 12 12", "aria-hidden": "true", focusable: "false", children: [
+                /* @__PURE__ */ jsx16("line", { x1: "6", y1: "0", x2: "6", y2: "12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+                /* @__PURE__ */ jsx16("line", { x1: "0", y1: "6", x2: "12", y2: "6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
               ] })
             }
           ),
-          /* @__PURE__ */ jsx(
+          /* @__PURE__ */ jsx16(
             motion.div,
             {
               className: "jeeby-cms-add-block-bar",
@@ -25031,7 +25568,7 @@ function AddBlockButton({ onAdd, insertIndex }) {
             }
           )
         ] }),
-        isOpen && /* @__PURE__ */ jsx(
+        isOpen && /* @__PURE__ */ jsx16(
           BlockTypePicker,
           {
             onSelect: (type, initialData) => {
@@ -25050,13 +25587,16 @@ function AddBlockButton({ onAdd, insertIndex }) {
     }
   );
 }
+
+// src/admin/BlockGutter.js
+import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
 var DISPLAY_NAMES = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List" };
 function displayName(type) {
   return DISPLAY_NAMES[type] || type;
 }
 function BlockGutter({ block, onDelete, dragControls }) {
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-gutter", children: [
-    /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs12("div", { className: "jeeby-cms-block-gutter", children: [
+    /* @__PURE__ */ jsx17(
       "button",
       {
         className: "jeeby-cms-drag-handle",
@@ -25066,31 +25606,34 @@ function BlockGutter({ block, onDelete, dragControls }) {
           e.preventDefault();
           dragControls.start(e);
         },
-        children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "14", viewBox: "0 0 10 14", "aria-hidden": "true", focusable: "false", children: [
-          /* @__PURE__ */ jsx("circle", { cx: "2", cy: "2", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsx("circle", { cx: "8", cy: "2", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsx("circle", { cx: "2", cy: "7", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsx("circle", { cx: "8", cy: "7", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsx("circle", { cx: "2", cy: "12", r: "1.25", fill: "currentColor" }),
-          /* @__PURE__ */ jsx("circle", { cx: "8", cy: "12", r: "1.25", fill: "currentColor" })
+        children: /* @__PURE__ */ jsxs12("svg", { width: "10", height: "14", viewBox: "0 0 10 14", "aria-hidden": "true", focusable: "false", children: [
+          /* @__PURE__ */ jsx17("circle", { cx: "2", cy: "2", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx17("circle", { cx: "8", cy: "2", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx17("circle", { cx: "2", cy: "7", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx17("circle", { cx: "8", cy: "7", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx17("circle", { cx: "2", cy: "12", r: "1.25", fill: "currentColor" }),
+          /* @__PURE__ */ jsx17("circle", { cx: "8", cy: "12", r: "1.25", fill: "currentColor" })
         ] })
       }
     ),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx17(
       "button",
       {
         type: "button",
         className: "jeeby-cms-block-delete-btn",
         "aria-label": "Delete " + displayName(block.type) + " block",
         onClick: () => onDelete(block),
-        children: /* @__PURE__ */ jsxs("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
-          /* @__PURE__ */ jsx("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
-          /* @__PURE__ */ jsx("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
+        children: /* @__PURE__ */ jsxs12("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: [
+          /* @__PURE__ */ jsx17("line", { x1: "1", y1: "1", x2: "9", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" }),
+          /* @__PURE__ */ jsx17("line", { x1: "9", y1: "1", x2: "1", y2: "9", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" })
         ] })
       }
     )
   ] });
 }
+
+// src/admin/BlockCanvas.js
+import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
 var DISPLAY_NAMES2 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery", list: "List", pullquote: "Pull Quote" };
 function displayName2(type) {
   return DISPLAY_NAMES2[type] || type;
@@ -25104,11 +25647,11 @@ var EDITOR_MAP = {
   list: ListEditor,
   pullquote: PullQuoteEditor
 };
-var BlockCard = memo(function BlockCard2({ block, index, onChange, onDelete, onAddBlock }) {
-  const controls = useDragControls();
+var BlockCard = memo4(function BlockCard2({ block, index, onChange, onDelete, onAddBlock }) {
+  const controls = useDragControls2();
   const Editor2 = EDITOR_MAP[block.type] || EDITOR_MAP.richtext;
-  return /* @__PURE__ */ jsxs(
-    Reorder.Item,
+  return /* @__PURE__ */ jsxs13(
+    Reorder2.Item,
     {
       value: block,
       dragListener: false,
@@ -25117,62 +25660,62 @@ var BlockCard = memo(function BlockCard2({ block, index, onChange, onDelete, onA
       style: { listStyle: "none" },
       whileDrag: { scale: 1.01, opacity: 0.9 },
       children: [
-        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-row", children: [
-          /* @__PURE__ */ jsx(BlockGutter, { block, onDelete, dragControls: controls }),
-          /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-block-row", children: [
+          /* @__PURE__ */ jsx18(BlockGutter, { block, onDelete, dragControls: controls }),
+          /* @__PURE__ */ jsx18(
             "article",
             {
               className: "jeeby-cms-block-content",
               "aria-label": displayName2(block.type) + " block",
-              children: /* @__PURE__ */ jsx(Editor2, { data: block.data, onChange: (newData) => onChange(block.id, newData), blockId: block.id })
+              children: /* @__PURE__ */ jsx18(Editor2, { data: block.data, onChange: (newData) => onChange(block.id, newData), blockId: block.id })
             }
           )
         ] }),
-        /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, index, initialData), insertIndex: index })
+        /* @__PURE__ */ jsx18(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, index, initialData), insertIndex: index })
       ]
     }
   );
 });
-var EmptyStatePreviews = memo(function EmptyStatePreviews2() {
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty-previews", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty-preview", children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "58", height: "9", rx: "2", opacity: "0.65" }),
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "17", width: "80", height: "4", rx: "1.5", opacity: "0.28" }),
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "25", width: "72", height: "4", rx: "1.5", opacity: "0.22" }),
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "33", width: "52", height: "4", rx: "1.5", opacity: "0.17" })
+var EmptyStatePreviews = memo4(function EmptyStatePreviews2() {
+  return /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-canvas-empty-previews", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-canvas-empty-preview", children: [
+      /* @__PURE__ */ jsx18("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxs13("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "0", width: "58", height: "9", rx: "2", opacity: "0.65" }),
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "17", width: "80", height: "4", rx: "1.5", opacity: "0.28" }),
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "25", width: "72", height: "4", rx: "1.5", opacity: "0.22" }),
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "33", width: "52", height: "4", rx: "1.5", opacity: "0.17" })
       ] }) }),
-      /* @__PURE__ */ jsx("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Heading" })
+      /* @__PURE__ */ jsx18("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Heading" })
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty-preview", children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "2", width: "80", height: "4", rx: "1.5", opacity: "0.45" }),
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "12", width: "76", height: "4", rx: "1.5", opacity: "0.4" }),
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "22", width: "80", height: "4", rx: "1.5", opacity: "0.4" }),
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "32", width: "80", height: "4", rx: "1.5", opacity: "0.35" })
+    /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-canvas-empty-preview", children: [
+      /* @__PURE__ */ jsx18("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxs13("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "2", width: "80", height: "4", rx: "1.5", opacity: "0.45" }),
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "12", width: "76", height: "4", rx: "1.5", opacity: "0.4" }),
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "22", width: "80", height: "4", rx: "1.5", opacity: "0.4" }),
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "32", width: "80", height: "4", rx: "1.5", opacity: "0.35" })
       ] }) }),
-      /* @__PURE__ */ jsx("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Text" })
+      /* @__PURE__ */ jsx18("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Text" })
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty-preview", children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
-        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "80", height: "44", rx: "3", fillOpacity: "0.05", stroke: "currentColor", strokeOpacity: "0.25", strokeWidth: "1.5" }),
-        /* @__PURE__ */ jsx("circle", { cx: "16", cy: "14", r: "6", opacity: "0.22" }),
-        /* @__PURE__ */ jsx("polygon", { points: "0,44 20,24 34,34 52,20 66,30 80,23 80,44", opacity: "0.18" })
+    /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-canvas-empty-preview", children: [
+      /* @__PURE__ */ jsx18("div", { className: "jeeby-cms-canvas-empty-preview-card", children: /* @__PURE__ */ jsxs13("svg", { viewBox: "0 0 80 44", width: "80", height: "44", fill: "currentColor", children: [
+        /* @__PURE__ */ jsx18("rect", { x: "0", y: "0", width: "80", height: "44", rx: "3", fillOpacity: "0.05", stroke: "currentColor", strokeOpacity: "0.25", strokeWidth: "1.5" }),
+        /* @__PURE__ */ jsx18("circle", { cx: "16", cy: "14", r: "6", opacity: "0.22" }),
+        /* @__PURE__ */ jsx18("polygon", { points: "0,44 20,24 34,34 52,20 66,30 80,23 80,44", opacity: "0.18" })
       ] }) }),
-      /* @__PURE__ */ jsx("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Image" })
+      /* @__PURE__ */ jsx18("span", { className: "jeeby-cms-canvas-empty-preview-label", children: "Image" })
     ] })
   ] });
 });
 function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
-  const [emptyPickerOpen, setEmptyPickerOpen] = useState(false);
-  const emptyBtnRef = useRef(null);
+  const [emptyPickerOpen, setEmptyPickerOpen] = useState12(false);
+  const emptyBtnRef = useRef12(null);
   if (blocks.length === 0) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty", children: [
-      /* @__PURE__ */ jsx(EmptyStatePreviews, {}),
-      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-canvas-empty-headline", children: "This page has no content yet" }),
-      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-canvas-empty-body", children: "Add blocks to build your page \u2014 headings, paragraphs, images, and more." }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-canvas-empty-picker-anchor", children: [
-        /* @__PURE__ */ jsx(
+    return /* @__PURE__ */ jsx18("div", { className: "jeeby-cms-block-canvas", children: /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-canvas-empty", children: [
+      /* @__PURE__ */ jsx18(EmptyStatePreviews, {}),
+      /* @__PURE__ */ jsx18("p", { className: "jeeby-cms-canvas-empty-headline", children: "This page has no content yet" }),
+      /* @__PURE__ */ jsx18("p", { className: "jeeby-cms-canvas-empty-body", children: "Add blocks to build your page \u2014 headings, paragraphs, images, and more." }),
+      /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-canvas-empty-picker-anchor", children: [
+        /* @__PURE__ */ jsx18(
           "button",
           {
             ref: emptyBtnRef,
@@ -25184,7 +25727,7 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
             children: "Add your first block"
           }
         ),
-        emptyPickerOpen && /* @__PURE__ */ jsx(
+        emptyPickerOpen && /* @__PURE__ */ jsx18(
           BlockTypePicker,
           {
             onSelect: (type, initialData) => {
@@ -25201,17 +25744,17 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
       ] })
     ] }) });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-block-canvas", children: [
-    /* @__PURE__ */ jsx(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, -1, initialData), insertIndex: -1 }),
-    /* @__PURE__ */ jsx(
-      Reorder.Group,
+  return /* @__PURE__ */ jsxs13("div", { className: "jeeby-cms-block-canvas", children: [
+    /* @__PURE__ */ jsx18(AddBlockButton, { onAdd: (type, initialData) => onAddBlock(type, -1, initialData), insertIndex: -1 }),
+    /* @__PURE__ */ jsx18(
+      Reorder2.Group,
       {
         as: "ol",
         axis: "y",
         values: blocks,
         onReorder,
         "aria-label": "Page blocks",
-        children: blocks.map((block, index) => /* @__PURE__ */ jsx(
+        children: blocks.map((block, index) => /* @__PURE__ */ jsx18(
           BlockCard,
           {
             block,
@@ -25226,9 +25769,12 @@ function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
     )
   ] });
 }
+
+// src/admin/UndoToast.js
+import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
 var DISPLAY_NAMES3 = { title: "Title", richtext: "Text", image: "Image", video: "Video", gallery: "Gallery" };
 function UndoToast({ blockType, onUndo }) {
-  return /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsxs14(
     "div",
     {
       role: "status",
@@ -25236,8 +25782,8 @@ function UndoToast({ blockType, onUndo }) {
       "aria-atomic": "true",
       className: "jeeby-cms-undo-toast",
       children: [
-        /* @__PURE__ */ jsx("span", { children: (DISPLAY_NAMES3[blockType] || blockType) + " block deleted." }),
-        /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx19("span", { children: (DISPLAY_NAMES3[blockType] || blockType) + " block deleted." }),
+        /* @__PURE__ */ jsx19(
           "button",
           {
             type: "button",
@@ -25251,6 +25797,11 @@ function UndoToast({ blockType, onUndo }) {
     }
   );
 }
+
+// src/admin/ModalShell.js
+import { useEffect as useEffect10, useRef as useRef13 } from "react";
+import { AnimatePresence, motion as motion2, useReducedMotion as useReducedMotion2 } from "framer-motion";
+import { jsx as jsx20 } from "react/jsx-runtime";
 var _scrollLockCount = 0;
 function lockScroll() {
   if (_scrollLockCount === 0) document.body.style.overflow = "hidden";
@@ -25262,9 +25813,9 @@ function unlockScroll() {
 }
 var FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef, onClose, backdropStyle, children }) {
-  const dialogRef = useRef(null);
-  const reduced = useReducedMotion();
-  useEffect(() => {
+  const dialogRef = useRef13(null);
+  const reduced = useReducedMotion2();
+  useEffect10(() => {
     var _a, _b, _c;
     if (!open) {
       (_a = triggerRef == null ? void 0 : triggerRef.current) == null ? void 0 : _a.focus();
@@ -25273,12 +25824,12 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
     const target = ((_b = dialogRef.current) == null ? void 0 : _b.querySelector("[data-autofocus]")) ?? ((_c = dialogRef.current) == null ? void 0 : _c.querySelector(FOCUSABLE));
     target == null ? void 0 : target.focus();
   }, [open]);
-  useEffect(() => {
+  useEffect10(() => {
     if (!open) return;
     lockScroll();
     return unlockScroll;
   }, [open]);
-  useEffect(() => {
+  useEffect10(() => {
     if (!open) return;
     function handleKeyDown2(e) {
       if (e.key === "Escape") {
@@ -25304,8 +25855,8 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
     document.addEventListener("keydown", handleKeyDown2);
     return () => document.removeEventListener("keydown", handleKeyDown2);
   }, [open, onClose]);
-  return /* @__PURE__ */ jsx(AnimatePresence, { children: open && /* @__PURE__ */ jsx(
-    motion.div,
+  return /* @__PURE__ */ jsx20(AnimatePresence, { children: open && /* @__PURE__ */ jsx20(
+    motion2.div,
     {
       className: "jeeby-cms-modal-backdrop",
       style: backdropStyle,
@@ -25314,8 +25865,8 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
       animate: { opacity: 1 },
       exit: { opacity: 0 },
       transition: { duration: reduced ? 0.01 : 0.2, ease: [0.16, 1, 0.3, 1] },
-      children: /* @__PURE__ */ jsx(
-        motion.div,
+      children: /* @__PURE__ */ jsx20(
+        motion2.div,
         {
           ref: dialogRef,
           role,
@@ -25334,8 +25885,11 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
     }
   ) });
 }
+
+// src/admin/UnsavedChangesWarning.js
+import { jsx as jsx21, jsxs as jsxs15 } from "react/jsx-runtime";
 function UnsavedChangesWarning({ onLeave, onStay }) {
-  return /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsxs15(
     ModalShell,
     {
       role: "alertdialog",
@@ -25344,10 +25898,10 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
       onClose: onStay,
       backdropStyle: { zIndex: 300 },
       children: [
-        /* @__PURE__ */ jsx("h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
-        /* @__PURE__ */ jsx("p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
-        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx21("h2", { id: "unsaved-heading", children: "You have unsaved changes" }),
+        /* @__PURE__ */ jsx21("p", { id: "unsaved-body", children: "Your recent edits have not been saved yet. Do you want to leave without saving?" }),
+        /* @__PURE__ */ jsxs15("div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ jsx21(
             "button",
             {
               type: "button",
@@ -25356,7 +25910,7 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
               children: "Leave without saving"
             }
           ),
-          /* @__PURE__ */ jsx(
+          /* @__PURE__ */ jsx21(
             "button",
             {
               type: "button",
@@ -25371,18 +25925,21 @@ function UnsavedChangesWarning({ onLeave, onStay }) {
     }
   );
 }
+
+// src/admin/PublishConfirmModal.js
+import { jsx as jsx23, jsxs as jsxs16 } from "react/jsx-runtime";
 function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, publishing, publishError }) {
-  return /* @__PURE__ */ jsxs(ModalShell, { open, labelId: "publish-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsxs("h2", { id: "publish-modal-heading", children: [
+  return /* @__PURE__ */ jsxs16(ModalShell, { open, labelId: "publish-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsxs16("h2", { id: "publish-modal-heading", children: [
       "Publish \u2018",
       pageName,
       "\u2019?"
     ] }),
-    /* @__PURE__ */ jsx("p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
-    publishError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-      /* @__PURE__ */ jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
-      /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx23("p", { children: "This will replace the current live version with your latest draft. Visitors will see the new content immediately." }),
+    publishError && /* @__PURE__ */ jsx23("p", { role: "alert", className: "jeeby-cms-inline-error", children: "Failed to publish. Please try again." }),
+    /* @__PURE__ */ jsxs16("div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ jsx23("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
+      /* @__PURE__ */ jsx23(
         "button",
         {
           type: "button",
@@ -25397,20 +25954,29 @@ function PublishConfirmModal({ open, pageName, onClose, onConfirm, triggerRef, p
     ] })
   ] });
 }
+
+// src/admin/PublishToast.js
+import { jsx as jsx24 } from "react/jsx-runtime";
 function PublishToast() {
-  return /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsx24(
     "div",
     {
       role: "status",
       "aria-live": "polite",
       "aria-atomic": "true",
       className: "jeeby-cms-publish-toast",
-      children: /* @__PURE__ */ jsx("span", { children: "Page published successfully." })
+      children: /* @__PURE__ */ jsx24("span", { children: "Page published successfully." })
     }
   );
 }
-var SignOutGuardContext = createContext(null);
-var useSignOutGuard = () => useContext(SignOutGuardContext);
+
+// src/admin/SignOutGuardContext.js
+import { createContext as createContext4, useContext as useContext4 } from "react";
+var SignOutGuardContext = createContext4(null);
+var useSignOutGuard = () => useContext4(SignOutGuardContext);
+
+// src/admin/PageEditor.js
+import { jsx as jsx25, jsxs as jsxs17 } from "react/jsx-runtime";
 var DEFAULT_BLOCK_DATA = {
   title: { level: "h2", text: "" },
   richtext: { html: "" },
@@ -25420,31 +25986,31 @@ var DEFAULT_BLOCK_DATA = {
   list: { ordered: false, items: [""] }
 };
 function PageEditor({ slug }) {
-  const { db } = useCMSFirebase();
+  const { db } = useCMSFirebase3();
   const signOutGuard = useSignOutGuard();
-  const [blocks, setBlocks] = useState([]);
-  const [pageName, setPageName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null);
-  const [deletedBlock, setDeletedBlock] = useState(null);
-  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
-  const [lastPublishedAt, setLastPublishedAt] = useState(null);
-  const [hasDraftChanges, setHasDraftChanges] = useState(false);
-  const [showPublishModal, setShowPublishModal] = useState(false);
-  const [publishStatus, setPublishStatus] = useState("idle");
-  const [publishError, setPublishError] = useState(null);
-  const [showPublishToast, setShowPublishToast] = useState(false);
-  const debounceRef = useRef(null);
-  const deleteTimerRef = useRef(null);
-  const blocksRef = useRef(blocks);
-  const pendingSaveRef = useRef(false);
-  const publishBtnRef = useRef(null);
-  const containerRef = useRef(null);
-  useEffect(() => {
+  const [blocks, setBlocks] = useState13([]);
+  const [pageName, setPageName] = useState13("");
+  const [loading, setLoading] = useState13(true);
+  const [loadError, setLoadError] = useState13(false);
+  const [saveStatus, setSaveStatus] = useState13(null);
+  const [deletedBlock, setDeletedBlock] = useState13(null);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState13(false);
+  const [lastPublishedAt, setLastPublishedAt] = useState13(null);
+  const [hasDraftChanges, setHasDraftChanges] = useState13(false);
+  const [showPublishModal, setShowPublishModal] = useState13(false);
+  const [publishStatus, setPublishStatus] = useState13("idle");
+  const [publishError, setPublishError] = useState13(null);
+  const [showPublishToast, setShowPublishToast] = useState13(false);
+  const debounceRef = useRef14(null);
+  const deleteTimerRef = useRef14(null);
+  const blocksRef = useRef14(blocks);
+  const pendingSaveRef = useRef14(false);
+  const publishBtnRef = useRef14(null);
+  const containerRef = useRef14(null);
+  useEffect11(() => {
     blocksRef.current = blocks;
   }, [blocks]);
-  useEffect(() => {
+  useEffect11(() => {
     let cancelled = false;
     async function load() {
       var _a;
@@ -25469,11 +26035,11 @@ function PageEditor({ slug }) {
       cancelled = true;
     };
   }, [db, slug]);
-  useEffect(() => () => {
+  useEffect11(() => () => {
     clearTimeout(debounceRef.current);
     clearTimeout(deleteTimerRef.current);
   }, []);
-  useEffect(() => {
+  useEffect11(() => {
     if (loading) return;
     const el = containerRef.current;
     if (!el) return;
@@ -25496,7 +26062,7 @@ function PageEditor({ slug }) {
       admin.classList.remove("jeeby-cms-nav-hidden");
     };
   }, [loading]);
-  useEffect(() => {
+  useEffect11(() => {
     if (!signOutGuard) return;
     signOutGuard.setGuard({
       hasPending: () => hasDraftChanges || pendingSaveRef.current,
@@ -25507,12 +26073,12 @@ function PageEditor({ slug }) {
       signOutGuard.clearGuard();
     };
   }, [signOutGuard, hasDraftChanges, pageName, slug]);
-  useEffect(() => {
+  useEffect11(() => {
     if (!showPublishToast) return;
     const t = setTimeout(() => setShowPublishToast(false), 3e3);
     return () => clearTimeout(t);
   }, [showPublishToast]);
-  const scheduleSave = useCallback((updatedBlocks) => {
+  const scheduleSave = useCallback2((updatedBlocks) => {
     pendingSaveRef.current = true;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -25528,12 +26094,12 @@ function PageEditor({ slug }) {
       }
     }, 1e3);
   }, [db, slug]);
-  const handleBlockChange = useCallback((id, newData) => {
+  const handleBlockChange = useCallback2((id, newData) => {
     const updated = blocksRef.current.map((b) => b.id === id ? { ...b, data: newData } : b);
     setBlocks(updated);
     scheduleSave(updated);
   }, [scheduleSave]);
-  const handleReorder = useCallback((newOrder) => {
+  const handleReorder = useCallback2((newOrder) => {
     setBlocks(newOrder);
     pendingSaveRef.current = true;
     setSaveStatus("saving");
@@ -25545,7 +26111,7 @@ function PageEditor({ slug }) {
       pendingSaveRef.current = false;
     });
   }, [db, slug]);
-  const handleAddBlock = useCallback((type, insertIndex, initialData) => {
+  const handleAddBlock = useCallback2((type, insertIndex, initialData) => {
     const newBlock = {
       id: crypto.randomUUID(),
       type,
@@ -25560,7 +26126,7 @@ function PageEditor({ slug }) {
       (_a = document.getElementById("block-input-" + newBlock.id)) == null ? void 0 : _a.focus();
     });
   }, [scheduleSave]);
-  const handleDelete2 = useCallback((block) => {
+  const handleDelete2 = useCallback2((block) => {
     const index = blocksRef.current.findIndex((b) => b.id === block.id);
     const afterDelete = blocksRef.current.filter((b) => b.id !== block.id);
     setBlocks(afterDelete);
@@ -25644,17 +26210,17 @@ function PageEditor({ slug }) {
     }
   }
   if (loading) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading editor", className: "jeeby-cms-loading", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
+    return /* @__PURE__ */ jsx25("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsx25("div", { role: "status", "aria-label": "Loading editor", className: "jeeby-cms-loading", children: /* @__PURE__ */ jsx25("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
   }
   if (loadError) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-editor-load-error", role: "alert", children: [
-      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-editor-load-error-title", children: "This page couldn\u2019t be loaded" }),
-      /* @__PURE__ */ jsx("p", { className: "jeeby-cms-editor-load-error-body", children: "Check your connection and try again." }),
-      /* @__PURE__ */ jsx("a", { href: "/admin/pages/" + encodeURIComponent(slug), className: "jeeby-cms-btn-primary", children: "Reload" })
+    return /* @__PURE__ */ jsx25("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsxs17("div", { className: "jeeby-cms-editor-load-error", role: "alert", children: [
+      /* @__PURE__ */ jsx25("p", { className: "jeeby-cms-editor-load-error-title", children: "This page couldn\u2019t be loaded" }),
+      /* @__PURE__ */ jsx25("p", { className: "jeeby-cms-editor-load-error-body", children: "Check your connection and try again." }),
+      /* @__PURE__ */ jsx25("a", { href: "/admin/pages/" + encodeURIComponent(slug), className: "jeeby-cms-btn-primary", children: "Reload" })
     ] }) });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-editor", ref: containerRef, children: [
-    /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs17("div", { className: "jeeby-cms-page-editor", ref: containerRef, children: [
+    /* @__PURE__ */ jsx25(
       EditorHeader,
       {
         pageName,
@@ -25671,7 +26237,7 @@ function PageEditor({ slug }) {
         publishBtnRef
       }
     ),
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx25("div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ jsx25(
       BlockCanvas,
       {
         blocks,
@@ -25681,14 +26247,14 @@ function PageEditor({ slug }) {
         onAddBlock: handleAddBlock
       }
     ) }),
-    deletedBlock && /* @__PURE__ */ jsx(
+    deletedBlock && /* @__PURE__ */ jsx25(
       UndoToast,
       {
         blockType: deletedBlock.block.type,
         onUndo: handleUndo
       }
     ),
-    showUnsavedWarning && /* @__PURE__ */ jsx(
+    showUnsavedWarning && /* @__PURE__ */ jsx25(
       UnsavedChangesWarning,
       {
         onLeave: () => {
@@ -25699,7 +26265,7 @@ function PageEditor({ slug }) {
         }
       }
     ),
-    showPublishModal && /* @__PURE__ */ jsx(
+    showPublishModal && /* @__PURE__ */ jsx25(
       PublishConfirmModal,
       {
         open: showPublishModal,
@@ -25711,16 +26277,25 @@ function PageEditor({ slug }) {
         publishError
       }
     ),
-    showPublishToast && /* @__PURE__ */ jsx(PublishToast, {})
+    showPublishToast && /* @__PURE__ */ jsx25(PublishToast, {})
   ] });
 }
+
+// src/admin/index.js
+import { useState as useState18, useRef as useRef17, useMemo as useMemo4 } from "react";
+import { useAuth as useAuth2 } from "jeeby-cms";
+
+// src/admin/LoginPage.js
+import { useState as useState14 } from "react";
+import { useAuth } from "jeeby-cms";
+import { jsx as jsx26, jsxs as jsxs18 } from "react/jsx-runtime";
 function LoginPage({ siteName }) {
   const { signIn } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState14("");
+  const [password, setPassword] = useState14("");
+  const [error, setError] = useState14(null);
+  const [submitting, setSubmitting] = useState14(false);
+  const [showPassword, setShowPassword] = useState14(false);
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
@@ -25733,12 +26308,12 @@ function LoginPage({ siteName }) {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsx("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-login-card", children: [
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-login-brand", children: /* @__PURE__ */ jsx("h1", { className: "jeeby-cms-login-heading", children: siteName ?? "Admin" }) }),
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-login-form-pane", children: /* @__PURE__ */ jsxs("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-email", children: "Email address" }),
-        /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsx26("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-login-card", children: [
+    /* @__PURE__ */ jsx26("div", { className: "jeeby-cms-login-brand", children: /* @__PURE__ */ jsx26("h1", { className: "jeeby-cms-login-heading", children: siteName ?? "Admin" }) }),
+    /* @__PURE__ */ jsx26("div", { className: "jeeby-cms-login-form-pane", children: /* @__PURE__ */ jsxs18("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx26("label", { htmlFor: "cms-email", children: "Email address" }),
+        /* @__PURE__ */ jsx26(
           "input",
           {
             id: "cms-email",
@@ -25750,10 +26325,10 @@ function LoginPage({ siteName }) {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-password", children: "Password" }),
-        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-password-wrapper", children: [
-          /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx26("label", { htmlFor: "cms-password", children: "Password" }),
+        /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-password-wrapper", children: [
+          /* @__PURE__ */ jsx26(
             "input",
             {
               id: "cms-password",
@@ -25764,7 +26339,7 @@ function LoginPage({ siteName }) {
               onChange: (e) => setPassword(e.target.value)
             }
           ),
-          /* @__PURE__ */ jsx(
+          /* @__PURE__ */ jsx26(
             "button",
             {
               type: "button",
@@ -25774,24 +26349,24 @@ function LoginPage({ siteName }) {
               onClick: () => setShowPassword((v) => !v),
               children: showPassword ? (
                 /* Eye-off icon — password visible, click to hide */
-                /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsx("path", { d: "M2 2l12 12" }),
-                  /* @__PURE__ */ jsx("path", { d: "M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 3-3 3 3 0 0 0-.4-1.5" }),
-                  /* @__PURE__ */ jsx("path", { d: "M9.88 3.28A8.9 8.9 0 0 0 8 3C4.5 3 1.5 5.5 1 8c.3 1.3 1 2.5 2 3.4" }),
-                  /* @__PURE__ */ jsx("path", { d: "M12.6 10.7C13.6 9.8 14.4 9 15 8c-.5-2.5-3.5-5-7-5" })
+                /* @__PURE__ */ jsxs18("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx26("path", { d: "M2 2l12 12" }),
+                  /* @__PURE__ */ jsx26("path", { d: "M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 3-3 3 3 0 0 0-.4-1.5" }),
+                  /* @__PURE__ */ jsx26("path", { d: "M9.88 3.28A8.9 8.9 0 0 0 8 3C4.5 3 1.5 5.5 1 8c.3 1.3 1 2.5 2 3.4" }),
+                  /* @__PURE__ */ jsx26("path", { d: "M12.6 10.7C13.6 9.8 14.4 9 15 8c-.5-2.5-3.5-5-7-5" })
                 ] })
               ) : (
                 /* Eye icon — password hidden, click to show */
-                /* @__PURE__ */ jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsx("path", { d: "M1 8C1.5 5.5 4.5 3 8 3s6.5 2.5 7 5c-.5 2.5-3.5 5-7 5S1.5 10.5 1 8z" }),
-                  /* @__PURE__ */ jsx("circle", { cx: "8", cy: "8", r: "2.5" })
+                /* @__PURE__ */ jsxs18("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx26("path", { d: "M1 8C1.5 5.5 4.5 3 8 3s6.5 2.5 7 5c-.5 2.5-3.5 5-7 5S1.5 10.5 1 8z" }),
+                  /* @__PURE__ */ jsx26("circle", { cx: "8", cy: "8", r: "2.5" })
                 ] })
               )
             }
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx26(
         "button",
         {
           type: "submit",
@@ -25802,14 +26377,17 @@ function LoginPage({ siteName }) {
           children: submitting ? "Signing in\u2026" : "Sign in"
         }
       ),
-      error && /* @__PURE__ */ jsx("p", { className: "jeeby-cms-auth-error", role: "alert", "aria-live": "assertive", children: error })
+      error && /* @__PURE__ */ jsx26("p", { className: "jeeby-cms-auth-error", role: "alert", "aria-live": "assertive", children: error })
     ] }) })
   ] }) });
 }
+
+// src/admin/AdminNav.js
+import { jsx as jsx27, jsxs as jsxs19 } from "react/jsx-runtime";
 function AdminNav({ onSignOut, siteName }) {
-  return /* @__PURE__ */ jsxs("header", { className: "jeeby-cms-nav", role: "banner", children: [
-    /* @__PURE__ */ jsx("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
-    /* @__PURE__ */ jsx("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs19("header", { className: "jeeby-cms-nav", role: "banner", children: [
+    /* @__PURE__ */ jsx27("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
+    /* @__PURE__ */ jsx27("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsx27(
       "button",
       {
         type: "button",
@@ -25820,19 +26398,29 @@ function AdminNav({ onSignOut, siteName }) {
     ) })
   ] });
 }
+
+// src/admin/PageManager.js
+import { useState as useState17, useEffect as useEffect13, useRef as useRef16, useCallback as useCallback3, useMemo as useMemo3, Fragment as Fragment5 } from "react";
+import { AnimatePresence as AnimatePresence2, motion as motion3, useReducedMotion as useReducedMotion3 } from "framer-motion";
+import { useCMSFirebase as useCMSFirebase6 } from "jeeby-cms";
+
+// src/admin/CreatePageModal.js
+import { useState as useState15, useEffect as useEffect12, useRef as useRef15 } from "react";
+import { useCMSFirebase as useCMSFirebase4 } from "jeeby-cms";
+import { jsx as jsx28, jsxs as jsxs20 } from "react/jsx-runtime";
 function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
-  const { db, templates } = useCMSFirebase();
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [template, setTemplate] = useState("");
-  const [slugError, setSlugError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const debounceRef = useRef(null);
+  const { db, templates } = useCMSFirebase4();
+  const [name, setName] = useState15("");
+  const [slug, setSlug] = useState15("");
+  const [slugTouched, setSlugTouched] = useState15(false);
+  const [template, setTemplate] = useState15("");
+  const [slugError, setSlugError] = useState15(null);
+  const [submitting, setSubmitting] = useState15(false);
+  const debounceRef = useRef15(null);
   function toKebabSlug(str) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
-  useEffect(() => {
+  useEffect12(() => {
     if (open) {
       setName("");
       setSlug("");
@@ -25884,12 +26472,12 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsxs(ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsx("h2", { id: "create-modal-heading", children: "Create New Page" }),
-    /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, noValidate: true, children: [
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-name", children: "Page name" }),
-        /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs20(ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsx28("h2", { id: "create-modal-heading", children: "Create New Page" }),
+    /* @__PURE__ */ jsxs20("form", { onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx28("label", { htmlFor: "cms-page-name", children: "Page name" }),
+        /* @__PURE__ */ jsx28(
           "input",
           {
             id: "cms-page-name",
@@ -25903,9 +26491,9 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-slug", children: "Slug" }),
-        /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx28("label", { htmlFor: "cms-page-slug", children: "Slug" }),
+        /* @__PURE__ */ jsx28(
           "input",
           {
             id: "cms-page-slug",
@@ -25919,19 +26507,19 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
             "aria-describedby": "cms-slug-hint cms-slug-error"
           }
         ),
-        /* @__PURE__ */ jsx("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
-        slugError && /* @__PURE__ */ jsx("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
+        /* @__PURE__ */ jsx28("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
+        slugError && /* @__PURE__ */ jsx28("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
       ] }),
-      templates.length > 0 && /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "cms-page-template", children: "Template" }),
-        /* @__PURE__ */ jsxs("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
-          /* @__PURE__ */ jsx("option", { value: "", children: "Select a template" }),
-          templates.map((t) => /* @__PURE__ */ jsx("option", { value: t.name, children: t.name }, t.name))
+      templates.length > 0 && /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx28("label", { htmlFor: "cms-page-template", children: "Template" }),
+        /* @__PURE__ */ jsxs20("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
+          /* @__PURE__ */ jsx28("option", { value: "", children: "Select a template" }),
+          templates.map((t) => /* @__PURE__ */ jsx28("option", { value: t.name, children: t.name }, t.name))
         ] })
       ] }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-        /* @__PURE__ */ jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
-        /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-modal-actions", children: [
+        /* @__PURE__ */ jsx28("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
+        /* @__PURE__ */ jsx28(
           "button",
           {
             type: "submit",
@@ -25946,9 +26534,14 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     ] })
   ] });
 }
+
+// src/admin/DeletePageModal.js
+import { useState as useState16 } from "react";
+import { useCMSFirebase as useCMSFirebase5 } from "jeeby-cms";
+import { jsx as jsx29, jsxs as jsxs21 } from "react/jsx-runtime";
 function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
-  const { db } = useCMSFirebase();
-  const [deleting, setDeleting] = useState(false);
+  const { db } = useCMSFirebase5();
+  const [deleting, setDeleting] = useState16(false);
   async function handleDelete2() {
     setDeleting(true);
     try {
@@ -25961,16 +26554,16 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
       setDeleting(false);
     }
   }
-  return /* @__PURE__ */ jsxs(ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsx("h2", { id: "delete-modal-heading", children: "Delete page?" }),
-    /* @__PURE__ */ jsxs("p", { children: [
+  return /* @__PURE__ */ jsxs21(ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsx29("h2", { id: "delete-modal-heading", children: "Delete page?" }),
+    /* @__PURE__ */ jsxs21("p", { children: [
       "Delete ",
       page == null ? void 0 : page.slug,
       "? This cannot be undone."
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-      /* @__PURE__ */ jsx("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
-      /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsxs21("div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ jsx29("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
+      /* @__PURE__ */ jsx29(
         "button",
         {
           type: "button",
@@ -25985,6 +26578,9 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
     ] })
   ] });
 }
+
+// src/admin/PageManager.js
+import { jsx as jsx30, jsxs as jsxs23 } from "react/jsx-runtime";
 function formatDate(ts2) {
   if (!ts2) return "Not yet";
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
@@ -26001,11 +26597,11 @@ var STATUS_PROPS = {
   changes: { label: "Changes", cls: "jeeby-cms-doc-status jeeby-cms-doc-status--changes" }
 };
 var SORT_OPTIONS = [
-  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ jsx(IconRecent, {}) },
-  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ jsx(IconAlpha, {}) },
-  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ jsx(IconDraft, {}) },
-  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ jsx(IconChanges, {}) },
-  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ jsx(IconPublished, {}) }
+  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ jsx30(IconRecent, {}) },
+  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ jsx30(IconAlpha, {}) },
+  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ jsx30(IconDraft, {}) },
+  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ jsx30(IconChanges, {}) },
+  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ jsx30(IconPublished, {}) }
 ];
 function tsToMs(ts2) {
   if (!ts2) return 0;
@@ -26051,64 +26647,70 @@ function applySortFilter(pages, key) {
   }
 }
 function IconRecent() {
-  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("circle", { cx: "7", cy: "7", r: "5" }),
-    /* @__PURE__ */ jsx("path", { d: "M7 4.5v2.7l1.8 1.8" })
+  return /* @__PURE__ */ jsxs23("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx30("circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ jsx30("path", { d: "M7 4.5v2.7l1.8 1.8" })
   ] });
 }
 function IconAlpha() {
-  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
-    /* @__PURE__ */ jsx("rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
+  return /* @__PURE__ */ jsxs23("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx30("rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
+    /* @__PURE__ */ jsx30("rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
+    /* @__PURE__ */ jsx30("rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
   ] });
 }
 function IconDraft() {
-  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
-    /* @__PURE__ */ jsx("line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
-    /* @__PURE__ */ jsx("line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
+  return /* @__PURE__ */ jsxs23("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx30("rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
+    /* @__PURE__ */ jsx30("line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
+    /* @__PURE__ */ jsx30("line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
   ] });
 }
 function IconChanges() {
-  return /* @__PURE__ */ jsx("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
+  return /* @__PURE__ */ jsx30("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx30("path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
 }
 function IconPublished() {
-  return /* @__PURE__ */ jsxs("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("circle", { cx: "7", cy: "7", r: "5" }),
-    /* @__PURE__ */ jsx("path", { d: "M4.5 7l2 2L9.5 5" })
+  return /* @__PURE__ */ jsxs23("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx30("circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ jsx30("path", { d: "M4.5 7l2 2L9.5 5" })
   ] });
 }
 function IconSortLines() {
-  return /* @__PURE__ */ jsxs("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
-    /* @__PURE__ */ jsx("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
+  return /* @__PURE__ */ jsxs23("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx30("rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ jsx30("rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ jsx30("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
   ] });
 }
 function IconSearch() {
-  return /* @__PURE__ */ jsxs("svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx("circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
-    /* @__PURE__ */ jsx("path", { d: "M8.5 8.5l2.5 2.5" })
+  return /* @__PURE__ */ jsxs23("svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx30("circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
+    /* @__PURE__ */ jsx30("path", { d: "M8.5 8.5l2.5 2.5" })
   ] });
 }
 function IconClear() {
-  return /* @__PURE__ */ jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
+  return /* @__PURE__ */ jsx30("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx30("path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
 }
 function IconChevronDown() {
-  return /* @__PURE__ */ jsx("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M2 3.5l3 3 3-3" }) });
+  return /* @__PURE__ */ jsx30("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx30("path", { d: "M2 3.5l3 3 3-3" }) });
+}
+function IconChevronLeft() {
+  return /* @__PURE__ */ jsx30("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx30("path", { d: "M6.5 2l-3 3 3 3" }) });
+}
+function IconChevronRight() {
+  return /* @__PURE__ */ jsx30("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx30("path", { d: "M3.5 2l3 3-3 3" }) });
 }
 function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
-  const [activeIndex, setActiveIndex] = useState(() => {
+  const [activeIndex, setActiveIndex] = useState17(() => {
     const idx = SORT_OPTIONS.findIndex((o) => o.key === sortMode);
     return idx >= 0 ? idx : 0;
   });
-  const listRef = useRef(null);
-  useEffect(() => {
+  const listRef = useRef16(null);
+  useEffect13(() => {
     var _a, _b;
     (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[activeIndex]) == null ? void 0 : _b.focus();
   }, []);
-  useEffect(() => {
+  useEffect13(() => {
     function handleClickOutside(e) {
       if (listRef.current && !listRef.current.contains(e.target) && (!triggerRef.current || !triggerRef.current.contains(e.target))) {
         onClose();
@@ -26142,7 +26744,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       (_e = triggerRef.current) == null ? void 0 : _e.focus();
     }
   }
-  return /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsx30(
     "ul",
     {
       ref: listRef,
@@ -26150,7 +26752,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       "aria-label": "Sort and filter pages",
       onKeyDown: handleKeyDown2,
       className: "jeeby-cms-sort-picker",
-      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ jsxs(
+      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ jsxs23(
         "li",
         {
           role: "menuitemradio",
@@ -26164,12 +26766,12 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
             (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[index]) == null ? void 0 : _b.focus();
           },
           children: [
-            /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
-            /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-block-type-info", children: [
-              /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-type-label", children: opt.label }),
-              /* @__PURE__ */ jsx("span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
+            /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
+            /* @__PURE__ */ jsxs23("span", { className: "jeeby-cms-block-type-info", children: [
+              /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-block-type-label", children: opt.label }),
+              /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
             ] }),
-            opt.key === sortMode && /* @__PURE__ */ jsx("svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx("path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
+            opt.key === sortMode && /* @__PURE__ */ jsx30("svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx30("path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
           ]
         },
         opt.key
@@ -26180,48 +26782,48 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
 var PAGE_SIZE = 20;
 var ALL_PAGES_TTL = 6e4;
 function PageManager() {
-  const { db, templates } = useCMSFirebase();
-  const [pages, setPages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [announcement, setAnnouncement] = useState("");
-  const [editingSlug, setEditingSlug] = useState(null);
-  const [editField, setEditField] = useState(null);
-  const [editValue, setEditValue] = useState("");
-  const [editError, setEditError] = useState(null);
-  const debounceRef = useRef(null);
-  const isSavingRef = useRef(false);
-  const fetchGenRef = useRef(0);
-  const newPageBtnRef = useRef(null);
-  const editTriggerRefs = useRef({});
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const deleteBtnRef = useRef(null);
-  const [sortMode, setSortMode] = useState("recent");
-  const [sortPickerOpen, setSortPickerOpen] = useState(false);
-  const sortTriggerRef = useRef(null);
-  const prefersReducedMotion = useReducedMotion();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { db, templates } = useCMSFirebase6();
+  const [pages, setPages] = useState17([]);
+  const [loading, setLoading] = useState17(true);
+  const [error, setError] = useState17(null);
+  const [announcement, setAnnouncement] = useState17("");
+  const [editingSlug, setEditingSlug] = useState17(null);
+  const [editField, setEditField] = useState17(null);
+  const [editValue, setEditValue] = useState17("");
+  const [editError, setEditError] = useState17(null);
+  const debounceRef = useRef16(null);
+  const isSavingRef = useRef16(false);
+  const fetchGenRef = useRef16(0);
+  const newPageBtnRef = useRef16(null);
+  const editTriggerRefs = useRef16({});
+  const [showCreateModal, setShowCreateModal] = useState17(false);
+  const [deleteTarget, setDeleteTarget] = useState17(null);
+  const deleteBtnRef = useRef16(null);
+  const [sortMode, setSortMode] = useState17("recent");
+  const [sortPickerOpen, setSortPickerOpen] = useState17(false);
+  const sortTriggerRef = useRef16(null);
+  const prefersReducedMotion = useReducedMotion3();
+  const [searchQuery, setSearchQuery] = useState17("");
+  const [debouncedQuery, setDebouncedQuery] = useState17("");
   const isPaginated = sortMode === "recent" && !debouncedQuery.trim();
-  const [pageNum, setPageNum] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const cursorsRef = useRef([null]);
-  const allPagesCacheRef = useRef(null);
-  const prefetchRef = useRef(null);
+  const [pageNum, setPageNum] = useState17(1);
+  const [hasNextPage, setHasNextPage] = useState17(false);
+  const cursorsRef = useRef16([null]);
+  const allPagesCacheRef = useRef16(null);
+  const prefetchRef = useRef16(null);
   const showSearch = isPaginated ? hasNextPage || pages.length >= 8 : pages.length >= 8;
-  const processedPages = useMemo(
+  const processedPages = useMemo3(
     () => applySearch(applySortFilter(pages, sortMode), debouncedQuery),
     [pages, sortMode, debouncedQuery]
   );
-  const displayedPages = useMemo(
+  const displayedPages = useMemo3(
     () => isPaginated ? processedPages : processedPages.slice((pageNum - 1) * PAGE_SIZE, pageNum * PAGE_SIZE),
     [isPaginated, processedPages, pageNum]
   );
   const totalPages = isPaginated ? null : Math.max(1, Math.ceil(processedPages.length / PAGE_SIZE));
   const canGoPrev = pageNum > 1;
   const canGoNext = isPaginated ? hasNextPage : pageNum < (totalPages ?? 1);
-  const loadPages = useCallback(async () => {
+  const loadPages = useCallback3(async () => {
     const gen = ++fetchGenRef.current;
     if (isPaginated) {
       const pre = prefetchRef.current;
@@ -26283,38 +26885,38 @@ function PageManager() {
       if (gen === fetchGenRef.current) setLoading(false);
     }
   }, [db, isPaginated, pageNum]);
-  useEffect(() => {
+  useEffect13(() => {
     loadPages();
   }, [loadPages]);
-  useEffect(() => {
+  useEffect13(() => {
     setPageNum(1);
     cursorsRef.current = [null];
     setHasNextPage(false);
     prefetchRef.current = null;
   }, [sortMode, debouncedQuery]);
-  useEffect(() => {
+  useEffect13(() => {
     if (displayedPages.length === 0 && pageNum > 1 && !loading) {
       setPageNum((p) => p - 1);
     }
   }, [displayedPages.length, pageNum, loading]);
-  useEffect(() => {
+  useEffect13(() => {
     if (announcement) {
       const t = setTimeout(() => setAnnouncement(""), 3e3);
       return () => clearTimeout(t);
     }
   }, [announcement]);
-  useEffect(() => {
+  useEffect13(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 200);
     return () => clearTimeout(t);
   }, [searchQuery]);
-  useEffect(() => {
+  useEffect13(() => {
     if (debouncedQuery.trim()) {
       setAnnouncement(
         processedPages.length === 0 ? "No pages match." : `${processedPages.length} page${processedPages.length !== 1 ? "s" : ""} found.`
       );
     }
   }, [debouncedQuery, processedPages.length]);
-  useEffect(() => {
+  useEffect13(() => {
     if (!showSearch) setSearchQuery("");
   }, [showSearch]);
   function startEdit(slug, field, currentValue) {
@@ -26436,8 +27038,8 @@ function PageManager() {
     setPageNum((p) => Math.max(1, p - 1));
   }
   if (loading && pages.length === 0) {
-    return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -26445,28 +27047,28 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx("h2", { children: "Pages" }) }),
-      /* @__PURE__ */ jsx("div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
-        /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
-          /* @__PURE__ */ jsx("th", { scope: "col", children: "Name" }),
-          /* @__PURE__ */ jsx("th", { scope: "col", children: "Slug" }),
-          /* @__PURE__ */ jsx("th", { scope: "col", children: "Status" }),
-          /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
-          /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
+      /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx30("h2", { children: "Pages" }) }),
+      /* @__PURE__ */ jsx30("div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ jsxs23("table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
+        /* @__PURE__ */ jsx30("thead", { children: /* @__PURE__ */ jsxs23("tr", { children: [
+          /* @__PURE__ */ jsx30("th", { scope: "col", children: "Name" }),
+          /* @__PURE__ */ jsx30("th", { scope: "col", children: "Slug" }),
+          /* @__PURE__ */ jsx30("th", { scope: "col", children: "Status" }),
+          /* @__PURE__ */ jsx30("th", { scope: "col", children: "Last Published" }),
+          /* @__PURE__ */ jsx30("th", { scope: "col", children: "Actions" })
         ] }) }),
-        /* @__PURE__ */ jsx("tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs("tr", { children: [
-          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
-          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
-          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "72px", height: "22px", borderRadius: "999px" } }) }),
-          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
-          /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
+        /* @__PURE__ */ jsx30("tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs23("tr", { children: [
+          /* @__PURE__ */ jsx30("td", { children: /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx30("td", { children: /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx30("td", { children: /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-skeleton", style: { width: "72px", height: "22px", borderRadius: "999px" } }) }),
+          /* @__PURE__ */ jsx30("td", { children: /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx30("td", { children: /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
         ] }, i)) })
       ] }) }) })
     ] });
   }
   if (error && pages.length === 0) {
-    return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -26474,10 +27076,10 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx("h2", { children: "Pages" }) }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
-        /* @__PURE__ */ jsx("p", { children: error }),
-        /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx30("h2", { children: "Pages" }) }),
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
+        /* @__PURE__ */ jsx30("p", { children: error }),
+        /* @__PURE__ */ jsx30(
           "button",
           {
             type: "button",
@@ -26490,8 +27092,8 @@ function PageManager() {
     ] });
   }
   if (pages.length === 0 && !loading) {
-    return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -26499,10 +27101,10 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-pages-empty", children: [
-        /* @__PURE__ */ jsx("h2", { children: "No pages yet." }),
-        /* @__PURE__ */ jsx("p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
-        /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-pages-empty", children: [
+        /* @__PURE__ */ jsx30("h2", { children: "No pages yet." }),
+        /* @__PURE__ */ jsx30("p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
+        /* @__PURE__ */ jsx30(
           "button",
           {
             ref: newPageBtnRef,
@@ -26513,14 +27115,14 @@ function PageManager() {
           }
         )
       ] }),
-      /* @__PURE__ */ jsx(CreatePageModal, { open: showCreateModal, onClose: () => setShowCreateModal(false), onCreated: () => {
+      /* @__PURE__ */ jsx30(CreatePageModal, { open: showCreateModal, onClose: () => setShowCreateModal(false), onCreated: () => {
         loadPages();
         setAnnouncement("Page created successfully.");
       }, triggerRef: newPageBtnRef })
     ] });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-manager", children: [
-    /* @__PURE__ */ jsx("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+  return /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-page-manager", children: [
+    /* @__PURE__ */ jsx30("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
       position: "absolute",
       width: "1px",
       height: "1px",
@@ -26528,13 +27130,13 @@ function PageManager() {
       clip: "rect(0,0,0,0)",
       whiteSpace: "nowrap"
     }, children: announcement }),
-    /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-list-header", children: [
-      /* @__PURE__ */ jsx("h2", { children: "Pages" }),
-      /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-page-list-controls", children: [
+    /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-page-list-header", children: [
+      /* @__PURE__ */ jsx30("h2", { children: "Pages" }),
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-page-list-controls", children: [
         pages.length > 0 && (() => {
           const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode) || SORT_OPTIONS[0];
-          return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-sort-anchor", children: [
-            /* @__PURE__ */ jsxs(
+          return /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-sort-anchor", children: [
+            /* @__PURE__ */ jsxs23(
               "button",
               {
                 ref: sortTriggerRef,
@@ -26546,13 +27148,13 @@ function PageManager() {
                 "data-filter-active": currentOpt.isFilter ? "true" : void 0,
                 onClick: () => setSortPickerOpen((v) => !v),
                 children: [
-                  /* @__PURE__ */ jsx(IconSortLines, {}),
+                  /* @__PURE__ */ jsx30(IconSortLines, {}),
                   currentOpt.label,
-                  /* @__PURE__ */ jsx(IconChevronDown, {})
+                  /* @__PURE__ */ jsx30(IconChevronDown, {})
                 ]
               }
             ),
-            sortPickerOpen && /* @__PURE__ */ jsx(
+            sortPickerOpen && /* @__PURE__ */ jsx30(
               SortPicker,
               {
                 sortMode,
@@ -26567,7 +27169,7 @@ function PageManager() {
             )
           ] });
         })(),
-        /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx30(
           "button",
           {
             ref: newPageBtnRef,
@@ -26579,8 +27181,8 @@ function PageManager() {
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsx(AnimatePresence, { initial: false, children: showSearch && /* @__PURE__ */ jsx(
-      motion.div,
+    /* @__PURE__ */ jsx30(AnimatePresence2, { initial: false, children: showSearch && /* @__PURE__ */ jsx30(
+      motion3.div,
       {
         className: "jeeby-cms-search-bar",
         initial: { opacity: 0, height: 0 },
@@ -26588,9 +27190,9 @@ function PageManager() {
         exit: { opacity: 0, height: 0 },
         transition: { duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.16, 1, 0.3, 1] },
         style: { overflow: "hidden" },
-        children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-search-inner", role: "search", children: [
-          /* @__PURE__ */ jsx("span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsx(IconSearch, {}) }),
-          /* @__PURE__ */ jsx(
+        children: /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-search-inner", role: "search", children: [
+          /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsx30(IconSearch, {}) }),
+          /* @__PURE__ */ jsx30(
             "input",
             {
               type: "search",
@@ -26602,36 +27204,36 @@ function PageManager() {
               maxLength: 200
             }
           ),
-          searchQuery && /* @__PURE__ */ jsx(
+          searchQuery && /* @__PURE__ */ jsx30(
             "button",
             {
               type: "button",
               className: "jeeby-cms-search-clear",
               "aria-label": "Clear search",
               onClick: () => setSearchQuery(""),
-              children: /* @__PURE__ */ jsx(IconClear, {})
+              children: /* @__PURE__ */ jsx30(IconClear, {})
             }
           )
         ] })
       }
     ) }),
-    /* @__PURE__ */ jsx(AnimatePresence, { mode: "wait", initial: false, children: /* @__PURE__ */ jsx(
-      motion.div,
+    /* @__PURE__ */ jsx30(AnimatePresence2, { mode: "wait", initial: false, children: /* @__PURE__ */ jsx30(
+      motion3.div,
       {
         className: "jeeby-cms-pages-table-wrap",
         initial: { opacity: 0, y: prefersReducedMotion ? 0 : 5 },
         animate: { opacity: 1, y: 0 },
         exit: { opacity: 0, transition: { duration: prefersReducedMotion ? 0 : 0.16 } },
         transition: { duration: prefersReducedMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] },
-        children: /* @__PURE__ */ jsxs("table", { className: "jeeby-cms-pages-table", children: [
-          /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
-            /* @__PURE__ */ jsx("th", { scope: "col", children: "Name" }),
-            /* @__PURE__ */ jsx("th", { scope: "col", children: "Slug" }),
-            /* @__PURE__ */ jsx("th", { scope: "col", children: "Status" }),
-            /* @__PURE__ */ jsx("th", { scope: "col", children: "Last Published" }),
-            /* @__PURE__ */ jsx("th", { scope: "col", children: "Actions" })
+        children: /* @__PURE__ */ jsxs23("table", { className: "jeeby-cms-pages-table", children: [
+          /* @__PURE__ */ jsx30("thead", { children: /* @__PURE__ */ jsxs23("tr", { children: [
+            /* @__PURE__ */ jsx30("th", { scope: "col", children: "Name" }),
+            /* @__PURE__ */ jsx30("th", { scope: "col", children: "Slug" }),
+            /* @__PURE__ */ jsx30("th", { scope: "col", children: "Status" }),
+            /* @__PURE__ */ jsx30("th", { scope: "col", children: "Last Published" }),
+            /* @__PURE__ */ jsx30("th", { scope: "col", children: "Actions" })
           ] }) }),
-          /* @__PURE__ */ jsx("tbody", { children: (() => {
+          /* @__PURE__ */ jsx30("tbody", { children: (() => {
             if (displayedPages.length === 0) {
               const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode);
               const hasFilter = currentOpt == null ? void 0 : currentOpt.isFilter;
@@ -26639,9 +27241,9 @@ function PageManager() {
               const queryChars = [...debouncedQuery];
               const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join("") + "\u2026" : debouncedQuery;
               const emptyMsg = hasSearch && hasFilter ? "No pages match this search and filter." : hasSearch ? `No pages match "${shortQuery}".` : "No pages match this filter.";
-              return /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsxs("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
-                /* @__PURE__ */ jsx("span", { children: emptyMsg }),
-                hasSearch && /* @__PURE__ */ jsx(
+              return /* @__PURE__ */ jsx30("tr", { children: /* @__PURE__ */ jsxs23("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
+                /* @__PURE__ */ jsx30("span", { children: emptyMsg }),
+                hasSearch && /* @__PURE__ */ jsx30(
                   "button",
                   {
                     type: "button",
@@ -26653,7 +27255,7 @@ function PageManager() {
                     children: "Clear search"
                   }
                 ),
-                hasFilter && /* @__PURE__ */ jsx(
+                hasFilter && /* @__PURE__ */ jsx30(
                   "button",
                   {
                     type: "button",
@@ -26667,13 +27269,13 @@ function PageManager() {
                 )
               ] }) });
             }
-            return /* @__PURE__ */ jsx(AnimatePresence, { children: displayedPages.map((page) => /* @__PURE__ */ jsxs(Fragment$1, { children: [
-              /* @__PURE__ */ jsxs(
-                motion.tr,
+            return /* @__PURE__ */ jsx30(AnimatePresence2, { children: displayedPages.map((page) => /* @__PURE__ */ jsxs23(Fragment5, { children: [
+              /* @__PURE__ */ jsxs23(
+                motion3.tr,
                 {
                   exit: { opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } },
                   children: [
-                    /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx(
+                    /* @__PURE__ */ jsx30("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx30(
                       "input",
                       {
                         type: "text",
@@ -26686,9 +27288,9 @@ function PageManager() {
                         onBlur: commitEdit,
                         autoFocus: true
                       }
-                    ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
-                      /* @__PURE__ */ jsx("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
-                      /* @__PURE__ */ jsx(
+                    ) : /* @__PURE__ */ jsxs23("span", { className: "jeeby-cms-cell-read", children: [
+                      /* @__PURE__ */ jsx30("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
+                      /* @__PURE__ */ jsx30(
                         "button",
                         {
                           ref: (el) => {
@@ -26702,7 +27304,7 @@ function PageManager() {
                         }
                       )
                     ] }) }),
-                    /* @__PURE__ */ jsx("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsx(
+                    /* @__PURE__ */ jsx30("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsx30(
                       "input",
                       {
                         type: "text",
@@ -26715,9 +27317,9 @@ function PageManager() {
                         onBlur: commitEdit,
                         autoFocus: true
                       }
-                    ) : /* @__PURE__ */ jsxs("span", { className: "jeeby-cms-cell-read", children: [
-                      /* @__PURE__ */ jsx("span", { children: page.slug }),
-                      /* @__PURE__ */ jsx(
+                    ) : /* @__PURE__ */ jsxs23("span", { className: "jeeby-cms-cell-read", children: [
+                      /* @__PURE__ */ jsx30("span", { children: page.slug }),
+                      /* @__PURE__ */ jsx30(
                         "button",
                         {
                           ref: (el) => {
@@ -26731,13 +27333,13 @@ function PageManager() {
                         }
                       )
                     ] }) }),
-                    /* @__PURE__ */ jsx("td", { children: (() => {
+                    /* @__PURE__ */ jsx30("td", { children: (() => {
                       const { label, cls } = STATUS_PROPS[pageStatus(page)];
-                      return /* @__PURE__ */ jsx("span", { className: cls, children: label });
+                      return /* @__PURE__ */ jsx30("span", { className: cls, children: label });
                     })() }),
-                    /* @__PURE__ */ jsx("td", { children: formatDate(page.lastPublishedAt) }),
-                    /* @__PURE__ */ jsx("td", { children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-table-actions", children: [
-                      /* @__PURE__ */ jsx(
+                    /* @__PURE__ */ jsx30("td", { children: formatDate(page.lastPublishedAt) }),
+                    /* @__PURE__ */ jsx30("td", { children: /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-table-actions", children: [
+                      /* @__PURE__ */ jsx30(
                         "a",
                         {
                           href: "/admin/pages/" + encodeURIComponent(page.slug),
@@ -26746,7 +27348,7 @@ function PageManager() {
                           children: "Edit"
                         }
                       ),
-                      /* @__PURE__ */ jsx(
+                      /* @__PURE__ */ jsx30(
                         "button",
                         {
                           type: "button",
@@ -26763,7 +27365,7 @@ function PageManager() {
                   ]
                 }
               ),
-              editError && editingSlug === page.slug && /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 5, children: /* @__PURE__ */ jsx(
+              editError && editingSlug === page.slug && /* @__PURE__ */ jsx30("tr", { children: /* @__PURE__ */ jsx30("td", { colSpan: 5, children: /* @__PURE__ */ jsx30(
                 "p",
                 {
                   id: `cms-rename-error-${page.slug}`,
@@ -26778,8 +27380,8 @@ function PageManager() {
       },
       `${sortMode}|${debouncedQuery}|${pageNum}`
     ) }),
-    (canGoPrev || canGoNext) && /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
-      /* @__PURE__ */ jsx(
+    (canGoPrev || canGoNext) && /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
+      /* @__PURE__ */ jsxs23(
         "button",
         {
           type: "button",
@@ -26787,11 +27389,14 @@ function PageManager() {
           onClick: goToPrevPage,
           disabled: !canGoPrev || loading,
           "aria-label": "Previous page",
-          children: "\u2190 Prev"
+          children: [
+            /* @__PURE__ */ jsx30(IconChevronLeft, {}),
+            " Prev"
+          ]
         }
       ),
-      /* @__PURE__ */ jsx("span", { className: "jeeby-cms-pagination-label", "aria-current": "page", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
-      /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx30("span", { className: "jeeby-cms-pagination-label", "aria-live": "polite", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
+      /* @__PURE__ */ jsxs23(
         "button",
         {
           type: "button",
@@ -26799,11 +27404,14 @@ function PageManager() {
           onClick: goToNextPage,
           disabled: !canGoNext || loading,
           "aria-label": "Next page",
-          children: "Next \u2192"
+          children: [
+            "Next ",
+            /* @__PURE__ */ jsx30(IconChevronRight, {})
+          ]
         }
       )
     ] }),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx30(
       CreatePageModal,
       {
         open: showCreateModal,
@@ -26817,7 +27425,7 @@ function PageManager() {
         triggerRef: newPageBtnRef
       }
     ),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ jsx30(
       DeletePageModal,
       {
         page: deleteTarget,
@@ -26835,8 +27443,11 @@ function PageManager() {
     )
   ] });
 }
+
+// src/admin/SignOutModal.js
+import { jsx as jsx31, jsxs as jsxs24 } from "react/jsx-runtime";
 function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishing, publishError }) {
-  return /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsxs24(
     ModalShell,
     {
       role: "alertdialog",
@@ -26845,14 +27456,14 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
       onClose: onCancel,
       backdropStyle: { zIndex: 300 },
       children: [
-        /* @__PURE__ */ jsx("h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
-        /* @__PURE__ */ jsxs("p", { id: "signout-modal-body", children: [
-          /* @__PURE__ */ jsx("strong", { children: pageName }),
+        /* @__PURE__ */ jsx31("h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
+        /* @__PURE__ */ jsxs24("p", { id: "signout-modal-body", children: [
+          /* @__PURE__ */ jsx31("strong", { children: pageName }),
           " has changes saved as a draft but not yet published. Publish now to make them live, or sign out and publish later."
         ] }),
-        publishError && /* @__PURE__ */ jsx("p", { role: "alert", className: "jeeby-cms-inline-error", style: { marginTop: 8 }, children: "Publish failed. Sign out anyway or try again." }),
-        /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsx(
+        publishError && /* @__PURE__ */ jsx31("p", { role: "alert", className: "jeeby-cms-inline-error", style: { marginTop: 8 }, children: "Publish failed. Sign out anyway or try again." }),
+        /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ jsx31(
             "button",
             {
               type: "button",
@@ -26862,7 +27473,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
               children: "Sign out anyway"
             }
           ),
-          /* @__PURE__ */ jsx(
+          /* @__PURE__ */ jsx31(
             "button",
             {
               type: "button",
@@ -26873,7 +27484,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
               children: "Cancel"
             }
           ),
-          /* @__PURE__ */ jsx(
+          /* @__PURE__ */ jsx31(
             "button",
             {
               type: "button",
@@ -26889,13 +27500,16 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
     }
   );
 }
+
+// src/admin/index.js
+import { jsx as jsx33, jsxs as jsxs25 } from "react/jsx-runtime";
 function AdminPanel({ children, siteName }) {
-  const { user, loading, signOut } = useAuth();
-  const guardRef = useRef(null);
-  const [signOutModal, setSignOutModal] = useState(null);
-  const [publishing, setPublishing] = useState(false);
-  const [publishError, setPublishError] = useState(false);
-  const guardContext = useMemo(() => ({
+  const { user, loading, signOut } = useAuth2();
+  const guardRef = useRef17(null);
+  const [signOutModal, setSignOutModal] = useState18(null);
+  const [publishing, setPublishing] = useState18(false);
+  const [publishError, setPublishError] = useState18(false);
+  const guardContext = useMemo4(() => ({
     setGuard: (guard) => {
       guardRef.current = guard;
     },
@@ -26933,19 +27547,19 @@ function AdminPanel({ children, siteName }) {
     window.location.replace("/admin");
   }
   if (loading) {
-    return /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-admin", children: [
-      /* @__PURE__ */ jsx("header", { className: "jeeby-cms-nav", role: "banner", children: /* @__PURE__ */ jsx("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }) }),
-      /* @__PURE__ */ jsx("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
+    return /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-admin", children: [
+      /* @__PURE__ */ jsx33("header", { className: "jeeby-cms-nav", role: "banner", children: /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }) }),
+      /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
     ] });
   }
   if (!user) {
-    return /* @__PURE__ */ jsx("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx(LoginPage, { siteName }) });
+    return /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx33(LoginPage, { siteName }) });
   }
-  return /* @__PURE__ */ jsx(SignOutGuardContext.Provider, { value: guardContext, children: /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-admin", children: [
-    /* @__PURE__ */ jsx("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
-    /* @__PURE__ */ jsx(AdminNav, { onSignOut: handleSignOutRequest, siteName }),
-    /* @__PURE__ */ jsx("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsx(PageManager, {}) }),
-    signOutModal && /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsx33(SignOutGuardContext.Provider, { value: guardContext, children: /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-admin", children: [
+    /* @__PURE__ */ jsx33("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
+    /* @__PURE__ */ jsx33(AdminNav, { onSignOut: handleSignOutRequest, siteName }),
+    /* @__PURE__ */ jsx33("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsx33(PageManager, {}) }),
+    signOutModal && /* @__PURE__ */ jsx33(
       SignOutModal,
       {
         pageName: signOutModal.pageName,
@@ -26962,5 +27576,7 @@ function AdminPanel({ children, siteName }) {
     )
   ] }) });
 }
-
-export { AdminPanel, PageEditor };
+export {
+  AdminPanel,
+  PageEditor
+};

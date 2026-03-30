@@ -63,3 +63,9 @@ test('GalleryEditor has batch upload button', () => {
 test('GalleryEditor has hidden file input for upload', () => {
   assert.ok(src.includes('type="file"'), 'GalleryEditor must have hidden file input')
 })
+
+test('GalleryEditor integrates media library in multi-select mode', () => {
+  assert.ok(src.includes('MediaLibraryModal'), 'GalleryEditor should import/use MediaLibraryModal')
+  assert.ok(src.includes('mode="select-multi"'), 'GalleryEditor should open media library in multi-select mode')
+  assert.ok(src.includes('Add from library'), 'GalleryEditor should expose Add from library action')
+})

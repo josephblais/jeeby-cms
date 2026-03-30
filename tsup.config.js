@@ -1,16 +1,15 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig([
-  // Entry 1: client components — "use client" banner injected at bundle entry
-  // NOTE: "use client" is NOT in the source file; TSUP injects it at the top of every output file in this config block
+  // Entry 1: client components — "use client" injected by post-build script (not banner)
+  // NOTE: "use client" is NOT in the source file. The post-build script in package.json
+  // prepends it to dist/index.{js,mjs} after esbuild runs, avoiding Rollup directive warnings.
   {
     entry: { index: 'src/index.js' },
     format: ['esm', 'cjs'],
     splitting: false,
-    treeshake: true,
     clean: true,
     external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', 'dompurify', 'video.js'],
-    banner: { js: '"use client";' },
     loader: { '.js': 'jsx' },
     esbuildOptions(options) {
       options.jsx = 'automatic'
@@ -20,14 +19,15 @@ export default defineConfig([
       return { js: format === 'esm' ? '.mjs' : '.js' }
     },
   },
-  // Entry 2: admin components — no entry-level banner (individual files self-mark as needed)
+  // Entry 2: admin components — "use client" comes from src/admin/index.js (entry file directive).
   // NOTE: ../index.js is rewritten to 'jeeby-cms' at bundle time so both admin and index
   // share the same React context instance at runtime (prevents "must be inside CMSProvider").
+  // treeshake removed: esbuild tree-shaking is sufficient; Rollup post-pass generated spurious
+  // warnings for tiptap's unused react/react-dom imports and storage.js's deleteObject.
   {
     entry: { admin: 'src/admin/index.js' },
     format: ['esm', 'cjs'],
     splitting: true,
-    treeshake: true,
     external: ['react', 'react-dom', 'next', 'firebase', 'framer-motion', /^firebase-admin/, /^use-sync-external-store/],
     loader: { '.js': 'jsx' },
     esbuildPlugins: [

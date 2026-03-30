@@ -98,3 +98,38 @@ export function validateSlug(pattern, slug) {
     .replace(/\//g, '\\/')
   return new RegExp('^' + regexStr + '$').test(slug)
 }
+
+// Write a new media record to the /cms/media collection.
+// item: { storageUrl, storagePath, title, alt, mimeType, size }
+// Returns the generated document ID.
+export async function addMediaItem(db, item) {
+  const id = crypto.randomUUID()
+  await setDoc(doc(db, 'cms', 'media', id), {
+    ...item,
+    uploadedAt: serverTimestamp(),
+  })
+  return id
+}
+
+// Returns one page of media items ordered by uploadedAt desc, plus a cursor
+// for the next page and a hasMore flag. Fetches pageSize+1 to detect overflow.
+// cursor: Firestore DocumentSnapshot from a previous call's nextCursor.
+export async function listMediaPaginated(db, { pageSize = 24, cursor = null } = {}) {
+  const col = collection(db, 'cms', 'media')
+  const constraints = cursor
+    ? [orderBy('uploadedAt', 'desc'), startAfter(cursor), limit(pageSize + 1)]
+    : [orderBy('uploadedAt', 'desc'), limit(pageSize + 1)]
+  const snap = await getDocs(query(col, ...constraints))
+  const hasMore = snap.docs.length > pageSize
+  const pageDocs = snap.docs.slice(0, pageSize)
+  return {
+    items: pageDocs.map(d => ({ id: d.id, ...d.data() })),
+    nextCursor: hasMore ? pageDocs[pageDocs.length - 1] : null,
+    hasMore,
+  }
+}
+
+// Update title/alt or other fields on an existing media record.
+export async function updateMediaItem(db, id, updates) {
+  await updateDoc(doc(db, 'cms', 'media', id), updates)
+}

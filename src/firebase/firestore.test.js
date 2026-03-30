@@ -165,3 +165,45 @@ test('publishPage includes hasDraftChanges: false in updateDoc payload', async (
   const src = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
   assert.ok(src.includes('hasDraftChanges: false'), 'publishPage must set hasDraftChanges: false')
 })
+
+// ── Media Library helpers (MLIB-01) ───────────────────────────────────
+
+const firestoreSrc = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
+
+test('addMediaItem uses setDoc on cms/media collection', () => {
+  assert.ok(firestoreSrc.includes("doc(db, 'cms', 'media', id)"), 'addMediaItem must write to cms/media collection')
+})
+
+test('addMediaItem spreads item and adds serverTimestamp', () => {
+  assert.ok(firestoreSrc.includes('...item'), 'addMediaItem must spread the item fields')
+  assert.ok(firestoreSrc.includes('uploadedAt: serverTimestamp()'), 'addMediaItem must set uploadedAt to serverTimestamp()')
+})
+
+test('addMediaItem generates a UUID for the document ID', () => {
+  assert.ok(firestoreSrc.includes('crypto.randomUUID()'), 'addMediaItem must generate a UUID')
+})
+
+test('listMediaPaginated queries cms/media ordered by uploadedAt desc', () => {
+  assert.ok(firestoreSrc.includes("collection(db, 'cms', 'media')"), 'listMediaPaginated must query cms/media collection')
+  assert.ok(firestoreSrc.includes("orderBy('uploadedAt', 'desc')"), 'listMediaPaginated must order by uploadedAt desc')
+})
+
+test('listMediaPaginated uses cursor pagination with pageSize+1 overflow detection', () => {
+  assert.ok(firestoreSrc.includes('startAfter(cursor)'), 'must use startAfter for cursor pagination')
+  assert.ok(firestoreSrc.includes('limit(pageSize + 1)'), 'must fetch pageSize+1 for overflow detection')
+})
+
+test('listMediaPaginated returns items, nextCursor, and hasMore', () => {
+  assert.ok(firestoreSrc.includes('items:'), 'must return items array')
+  assert.ok(firestoreSrc.includes('nextCursor:'), 'must return nextCursor')
+  assert.ok(firestoreSrc.includes('hasMore'), 'must return hasMore flag')
+})
+
+test('listMediaPaginated defaults to pageSize 24', () => {
+  assert.ok(firestoreSrc.includes('pageSize = 24'), 'default pageSize must be 24')
+})
+
+test('updateMediaItem calls updateDoc on cms/media/{id}', () => {
+  assert.ok(firestoreSrc.includes("doc(db, 'cms', 'media', id)"), 'updateMediaItem must target cms/media/{id}')
+  assert.ok(firestoreSrc.includes('updateDoc('), 'updateMediaItem must call updateDoc')
+})

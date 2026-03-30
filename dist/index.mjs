@@ -1,18 +1,20 @@
 "use client";
-import { createContext, createElement, useMemo, useContext, useState, useEffect, useRef } from 'react';
-import { doc, onSnapshot, getFirestore } from 'firebase/firestore';
-import { getApps, initializeApp, getApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signOut as signOut$1, signInWithEmailAndPassword } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import * as DOMPurifyModule from 'dompurify';
-import { jsx } from 'react/jsx-runtime';
-
 var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
   get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
 }) : x)(function(x) {
   if (typeof require !== "undefined") return require.apply(this, arguments);
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
+
+// src/index.js
+import { createContext, useContext, useMemo, useState as useState2, useEffect as useEffect3 } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+
+// src/firebase/init.js
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 var _app;
 var _db;
 var _auth;
@@ -24,25 +26,45 @@ function initFirebase(config) {
   _storage = getStorage(_app);
   return { app: _app, db: _db, auth: _auth, storage: _storage };
 }
+
+// src/firebase/auth.js
+import {
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged
+} from "firebase/auth";
 async function signIn(auth, email, password) {
   const result = await signInWithEmailAndPassword(auth, email, password);
   return result.user;
 }
 async function signOut(auth) {
-  return signOut$1(auth);
+  return firebaseSignOut(auth);
 }
 function subscribeToAuthState(auth, callback) {
   return onAuthStateChanged(auth, callback);
 }
+
+// src/blocks/index.js
+import { createElement as createElement9 } from "react";
+
+// src/blocks/Title.js
+import { createElement } from "react";
 var VALID_LEVELS = ["h2", "h3", "h4", "h5", "h6"];
 var normalizeLevel = (l) => l === "h1" ? "h2" : VALID_LEVELS.includes(l) ? l : "h3";
 function Title({ data, className }) {
   const tag = normalizeLevel(data == null ? void 0 : data.level);
   return createElement(tag, { className }, data == null ? void 0 : data.text);
 }
+
+// src/blocks/Paragraph.js
+import { createElement as createElement2 } from "react";
 function Paragraph({ data, className }) {
-  return createElement("p", { className }, data == null ? void 0 : data.text);
+  return createElement2("p", { className }, data == null ? void 0 : data.text);
 }
+
+// src/blocks/RichText.js
+import { createElement as createElement3, useState, useEffect } from "react";
+import * as DOMPurifyModule from "dompurify";
 var DOMPurify = DOMPurifyModule.default ?? DOMPurifyModule;
 var DOMPURIFY_CONFIG = {
   // Preserve ARIA attributes so admin-authored HTML stays accessible.
@@ -61,8 +83,11 @@ function RichText({ data, className }) {
       setClean(DOMPurify.sanitize(raw, DOMPURIFY_CONFIG));
     }
   }, [raw]);
-  return createElement("div", { className, dangerouslySetInnerHTML: { __html: clean } });
+  return createElement3("div", { className, dangerouslySetInnerHTML: { __html: clean } });
 }
+
+// src/blocks/Image.js
+import { createElement as createElement4 } from "react";
 function Image({ data, className }) {
   if (!(data == null ? void 0 : data.src)) return null;
   const imgProps = {
@@ -73,15 +98,18 @@ function Image({ data, className }) {
     height: data == null ? void 0 : data.height
   };
   if (data == null ? void 0 : data.caption) {
-    return createElement(
+    return createElement4(
       "figure",
       { className },
-      createElement("img", imgProps),
-      createElement("figcaption", null, data.caption)
+      createElement4("img", imgProps),
+      createElement4("figcaption", null, data.caption)
     );
   }
-  return createElement("img", { ...imgProps, className });
+  return createElement4("img", { ...imgProps, className });
 }
+
+// src/blocks/Video.js
+import { createElement as createElement5, useRef, useEffect as useEffect2 } from "react";
 function toEmbedUrl(url) {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -98,7 +126,7 @@ function isStorageUrl(url) {
 function VideoJSPlayer({ url, title }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
-  useEffect(() => {
+  useEffect2(() => {
     if (!playerRef.current && containerRef.current) {
       let videojs;
       try {
@@ -117,7 +145,7 @@ function VideoJSPlayer({ url, title }) {
       });
     }
   }, [url]);
-  useEffect(() => {
+  useEffect2(() => {
     const player = playerRef.current;
     return () => {
       if (player && !player.isDisposed()) {
@@ -126,10 +154,10 @@ function VideoJSPlayer({ url, title }) {
       }
     };
   }, [playerRef]);
-  return createElement(
+  return createElement5(
     "div",
     { "data-vjs-player": true },
-    createElement("div", { ref: containerRef })
+    createElement5("div", { ref: containerRef })
   );
 }
 function Video({ data, className }) {
@@ -149,9 +177,9 @@ function Video({ data, className }) {
       }
     }
     if (videojsAvailable && typeof window !== "undefined") {
-      return createElement(VideoJSPlayer, { url: src, title: titleText });
+      return createElement5(VideoJSPlayer, { url: src, title: titleText });
     }
-    return createElement("video", {
+    return createElement5("video", {
       src,
       controls: true,
       className,
@@ -160,7 +188,7 @@ function Video({ data, className }) {
     });
   }
   const embedUrl = toEmbedUrl(src);
-  return createElement("iframe", {
+  return createElement5("iframe", {
     src: embedUrl,
     // WCAG 4.1.2: title attribute is MANDATORY on every iframe.
     // Use block.data.title if provided, otherwise fall back to a descriptive default.
@@ -171,9 +199,12 @@ function Video({ data, className }) {
     style: { border: 0, width: "100%", aspectRatio: "16/9" }
   });
 }
+
+// src/blocks/Gallery.js
+import { createElement as createElement6 } from "react";
 function Gallery({ data, className }) {
   const items = (data == null ? void 0 : data.items) ?? [];
-  return createElement(
+  return createElement6(
     "ul",
     {
       className: ["jeeby-cms-gallery", className].filter(Boolean).join(" "),
@@ -181,38 +212,44 @@ function Gallery({ data, className }) {
       style: { listStyle: "none", padding: 0, margin: 0 }
     },
     ...items.map(
-      (item, i) => createElement(
+      (item, i) => createElement6(
         "li",
         { key: item.id ?? i },
-        item.caption ? createElement(
+        item.caption ? createElement6(
           "figure",
           null,
-          createElement("img", { src: item.src, alt: item.alt ?? "", loading: "lazy" }),
-          createElement("figcaption", null, item.caption)
-        ) : createElement("img", { src: item.src, alt: item.alt ?? "", loading: "lazy" })
+          createElement6("img", { src: item.src, alt: item.alt ?? "", loading: "lazy" }),
+          createElement6("figcaption", null, item.caption)
+        ) : createElement6("img", { src: item.src, alt: item.alt ?? "", loading: "lazy" })
       )
     )
   );
 }
+
+// src/blocks/List.js
+import { createElement as createElement7 } from "react";
 function List({ data, className }) {
   const items = (data == null ? void 0 : data.items) ?? [];
   if (!items.length) return null;
   const tag = (data == null ? void 0 : data.ordered) ? "ol" : "ul";
-  return createElement(
+  return createElement7(
     tag,
     { className },
-    ...items.map((item, i) => createElement("li", { key: i }, item))
+    ...items.map((item, i) => createElement7("li", { key: i }, item))
   );
 }
+
+// src/blocks/PullQuote.js
+import { createElement as createElement8 } from "react";
 function PullQuote({ data, className }) {
   const quote = (data == null ? void 0 : data.quote) ?? "";
   const attribution = (data == null ? void 0 : data.attribution) ?? "";
   if (!quote) return null;
-  return createElement(
+  return createElement8(
     "figure",
     { className },
-    createElement("blockquote", null, createElement("p", null, quote)),
-    attribution ? createElement("figcaption", null, attribution) : null
+    createElement8("blockquote", null, createElement8("p", null, quote)),
+    attribution ? createElement8("figcaption", null, attribution) : null
   );
 }
 
@@ -228,7 +265,7 @@ var BLOCK_REGISTRY = {
   pullquote: PullQuote
 };
 function Block({ id, className, children }) {
-  return createElement(
+  return createElement9(
     "div",
     {
       id,
@@ -241,20 +278,23 @@ function Blocks({ data, components, className, blockClassName }) {
   var _a;
   if (!((_a = data == null ? void 0 : data.blocks) == null ? void 0 : _a.length)) return null;
   const registry = components ? { ...BLOCK_REGISTRY, ...components } : BLOCK_REGISTRY;
-  return createElement(
+  return createElement9(
     "div",
     { className },
     ...data.blocks.map((block, i) => {
       const Component = registry[block.type];
       if (!Component) return null;
-      return createElement(
+      return createElement9(
         Block,
         { key: block.id ?? i, id: block.id, className: blockClassName },
-        createElement(Component, { data: block.data })
+        createElement9(Component, { data: block.data })
       );
     })
   );
 }
+
+// src/index.js
+import { jsx } from "react/jsx-runtime";
 var CMSContext = createContext(null);
 function CMSProvider({ firebaseConfig, templates = [], children }) {
   const firebase = useMemo(() => initFirebase(firebaseConfig), [firebaseConfig]);
@@ -268,9 +308,9 @@ function useCMSFirebase() {
 }
 function useAuth() {
   const { auth } = useCMSFirebase();
-  const [user, setUser] = useState(void 0);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
+  const [user, setUser] = useState2(void 0);
+  const [loading, setLoading] = useState2(true);
+  useEffect3(() => {
     const unsubscribe = subscribeToAuthState(auth, async (u) => {
       if (u) {
         const token = await u.getIdToken();
@@ -293,10 +333,10 @@ function useAuth() {
 }
 function useCMSContent(slug) {
   const { db } = useCMSFirebase();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  useEffect(() => {
+  const [data, setData] = useState2(null);
+  const [loading, setLoading] = useState2(true);
+  const [error, setError] = useState2(null);
+  useEffect3(() => {
     if (!slug || !db) return;
     setLoading(true);
     const ref = doc(db, "pages", slug);
@@ -316,5 +356,11 @@ function useCMSContent(slug) {
   }, [db, slug]);
   return { data, loading, error };
 }
-
-export { Block, Blocks, CMSProvider, useAuth, useCMSContent, useCMSFirebase };
+export {
+  Block,
+  Blocks,
+  CMSProvider,
+  useAuth,
+  useCMSContent,
+  useCMSFirebase
+};

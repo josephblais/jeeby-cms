@@ -83,3 +83,21 @@ test('ImageEditor has role=alert on upload error', () => {
 test('ImageEditor has retry button for failed uploads', () => {
   assert.ok(src.includes('Retry'), 'ImageEditor must have Retry button for failed uploads')
 })
+
+test('ImageEditor integrates media library modal', () => {
+  assert.ok(src.includes('MediaLibraryModal'), 'ImageEditor should import/use MediaLibraryModal')
+  assert.ok(src.includes('mode="select-single"'), 'ImageEditor should open MediaLibraryModal in select-single mode')
+  assert.ok(src.includes('Select image from media library'), 'ImageEditor should expose a Select from Library control')
+})
+
+test('ImageEditor supports alt conflict resolution', () => {
+  assert.ok(src.includes('Resolve alt text conflict'), 'ImageEditor should show alt conflict prompt when needed')
+  assert.ok(src.includes('Keep current alt text'), 'ImageEditor should let users keep block alt text')
+  assert.ok(src.includes('Use library alt text'), 'ImageEditor should let users replace with library alt text')
+})
+
+test('ImageEditor supports saving uploaded image metadata to media library', () => {
+  assert.ok(src.includes('Save uploaded image to Media Library'), 'ImageEditor should prompt for metadata after upload')
+  assert.ok(src.includes('Save to Library'), 'ImageEditor should include Save to Library action')
+  assert.ok(src.includes('addMediaItem'), 'ImageEditor should persist uploaded media metadata')
+})

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 09-media-handling
-current_plan: 09-03 complete
+current_phase: 09.2
+current_plan: 1
 status: executing
-last_updated: "2026-03-23T18:59:18.739Z"
+last_updated: "2026-03-30T01:44:33.358Z"
 progress:
-  total_phases: 12
+  total_phases: 13
   completed_phases: 9
-  total_plans: 32
+  total_plans: 37
   completed_plans: 32
 ---
 
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 09-media-handling
-**Current plan:** 09-03 complete
-**Status:** Phase 09-media-handling complete — all 3 plans done
+**Current phase:** 09.2
+**Current plan:** 1
+**Status:** Executing Phase 09.2
 
 ## Decisions
 
@@ -45,6 +45,11 @@ See: .planning/PROJECT.md
 - [Phase 09-media-handling]: Upload button label changes during upload for WCAG 2.5.3 compliance; uploadProgress guard prevents blur-dismiss during active upload
 - [Phase 09-media-handling]: Upload state local to GalleryItem (not GalleryEditor) — drag reorder cannot corrupt per-item progress
 - [Phase 09-media-handling]: Promise.allSettled for batch gallery uploads — partial success appends fulfilled URLs without blocking on a single failure
+
+## Roadmap Evolution
+
+- Phase 12 added then removed — replaced by Phase 09.2 inserted after Phase 9
+- Phase 09.2 inserted after Phase 9: Media Library — modal-based image browser with lazy loading, infinite scroll, multi-upload, title/alt text prompting, and block editor integration
 
 ## Session Log
 

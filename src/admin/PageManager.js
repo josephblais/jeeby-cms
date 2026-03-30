@@ -5,6 +5,7 @@ import { useCMSFirebase } from '../index.js'
 import { listPages, listPagesPaginated, renamePage, savePage, validateSlug } from '../firebase/firestore.js'
 import { CreatePageModal } from './CreatePageModal.js'
 import { DeletePageModal } from './DeletePageModal.js'
+import { MediaLibraryModal } from './MediaLibraryModal.js'
 
 // Internal helper — not exported
 function formatDate(ts) {
@@ -155,6 +156,20 @@ function IconChevronDown() {
     </svg>
   )
 }
+function IconChevronLeft() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M6.5 2l-3 3 3 3" />
+    </svg>
+  )
+}
+function IconChevronRight() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M3.5 2l3 3-3 3" />
+    </svg>
+  )
+}
 
 // SortPicker — floating menu for sort/filter options.
 // Uses role="menu" + role="menuitemradio" (not listbox) since this is a persistent
@@ -279,6 +294,8 @@ export function PageManager() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const deleteBtnRef = useRef(null)
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false)
+  const mediaLibraryTriggerRef = useRef(null)
 
   // Sort / filter
   const [sortMode, setSortMode] = useState('recent')
@@ -668,14 +685,29 @@ export function PageManager() {
         <div className="jeeby-cms-pages-empty">
           <h2>No pages yet.</h2>
           <p>Each page is a section of your website — like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready.</p>
-          <button
-            ref={newPageBtnRef}
-            type="button"
-            className="jeeby-cms-btn-primary"
-            onClick={() => setShowCreateModal(true)}
-          >Create your first page</button>
+          <div className="jeeby-cms-page-list-controls">
+            <button
+              ref={newPageBtnRef}
+              type="button"
+              className="jeeby-cms-btn-primary"
+              onClick={() => setShowCreateModal(true)}
+            >Create your first page</button>
+            <button
+              ref={mediaLibraryTriggerRef}
+              type="button"
+              className="jeeby-cms-btn-ghost"
+              onClick={() => setMediaLibraryOpen(true)}
+            >Upload Media</button>
+          </div>
         </div>
         <CreatePageModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }} triggerRef={newPageBtnRef} />
+        <MediaLibraryModal
+          open={mediaLibraryOpen}
+          mode="browse"
+          onSelect={undefined}
+          onClose={() => setMediaLibraryOpen(false)}
+          triggerRef={mediaLibraryTriggerRef}
+        />
       </div>
     )
   }
@@ -731,6 +763,12 @@ export function PageManager() {
             className="jeeby-cms-btn-primary"
             onClick={() => setShowCreateModal(true)}
           >New Page</button>
+          <button
+            ref={mediaLibraryTriggerRef}
+            type="button"
+            className="jeeby-cms-btn-ghost"
+            onClick={() => setMediaLibraryOpen(true)}
+          >Upload Media</button>
         </div>
       </div>
 
@@ -948,8 +986,8 @@ export function PageManager() {
             onClick={goToPrevPage}
             disabled={!canGoPrev || loading}
             aria-label="Previous page"
-          >← Prev</button>
-          <span className="jeeby-cms-pagination-label" aria-current="page">
+          ><IconChevronLeft /> Prev</button>
+          <span className="jeeby-cms-pagination-label" aria-live="polite">
             {totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}`}
           </span>
           <button
@@ -958,7 +996,7 @@ export function PageManager() {
             onClick={goToNextPage}
             disabled={!canGoNext || loading}
             aria-label="Next page"
-          >Next →</button>
+          >Next <IconChevronRight /></button>
         </div>
       )}
 
@@ -972,6 +1010,13 @@ export function PageManager() {
           setAnnouncement('Page created successfully.')
         }}
         triggerRef={newPageBtnRef}
+      />
+      <MediaLibraryModal
+        open={mediaLibraryOpen}
+        mode="browse"
+        onSelect={undefined}
+        onClose={() => setMediaLibraryOpen(false)}
+        triggerRef={mediaLibraryTriggerRef}
       />
       <DeletePageModal
         page={deleteTarget}

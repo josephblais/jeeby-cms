@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
-import { uploadFile } from '../../firebase/storage.js'
+import { uploadFile, validateImageFile, MIME_TO_EXT } from '../../firebase/storage.js'
 import { useCMSFirebase } from '../../index.js'
+import { MediaLibraryModal } from '../MediaLibraryModal.js'
 
 // GalleryEditor — ordered list of { src, alt } gallery items with add/remove/reorder controls.
 // Props: { data: { items: Array<{ src, alt }> }, onChange, blockId }
@@ -20,28 +21,79 @@ function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item)
 }
 
-function GalleryItem({ item, index, items, blockId, onChange, data, storage }) {
+// Runs async factory functions with at most `limit` in flight simultaneously.
+// Returns a Promise.allSettled-shaped array of { status, value | reason } objects.
+async function withConcurrency(factories, limit = 3) {
+  const results = []
+  for (let i = 0; i < factories.length; i += limit) {
+    const batch = await Promise.allSettled(factories.slice(i, i + limit).map(fn => fn()))
+    results.push(...batch)
+  }
+  return results
+}
+
+// Memoized — prevents re-renders during concurrent upload progress ticks.
+// onUploadStart/onUploadEnd must be stabilized with useCallback in the parent.
+const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onChange, data, storage, filePickerOpen, onUploadStart, onUploadEnd }) {
   const controls = useDragControls()
-  const [uploadProgress, setUploadProgress] = useState(null) // null | 0-100 | 'error'
+  // null | 0–100 (uploading) | { message: string, retryable: boolean } (error/validation fail)
+  const [uploadProgress, setUploadProgress] = useState(null)
+  const isUploading = typeof uploadProgress === 'number'
+  const uploadError  = uploadProgress !== null && !isUploading ? uploadProgress : null
   const fileInputRef = useRef(null)
   const pendingFileRef = useRef(null)
+  // Local blob preview shown immediately after file selection.
+  // Never written to item.src — only used as a display source.
+  const [previewSrc, setPreviewSrc] = useState(null)
+  const uploadCancelRef = useRef(null)
+  const [imgLoadError, setImgLoadError] = useState(false)
+
+  // Revoke the blob URL after React renders without it.
+  useEffect(() => {
+    return () => { if (previewSrc) URL.revokeObjectURL(previewSrc) }
+  }, [previewSrc])
+
+  // Reset img error when the source changes (user corrected the URL).
+  useEffect(() => { setImgLoadError(false) }, [item.src])
+
+  // Cancel any in-flight upload when the item unmounts.
+  useEffect(() => {
+    return () => { uploadCancelRef.current?.() }
+  }, [])
+
+  const displaySrc = previewSrc ?? item.src
 
   async function handleItemUpload(file) {
+    const validationError = validateImageFile(file)
+    if (validationError) {
+      setUploadProgress({ message: validationError, retryable: false })
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+    onUploadStart?.()
     pendingFileRef.current = file
-    const ext = file.name.split('.').pop().toLowerCase()
-    const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+    const previewUrl = URL.createObjectURL(file)
+    setPreviewSrc(previewUrl)
     setUploadProgress(0)
     try {
-      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct))
+      const ext = file.name.includes('.')
+        ? file.name.split('.').pop().toLowerCase()
+        : (MIME_TO_EXT[file.type] ?? 'jpg')
+      const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+      const url = await uploadFile(storage, file, path, (pct) => setUploadProgress(pct), uploadCancelRef)
       onChange({
         ...data,
         items: items.map((it, i) => i === index ? { ...it, src: url } : it),
       })
       setUploadProgress(null)
-    } catch {
-      setUploadProgress('error')
+    } catch (err) {
+      if (err.code === 'storage/canceled') return
+      console.error('[jeeby-cms] Gallery item upload failed:', err)
+      setUploadProgress({ message: 'Upload failed — check your connection and try again.', retryable: true })
     } finally {
+      setPreviewSrc(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
+      onUploadEnd?.()
     }
   }
 
@@ -66,11 +118,12 @@ function GalleryItem({ item, index, items, blockId, onChange, data, storage }) {
           onPointerDown={(e) => { e.preventDefault(); controls.start(e) }}
         >⠿</button>
 
-        {item.src && (
+        {displaySrc && !imgLoadError && (
           <img
-            src={item.src}
+            src={displaySrc}
             alt={item.alt || ''}
             className="jeeby-cms-gallery-preview"
+            onError={() => setImgLoadError(true)}
           />
         )}
 
@@ -86,15 +139,17 @@ function GalleryItem({ item, index, items, blockId, onChange, data, storage }) {
                 ...data,
                 items: updateItem(items, index, 'src', e.target.value),
               })}
+              onBlur={(e) => { const v = e.target.value.trim(); if (v !== e.target.value) onChange({ ...data, items: updateItem(items, index, 'src', v) }) }}
             />
+            <span className="jeeby-cms-image-url-or" aria-hidden="true">or</span>
             <button
               type="button"
               className="jeeby-cms-btn-ghost jeeby-cms-gallery-upload-btn"
-              aria-label={uploadProgress !== null && uploadProgress !== 'error' ? 'Uploading item ' + (index + 1) + '...' : 'Upload image for item ' + (index + 1)}
-              disabled={uploadProgress !== null && uploadProgress !== 'error'}
-              onClick={() => fileInputRef.current?.click()}
+              aria-label={isUploading ? 'Uploading item ' + (index + 1) + '…' : 'Upload image for item ' + (index + 1)}
+              disabled={isUploading}
+              onClick={() => { if (filePickerOpen) filePickerOpen.current = true; fileInputRef.current?.click() }}
             >
-              {uploadProgress !== null && uploadProgress !== 'error' ? '...' : 'Upload'}
+              {isUploading ? 'Uploading…' : 'Upload'}
             </button>
           </div>
           <input
@@ -105,21 +160,28 @@ function GalleryItem({ item, index, items, blockId, onChange, data, storage }) {
             aria-hidden="true"
             tabIndex={-1}
             onChange={(e) => {
+              if (filePickerOpen) filePickerOpen.current = false
               const file = e.target.files?.[0]
               if (file) handleItemUpload(file)
             }}
+            onCancel={() => { if (filePickerOpen) filePickerOpen.current = false }}
           />
-          {uploadProgress !== null && uploadProgress !== 'error' && (
-            <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for item ' + (index + 1)}>
+          {isUploading && (
+            <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(uploadProgress)} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for item ' + (index + 1)}>
               <div className="jeeby-cms-upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
             </div>
           )}
-          {uploadProgress === 'error' && (
+          {uploadError && (
             <div className="jeeby-cms-upload-error-row">
-              <p role="alert" className="jeeby-cms-inline-error">Upload failed</p>
-              <button type="button" className="jeeby-cms-btn-ghost" onClick={handleItemRetry}>Retry</button>
+              <p role="alert" className="jeeby-cms-inline-error">{uploadError.message}</p>
+              {uploadError.retryable && (
+                <button type="button" className="jeeby-cms-btn-ghost" onClick={handleItemRetry}>Retry</button>
+              )}
             </div>
           )}
+          <div className="jeeby-cms-upload-status" aria-live="polite">
+            {isUploading ? `Uploading — ${Math.round(uploadProgress)}%` : null}
+          </div>
           <input
             type="text"
             value={item.alt ?? ''}
@@ -149,7 +211,7 @@ function GalleryItem({ item, index, items, blockId, onChange, data, storage }) {
       </div>
     </Reorder.Item>
   )
-}
+})
 
 export function GalleryEditor({ data, onChange, blockId }) {
   const items = data?.items ?? []
@@ -160,16 +222,35 @@ export function GalleryEditor({ data, onChange, blockId }) {
   const addButtonRef = useRef(null)
   const { storage } = useCMSFirebase()
   const batchInputRef = useRef(null)
+  const filePickerOpen = useRef(false)
+  // Counter tracking concurrent in-progress item uploads. When an upload starts,
+  // the upload button becomes disabled and the browser moves focus to body. Without
+  // this guard, that focus move triggers blur → setIsEditing(false).
+  // A counter (not a boolean) handles multiple simultaneous uploads correctly.
+  const uploadCountRef = useRef(0)
   // Entering edit mode unmounts the focused view div, whose blur fires before any
   // child of the edit container is focused. Suppress that one spurious blur so the
   // edit mode doesn't immediately close itself.
   const suppressNextBlur = useRef(false)
+  const libraryTriggerRef = useRef(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
+
+  const [batchError, setBatchError] = useState(null)
+  // Mirrors uploadCountRef for reactive UI — keeps Done button disabled while
+  // any item upload is in flight (closing edit mode would cancel them via cleanup).
+  const [activeUploads, setActiveUploads] = useState(0)
+
+  // Stable references required for GalleryItem memo to skip re-renders during
+  // upload progress ticks. Deps are empty — both use only refs and setState updaters.
+  const handleUploadStart = useCallback(() => { uploadCountRef.current++; setActiveUploads(c => c + 1) }, [])
+  const handleUploadEnd   = useCallback(() => { uploadCountRef.current--; setActiveUploads(c => c - 1) }, [])
 
   function handleContainerBlur() {
     if (suppressNextBlur.current) {
       suppressNextBlur.current = false
       return
     }
+    if (filePickerOpen.current || uploadCountRef.current > 0) return
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
         setIsEditing(false)
@@ -178,49 +259,104 @@ export function GalleryEditor({ data, onChange, blockId }) {
   }
 
   async function handleBatchUpload(files) {
+    setBatchError(null)
     const fileArray = Array.from(files)
-    const results = await Promise.allSettled(
-      fileArray.map(file => {
-        const ext = file.name.split('.').pop().toLowerCase()
-        const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
-        return uploadFile(storage, file, path)
-      })
-    )
-    const newItems = results
-      .filter(r => r.status === 'fulfilled')
-      .map(r => ({ src: r.value, alt: '', id: crypto.randomUUID() }))
-    if (newItems.length > 0) {
-      onChange({ ...data, items: [...items, ...newItems] })
+    const valid = fileArray.filter(f => !validateImageFile(f))
+    const invalidCount = fileArray.length - valid.length
+
+    if (valid.length === 0) {
+      setBatchError('No valid images — only JPEG, PNG, GIF, and WebP under 10 MB are supported.')
+      if (batchInputRef.current) batchInputRef.current.value = ''
+      filePickerOpen.current = false
+      return
     }
-    if (batchInputRef.current) batchInputRef.current.value = ''
+
+    try {
+      // Limit to 3 concurrent uploads to avoid saturating the connection on
+      // large selections. withConcurrency processes files in waves of 3.
+      const results = await withConcurrency(
+        valid.map(file => () => {
+          const ext = file.name.includes('.')
+            ? file.name.split('.').pop().toLowerCase()
+            : (MIME_TO_EXT[file.type] ?? 'jpg')
+          const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
+          return uploadFile(storage, file, path)
+        })
+      )
+      const newItems = results
+        .filter(r => r.status === 'fulfilled')
+        .map(r => ({ src: r.value, alt: '', id: crypto.randomUUID() }))
+      if (newItems.length > 0) {
+        onChange({ ...data, items: [...items, ...newItems] })
+      }
+      const totalFailed = invalidCount + results.filter(r => r.status === 'rejected').length
+      if (totalFailed > 0) {
+        setBatchError(`${totalFailed} file${totalFailed !== 1 ? 's' : ''} could not be uploaded.`)
+      }
+    } catch (err) {
+      console.error('[jeeby-cms] Batch upload failed:', err)
+      setBatchError('Upload failed — check your connection and try again.')
+    } finally {
+      if (batchInputRef.current) batchInputRef.current.value = ''
+      filePickerOpen.current = false
+    }
+  }
+
+  function handleLibrarySelect(selectedItems) {
+    const picked = Array.isArray(selectedItems) ? selectedItems : []
+    if (picked.length === 0) {
+      filePickerOpen.current = false
+      setLibraryOpen(false)
+      return
+    }
+    const appended = picked.map((item) => ({
+      src: item.storageUrl,
+      alt: item.alt ?? '',
+      id: crypto.randomUUID(),
+    }))
+    onChange({
+      ...data,
+      items: [...items, ...appended],
+    })
+    filePickerOpen.current = false
+    setLibraryOpen(false)
   }
 
   // View mode — thumbnail strip, click to edit
   if (!isEditing) {
     const itemsWithSrc = items.filter(item => item.src)
     return (
-      <div
-        ref={containerRef}
-        className="jeeby-cms-gallery-view"
-        role="button"
-        tabIndex={0}
-        id={'block-input-' + blockId}
-        aria-label={'Gallery — ' + items.length + ' image' + (items.length !== 1 ? 's' : '') + '. Click to edit'}
-        onClick={() => { suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) }}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) } }}
-      >
-        {itemsWithSrc.length > 0 ? (
-          <div className="jeeby-cms-gallery-thumb-strip">
-            {itemsWithSrc.map((item, i) => (
-              <img key={i} src={item.src} alt={item.alt || ''} className="jeeby-cms-gallery-thumb" />
-            ))}
-          </div>
-        ) : (
-          <p className="jeeby-cms-gallery-empty-hint">
-            {items.length > 0 ? 'Gallery — click to add image URLs' : 'Empty gallery — click to add images'}
-          </p>
-        )}
-      </div>
+      <>
+        <div
+          ref={containerRef}
+          className="jeeby-cms-gallery-view"
+          role="button"
+          tabIndex={0}
+          id={'block-input-' + blockId}
+          aria-label={'Gallery — ' + items.length + ' image' + (items.length !== 1 ? 's' : '') + '. Click to edit'}
+          onClick={() => { suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) }}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) } }}
+        >
+          {itemsWithSrc.length > 0 ? (
+            <div className="jeeby-cms-gallery-thumb-strip">
+              {itemsWithSrc.map((item, i) => (
+                <img key={i} src={item.src} alt={item.alt || ''} className="jeeby-cms-gallery-thumb" onError={e => { e.currentTarget.style.display = 'none' }} />
+              ))}
+            </div>
+          ) : (
+            <p className="jeeby-cms-gallery-empty-hint">
+              {items.length > 0 ? 'Gallery — click to add image URLs' : 'Empty gallery — click to add images'}
+            </p>
+          )}
+        </div>
+        <MediaLibraryModal
+          open={libraryOpen}
+          mode="select-multi"
+          onSelect={handleLibrarySelect}
+          triggerRef={libraryTriggerRef}
+          onClose={() => { filePickerOpen.current = false; setLibraryOpen(false) }}
+        />
+      </>
     )
   }
 
@@ -245,6 +381,9 @@ export function GalleryEditor({ data, onChange, blockId }) {
             onChange={onChange}
             data={data}
             storage={storage}
+            filePickerOpen={filePickerOpen}
+            onUploadStart={handleUploadStart}
+            onUploadEnd={handleUploadEnd}
           />
         ))}
       </Reorder.Group>
@@ -263,8 +402,27 @@ export function GalleryEditor({ data, onChange, blockId }) {
         <button
           type="button"
           className="jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn"
-          onClick={() => batchInputRef.current?.click()}
+          onClick={() => { filePickerOpen.current = true; batchInputRef.current?.click() }}
         >Upload multiple</button>
+        <button
+          ref={libraryTriggerRef}
+          type="button"
+          className="jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn"
+          onClick={() => { filePickerOpen.current = true; setLibraryOpen(true) }}
+        >Add from library</button>
+      </div>
+      {batchError && (
+        <p role="alert" className="jeeby-cms-inline-error">{batchError}</p>
+      )}
+      <div className="jeeby-cms-image-done-row">
+        <button
+          type="button"
+          className="jeeby-cms-btn-ghost jeeby-cms-image-done-btn"
+          disabled={activeUploads > 0}
+          onClick={() => setIsEditing(false)}
+        >
+          Done
+        </button>
       </div>
       <input
         ref={batchInputRef}
@@ -275,8 +433,17 @@ export function GalleryEditor({ data, onChange, blockId }) {
         aria-hidden="true"
         tabIndex={-1}
         onChange={(e) => {
+          filePickerOpen.current = false
           if (e.target.files?.length) handleBatchUpload(e.target.files)
         }}
+        onCancel={() => { filePickerOpen.current = false }}
+      />
+      <MediaLibraryModal
+        open={libraryOpen}
+        mode="select-multi"
+        onSelect={handleLibrarySelect}
+        triggerRef={libraryTriggerRef}
+        onClose={() => { filePickerOpen.current = false; setLibraryOpen(false) }}
       />
     </div>
   )

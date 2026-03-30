@@ -104,3 +104,13 @@ test('PageManager page name is a link to /admin/pages/[slug]', () => {
 test('PageManager has Edit button in Actions column linking to editor', () => {
   assert.ok(/aria-label=.*Edit blocks/.test(src), 'Edit button must have aria-label describing action')
 })
+
+test('PageManager includes Upload Media browse entrypoint', () => {
+  assert.ok(src.includes('Upload Media'), 'PageManager should expose Upload Media action')
+  assert.ok(src.includes('mode="browse"'), 'PageManager should open media library in browse mode')
+  assert.ok(src.includes('MediaLibraryModal'), 'PageManager should mount MediaLibraryModal')
+})
+
+test('Admin entry exports MediaLibraryModal', () => {
+  assert.ok(adminSrc.includes("export { MediaLibraryModal }"), 'src/admin/index.js should export MediaLibraryModal')
+})

@@ -1,5 +1,6 @@
 "use client"
 export { PageEditor } from './PageEditor.js'
+export { MediaLibraryModal } from './MediaLibraryModal.js'
 import { useState, useRef, useMemo } from 'react'
 import { useAuth } from '../index.js'
 import { LoginPage } from './LoginPage.js'

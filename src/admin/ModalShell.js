@@ -33,9 +33,10 @@ const FOCUSABLE =
  *   triggerRef    ref?         element to return focus to on close
  *   onClose       fn?          called on Escape
  *   backdropStyle object?      override backdrop inline styles (e.g. zIndex)
+ *   cardClassName string?      additional class(es) for the card element
  *   children      ReactNode
  */
-export function ModalShell({ open = true, role = 'dialog', labelId, descId, triggerRef, onClose, backdropStyle, children }) {
+export function ModalShell({ open = true, role = 'dialog', labelId, descId, triggerRef, onClose, backdropStyle, cardClassName, children }) {
   const dialogRef = useRef(null)
   const reduced = useReducedMotion()
 
@@ -102,7 +103,7 @@ export function ModalShell({ open = true, role = 'dialog', labelId, descId, trig
             aria-modal="true"
             aria-labelledby={labelId}
             aria-describedby={descId}
-            className="jeeby-cms-modal-card"
+            className={['jeeby-cms-modal-card', cardClassName].filter(Boolean).join(' ')}
             onMouseDown={e => e.stopPropagation()}
             initial={{ scale: reduced ? 1 : 0.96, y: reduced ? 0 : 10 }}
             animate={{ scale: 1, y: 0 }}
