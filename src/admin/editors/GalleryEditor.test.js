@@ -81,6 +81,14 @@ test('GalleryEditor has batch upload button', () => {
   )
 })
 
+test('GalleryEditor shows per-image batch upload queue with thumbnail, progress, and metadata fields', () => {
+  assert.ok(src.includes('jeeby-cms-gallery-batch-queue'), 'GalleryEditor should render a batch upload queue')
+  assert.ok(src.includes('Uploading — ${Math.round(upload.progress)}%'), 'GalleryEditor should show per-image upload progress text')
+  assert.ok(src.includes('jeeby-cms-upload-progress'), 'GalleryEditor should show per-image upload progress bar')
+  assert.ok(src.includes('gallery-batch-title-'), 'GalleryEditor should provide title input per uploading image')
+  assert.ok(src.includes('gallery-batch-alt-'), 'GalleryEditor should provide alt input per uploading image')
+})
+
 test('GalleryEditor has hidden file input for upload', () => {
   assert.ok(src.includes('type="file"'), 'GalleryEditor must have hidden file input')
 })

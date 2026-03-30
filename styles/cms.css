@@ -2085,6 +2085,28 @@
   padding: 6px 12px;
 }
 
+.jeeby-cms-admin .jeeby-cms-gallery-batch-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-batch-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 6px;
+  background: var(--jeeby-cms-bg-card);
+}
+
+.jeeby-cms-admin .jeeby-cms-gallery-batch-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ─── Section 14: Block Layout (document-flow, Notion-style) ──────── */
 
 /* Block row — document-flow container with left gutter space */
@@ -2664,6 +2686,93 @@
   color: var(--jeeby-cms-error);
 }
 
+.jeeby-cms-admin .jeeby-cms-media-detail-panel {
+  margin: 0 32px 16px;
+  padding: 12px;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 8px;
+  background: var(--jeeby-cms-bg-card);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-thumb {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--jeeby-cms-bg-input);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-stats strong {
+  font-size: var(--jeeby-cms-text-xs);
+  color: var(--jeeby-cms-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-stats span {
+  font-size: var(--jeeby-cms-text-sm);
+  color: var(--jeeby-cms-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-detail-url-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-upload-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 32px 16px;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-upload-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--jeeby-cms-border);
+  border-radius: 8px;
+  background: var(--jeeby-cms-bg-card);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-upload-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
 .jeeby-cms-admin .jeeby-cms-media-library-loading {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -2818,6 +2927,8 @@
   }
 
   .jeeby-cms-admin .jeeby-cms-media-library-toolbar,
+  .jeeby-cms-admin .jeeby-cms-media-detail-panel,
+  .jeeby-cms-admin .jeeby-cms-media-upload-queue,
   .jeeby-cms-admin .jeeby-cms-media-library-grid,
   .jeeby-cms-admin .jeeby-cms-media-library-loading,
   .jeeby-cms-admin .jeeby-cms-media-library-footer,
@@ -2832,5 +2943,25 @@
   .jeeby-cms-admin .jeeby-cms-media-library-loading {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-detail-panel,
+  .jeeby-cms-admin .jeeby-cms-media-upload-item {
+    flex-direction: column;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-detail-thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-detail-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-detail-url-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

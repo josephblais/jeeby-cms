@@ -22,15 +22,8 @@ function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item)
 }
 
-// Runs async factory functions with at most `limit` in flight simultaneously.
-// Returns a Promise.allSettled-shaped array of { status, value | reason } objects.
-async function withConcurrency(factories, limit = 3) {
-  const results = []
-  for (let i = 0; i < factories.length; i += limit) {
-    const batch = await Promise.allSettled(factories.slice(i, i + limit).map(fn => fn()))
-    results.push(...batch)
-  }
-  return results
+function makeBatchUploadId() {
+  return 'batch-' + crypto.randomUUID()
 }
 
 // Memoized — prevents re-renders during concurrent upload progress ticks.
@@ -337,6 +330,11 @@ export function GalleryEditor({ data, onChange, blockId }) {
   const [libraryOpen, setLibraryOpen] = useState(false)
 
   const [batchError, setBatchError] = useState(null)
+  const [batchUploads, setBatchUploads] = useState([])
+  const latestDataRef = useRef(data)
+  const latestItemsRef = useRef(items)
+  const batchUploadsRef = useRef(batchUploads)
+  const batchCancelRefs = useRef(new Map())
   // Mirrors uploadCountRef for reactive UI — keeps Done button disabled while
   // any item upload is in flight (closing edit mode would cancel them via cleanup).
   const [activeUploads, setActiveUploads] = useState(0)
@@ -345,6 +343,126 @@ export function GalleryEditor({ data, onChange, blockId }) {
   // upload progress ticks. Deps are empty — both use only refs and setState updaters.
   const handleUploadStart = useCallback(() => { uploadCountRef.current++; setActiveUploads(c => c + 1) }, [])
   const handleUploadEnd   = useCallback(() => { uploadCountRef.current--; setActiveUploads(c => c - 1) }, [])
+
+  useEffect(() => { latestDataRef.current = data }, [data])
+  useEffect(() => { latestItemsRef.current = items }, [items])
+  useEffect(() => { batchUploadsRef.current = batchUploads }, [batchUploads])
+
+  function removeBatchUpload(id) {
+    setBatchUploads((prev) => {
+      const target = prev.find((u) => u.id === id)
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl)
+      return prev.filter((u) => u.id !== id)
+    })
+    const ref = batchCancelRefs.current.get(id)
+    ref?.current?.()
+    batchCancelRefs.current.delete(id)
+  }
+
+  function updateBatchUpload(id, patch) {
+    setBatchUploads((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)))
+  }
+
+  function handleBatchTitleChange(id, nextTitle) {
+    setBatchUploads((prev) => prev.map((u) => {
+      if (u.id !== id) return u
+      return {
+        ...u,
+        title: nextTitle,
+        alt: u.altManuallyEdited ? u.alt : nextTitle,
+      }
+    }))
+  }
+
+  function handleBatchAltChange(id, nextAlt) {
+    setBatchUploads((prev) => prev.map((u) => (
+      u.id === id ? { ...u, alt: nextAlt, altManuallyEdited: true } : u
+    )))
+  }
+
+  async function saveBatchUploadToLibrary(id) {
+    const upload = batchUploadsRef.current.find((u) => u.id === id)
+    if (!upload?.storageUrl) return
+    try {
+      const trimmedAlt = upload.alt.trim()
+      await addMediaItem(db, {
+        storageUrl: upload.storageUrl,
+        storagePath: upload.storagePath,
+        title: upload.title.trim(),
+        alt: trimmedAlt,
+        mimeType: upload.mimeType,
+        size: upload.size,
+      })
+      if (upload.galleryItemId) {
+        const latestData = latestDataRef.current
+        const latestItems = latestItemsRef.current
+        onChange({
+          ...latestData,
+          items: latestItems.map((it) => it.id === upload.galleryItemId ? { ...it, alt: trimmedAlt } : it),
+        })
+      }
+      removeBatchUpload(id)
+    } catch (err) {
+      console.error('[jeeby-cms] Failed to save batch upload to media library:', err)
+    }
+  }
+
+  async function startBatchUpload(upload) {
+    const cancelRef = { current: null }
+    batchCancelRefs.current.set(upload.id, cancelRef)
+    handleUploadStart()
+    try {
+      const url = await uploadFile(
+        storage,
+        upload.file,
+        upload.storagePath,
+        (pct) => updateBatchUpload(upload.id, { progress: pct }),
+        cancelRef
+      )
+      const galleryItemId = crypto.randomUUID()
+      const latestData = latestDataRef.current
+      const latestItems = latestItemsRef.current
+      onChange({
+        ...latestData,
+        items: [...latestItems, { src: url, alt: upload.alt.trim(), id: galleryItemId }],
+      })
+      updateBatchUpload(upload.id, {
+        state: 'pending-meta',
+        progress: 100,
+        storageUrl: url,
+        galleryItemId,
+      })
+    } catch (err) {
+      if (err.code === 'storage/canceled') return
+      console.error('[jeeby-cms] Batch upload failed:', err)
+      updateBatchUpload(upload.id, {
+        state: 'failed',
+        error: 'Upload failed — check your connection and try again.',
+      })
+    } finally {
+      handleUploadEnd()
+      batchCancelRefs.current.delete(upload.id)
+    }
+  }
+
+  function retryBatchUpload(id) {
+    const upload = batchUploadsRef.current.find((u) => u.id === id)
+    if (!upload?.file) return
+    updateBatchUpload(id, { state: 'uploading', progress: 0, error: null })
+    startBatchUpload(upload)
+  }
+
+  useEffect(() => {
+    return () => {
+      for (const upload of batchUploadsRef.current) {
+        if (upload.previewUrl) URL.revokeObjectURL(upload.previewUrl)
+      }
+      for (const ref of batchCancelRefs.current.values()) {
+        ref?.current?.()
+      }
+      batchCancelRefs.current.clear()
+    }
+  }, [])
 
   function handleContainerBlur() {
     if (suppressNextBlur.current) {
@@ -362,7 +480,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
   async function handleBatchUpload(files) {
     setBatchError(null)
     const fileArray = Array.from(files)
-    const valid = fileArray.filter(f => !validateImageFile(f))
+    const valid = fileArray.filter((f) => !validateImageFile(f))
     const invalidCount = fileArray.length - valid.length
 
     if (valid.length === 0) {
@@ -372,35 +490,37 @@ export function GalleryEditor({ data, onChange, blockId }) {
       return
     }
 
-    try {
-      // Limit to 3 concurrent uploads to avoid saturating the connection on
-      // large selections. withConcurrency processes files in waves of 3.
-      const results = await withConcurrency(
-        valid.map(file => () => {
-          const ext = file.name.includes('.')
-            ? file.name.split('.').pop().toLowerCase()
-            : (MIME_TO_EXT[file.type] ?? 'jpg')
-          const path = `cms/media/images/${crypto.randomUUID()}.${ext}`
-          return uploadFile(storage, file, path)
-        })
-      )
-      const newItems = results
-        .filter(r => r.status === 'fulfilled')
-        .map(r => ({ src: r.value, alt: '', id: crypto.randomUUID() }))
-      if (newItems.length > 0) {
-        onChange({ ...data, items: [...items, ...newItems] })
-      }
-      const totalFailed = invalidCount + results.filter(r => r.status === 'rejected').length
-      if (totalFailed > 0) {
-        setBatchError(`${totalFailed} file${totalFailed !== 1 ? 's' : ''} could not be uploaded.`)
-      }
-    } catch (err) {
-      console.error('[jeeby-cms] Batch upload failed:', err)
-      setBatchError('Upload failed — check your connection and try again.')
-    } finally {
-      if (batchInputRef.current) batchInputRef.current.value = ''
-      filePickerOpen.current = false
+    if (invalidCount > 0) {
+      setBatchError(`${invalidCount} file${invalidCount !== 1 ? 's' : ''} skipped (invalid type or size).`)
     }
+
+    const pending = valid.map((file) => {
+      const ext = file.name.includes('.')
+        ? file.name.split('.').pop().toLowerCase()
+        : (MIME_TO_EXT[file.type] ?? 'jpg')
+      return {
+        id: makeBatchUploadId(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        progress: 0,
+        state: 'uploading',
+        error: null,
+        storageUrl: '',
+        storagePath: `cms/media/images/${crypto.randomUUID()}.${ext}`,
+        title: '',
+        alt: '',
+        altManuallyEdited: false,
+        mimeType: file.type,
+        size: file.size,
+        galleryItemId: null,
+      }
+    })
+
+    setBatchUploads((prev) => [...pending, ...prev])
+    pending.forEach((upload) => startBatchUpload(upload))
+
+    if (batchInputRef.current) batchInputRef.current.value = ''
+    filePickerOpen.current = false
   }
 
   function handleLibrarySelect(selectedItems) {
@@ -515,6 +635,70 @@ export function GalleryEditor({ data, onChange, blockId }) {
       </div>
       {batchError && (
         <p role="alert" className="jeeby-cms-inline-error">{batchError}</p>
+      )}
+      {batchUploads.length > 0 && (
+        <div className="jeeby-cms-gallery-batch-queue" role="region" aria-label="Batch uploads">
+          {batchUploads.map((upload, idx) => (
+            <div key={upload.id} className="jeeby-cms-gallery-batch-item">
+              <img
+                src={upload.storageUrl || upload.previewUrl}
+                alt=""
+                className="jeeby-cms-gallery-preview"
+                aria-hidden="true"
+              />
+              <div className="jeeby-cms-gallery-batch-item-body">
+                <p className="jeeby-cms-field-label">Upload {idx + 1}</p>
+                {upload.state === 'uploading' && (
+                  <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(upload.progress)} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for selected image ' + (idx + 1)}>
+                    <div className="jeeby-cms-upload-progress-fill" style={{ width: `${upload.progress}%` }} />
+                  </div>
+                )}
+                <div className="jeeby-cms-upload-status" aria-live="polite">
+                  {upload.state === 'uploading' ? `Uploading — ${Math.round(upload.progress)}%` : null}
+                  {upload.state === 'pending-meta' ? 'Upload complete. Ready to save metadata.' : null}
+                  {upload.state === 'failed' ? upload.error : null}
+                </div>
+
+                <div className="jeeby-cms-library-meta-form" role="group" aria-label={'Metadata for selected image ' + (idx + 1)}>
+                  <label className="jeeby-cms-field-label" htmlFor={'gallery-batch-title-' + upload.id}>Title</label>
+                  <input
+                    id={'gallery-batch-title-' + upload.id}
+                    type="text"
+                    value={upload.title}
+                    onChange={(e) => handleBatchTitleChange(upload.id, e.target.value)}
+                  />
+                  <label className="jeeby-cms-field-label" htmlFor={'gallery-batch-alt-' + upload.id}>Alt text</label>
+                  <input
+                    id={'gallery-batch-alt-' + upload.id}
+                    type="text"
+                    value={upload.alt}
+                    onChange={(e) => handleBatchAltChange(upload.id, e.target.value)}
+                  />
+                  {!upload.alt.trim() && (
+                    <p className="jeeby-cms-field-hint" role="alert">Images without alt text may fail accessibility checks.</p>
+                  )}
+                  <div className="jeeby-cms-image-done-row">
+                    {upload.state === 'failed' ? (
+                      <button type="button" className="jeeby-cms-btn-ghost" onClick={() => retryBatchUpload(upload.id)}>Retry upload</button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="jeeby-cms-btn-primary"
+                        disabled={upload.state !== 'pending-meta' || !upload.storageUrl}
+                        onClick={() => saveBatchUploadToLibrary(upload.id)}
+                      >
+                        Save to Library
+                      </button>
+                    )}
+                    <button type="button" className="jeeby-cms-btn-ghost" onClick={() => removeBatchUpload(upload.id)}>
+                      Skip
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
       <div className="jeeby-cms-image-done-row">
         <button

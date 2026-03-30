@@ -24290,7 +24290,6 @@ function uploadFile(storage, file, path, onProgress, cancelRef) {
 // src/admin/MediaLibraryModal.js
 
 
-
 // src/admin/ModalShell.js
 
 
@@ -24386,8 +24385,36 @@ var PAGE_SIZE = 24;
 function makeTempId() {
   return "tmp-" + crypto.randomUUID();
 }
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "Unknown size";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let idx = 0;
+  while (size >= 1024 && idx < units.length - 1) {
+    size /= 1024;
+    idx += 1;
+  }
+  return `${size.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
+}
+function formatUploadedAt(uploadedAt) {
+  if (!uploadedAt) return "Unknown upload date";
+  try {
+    const date = typeof (uploadedAt == null ? void 0 : uploadedAt.toDate) === "function" ? uploadedAt.toDate() : new Date(uploadedAt);
+    if (Number.isNaN(date.getTime())) return "Unknown upload date";
+    return date.toLocaleString();
+  } catch (e8) {
+    return "Unknown upload date";
+  }
+}
+async function readImageDimensions(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
 function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClose }) {
-  const reduced = _framermotion.useReducedMotion.call(void 0, );
   const { storage, db } = _jeebycms.useCMSFirebase.call(void 0, );
   const [items, setItems] = _react.useState.call(void 0, []);
   const [isLoading, setIsLoading] = _react.useState.call(void 0, false);
@@ -24398,18 +24425,30 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
   const [pendingUploads, setPendingUploads] = _react.useState.call(void 0, []);
   const [editingId, setEditingId] = _react.useState.call(void 0, null);
   const [editDraft, setEditDraft] = _react.useState.call(void 0, { title: "", alt: "" });
+  const [dimensionsByKey, setDimensionsByKey] = _react.useState.call(void 0, {});
+  const [copiedValue, setCopiedValue] = _react.useState.call(void 0, "");
   const cursorRef = _react.useRef.call(void 0, null);
   const sentinelRef = _react.useRef.call(void 0, null);
   const fileInputRef = _react.useRef.call(void 0, null);
+  const pendingUploadsRef = _react.useRef.call(void 0, []);
   const closeGuardActive = _react.useMemo.call(void 0, 
     () => pendingUploads.some((u) => u.state === "pending-meta"),
     [pendingUploads]
   );
+  const editingItem = _react.useMemo.call(void 0, 
+    () => _nullishCoalesce(items.find((it) => it.id === editingId), () => ( null)),
+    [items, editingId]
+  );
+  const editingDimensions = editingItem ? dimensionsByKey[editingItem.id] : null;
   const updatePending = _react.useCallback.call(void 0, (id, patch) => {
     setPendingUploads((prev) => prev.map((u) => u.id === id ? { ...u, ...patch } : u));
   }, []);
   const removePending = _react.useCallback.call(void 0, (id) => {
-    setPendingUploads((prev) => prev.filter((u) => u.id !== id));
+    setPendingUploads((prev) => {
+      const target = prev.find((u) => u.id === id);
+      if (target == null ? void 0 : target.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((u) => u.id !== id);
+    });
   }, []);
   const fetchInitialPage = _react.useCallback.call(void 0, async () => {
     setIsLoading(true);
@@ -24446,12 +24485,41 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
   _react.useEffect.call(void 0, () => {
     if (!open) return;
     setSelected(/* @__PURE__ */ new Set());
-    setPendingUploads([]);
+    setPendingUploads((prev) => {
+      prev.forEach((u) => {
+        if (u.previewUrl) URL.revokeObjectURL(u.previewUrl);
+      });
+      return [];
+    });
     setEditingId(null);
     setEditDraft({ title: "", alt: "" });
+    setDimensionsByKey({});
+    setCopiedValue("");
     cursorRef.current = null;
     fetchInitialPage();
   }, [open, fetchInitialPage]);
+  _react.useEffect.call(void 0, () => {
+    pendingUploadsRef.current = pendingUploads;
+  }, [pendingUploads]);
+  _react.useEffect.call(void 0, () => {
+    return () => {
+      pendingUploadsRef.current.forEach((u) => {
+        if (u.previewUrl) URL.revokeObjectURL(u.previewUrl);
+      });
+    };
+  }, []);
+  _react.useEffect.call(void 0, () => {
+    if (!(editingItem == null ? void 0 : editingItem.storageUrl)) return;
+    if (dimensionsByKey[editingItem.id]) return;
+    let cancelled = false;
+    readImageDimensions(editingItem.storageUrl).then((dims) => {
+      if (cancelled || !dims) return;
+      setDimensionsByKey((prev) => ({ ...prev, [editingItem.id]: dims }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [editingItem, dimensionsByKey]);
   _react.useEffect.call(void 0, () => {
     if (!open || !hasMore || isLoading || isLoadingMore) return;
     const el = sentinelRef.current;
@@ -24473,29 +24541,37 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
     const validationError = validateImageFile(file);
     if (validationError) return;
     const id = makeTempId();
+    const previewUrl = URL.createObjectURL(file);
     const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : _nullishCoalesce(MIME_TO_EXT[file.type], () => ( "jpg"));
     const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
     setPendingUploads((prev) => [
       {
         id,
         file,
-        title: "",
-        alt: "",
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        alt: file.name.replace(/\.[^/.]+$/, ""),
+        altManuallyEdited: false,
         progress: 0,
         state: "uploading",
         storageUrl: "",
+        previewUrl,
         storagePath: path,
         mimeType: file.type,
-        size: file.size
+        size: file.size,
+        dimensions: null
       },
       ...prev
     ]);
+    readImageDimensions(previewUrl).then((dims) => {
+      if (!dims) return;
+      updatePending(id, { dimensions: dims });
+    });
     try {
       const storageUrl = await uploadFile(storage, file, path, (pct) => updatePending(id, { progress: pct }));
       updatePending(id, { state: "pending-meta", progress: 100, storageUrl });
     } catch (err) {
       console.error("[jeeby-cms] Upload failed:", err);
-      removePending(id);
+      updatePending(id, { state: "failed", error: "Upload failed \u2014 check your connection and try again." });
     }
   }
   async function handleFilesSelected(files) {
@@ -24504,12 +24580,15 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
   async function handleSavePending(pending) {
+    if (!pending.storageUrl) return;
     try {
+      const trimmedTitle = pending.title.trim();
+      const trimmedAlt = pending.alt.trim();
       const newId = await addMediaItem(db, {
         storageUrl: pending.storageUrl,
         storagePath: pending.storagePath,
-        title: pending.title.trim(),
-        alt: pending.alt.trim(),
+        title: trimmedTitle,
+        alt: trimmedAlt,
         mimeType: pending.mimeType,
         size: pending.size
       });
@@ -24517,14 +24596,37 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
         id: newId,
         storageUrl: pending.storageUrl,
         storagePath: pending.storagePath,
-        title: pending.title.trim(),
-        alt: pending.alt.trim(),
+        title: trimmedTitle,
+        alt: trimmedAlt,
         mimeType: pending.mimeType,
-        size: pending.size
+        size: pending.size,
+        uploadedAt: /* @__PURE__ */ new Date()
       }, ...prev]);
       removePending(pending.id);
     } catch (err) {
       console.error("[jeeby-cms] Failed to save media item:", err);
+    }
+  }
+  function handlePendingTitleChange(id, nextTitle) {
+    setPendingUploads((prev) => prev.map((u) => {
+      if (u.id !== id) return u;
+      return {
+        ...u,
+        title: nextTitle,
+        alt: u.altManuallyEdited ? u.alt : nextTitle
+      };
+    }));
+  }
+  async function retryPendingUpload(pending) {
+    if (!(pending == null ? void 0 : pending.file)) return;
+    updatePending(pending.id, { state: "uploading", progress: 0, error: null });
+    try {
+      const storageUrl = await uploadFile(storage, pending.file, pending.storagePath, (pct) => updatePending(pending.id, { progress: pct }));
+      updatePending(pending.id, { state: "pending-meta", progress: 100, storageUrl });
+    } catch (err) {
+      if (err.code === "storage/canceled") return;
+      console.error("[jeeby-cms] Upload failed:", err);
+      updatePending(pending.id, { state: "failed", error: "Upload failed \u2014 check your connection and try again." });
     }
   }
   function handleCardClick(item) {
@@ -24554,6 +24656,16 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
       setEditDraft({ title: "", alt: "" });
     } catch (err) {
       console.error("[jeeby-cms] Failed to update media item:", err);
+    }
+  }
+  async function handleCopy(text) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedValue(text);
+      setTimeout(() => setCopiedValue(""), 1200);
+    } catch (e9) {
+      setCopiedValue("");
     }
   }
   function handleConfirmSelection() {
@@ -24606,121 +24718,156 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
           )
         ] }),
         error && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-library-error", role: "alert", children: error }),
-        isLoading ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-library-loading", "aria-hidden": "true", children: Array.from({ length: 12 }, (_, i) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-card-skeleton" }, i)) }) : /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-library-grid", children: [
-          pendingUploads.map((pending) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-card jeeby-cms-media-card--pending-meta", children: [
-            pending.state === "uploading" && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-card-meta-form", children: [
-              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-field-label", children: "Uploading..." }),
-              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": pending.progress, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${pending.progress}%` } }) })
+        mode === "browse" && editingItem && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "section", { className: "jeeby-cms-media-detail-panel", "aria-label": "Media details", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+            "img",
+            {
+              className: "jeeby-cms-media-detail-thumb",
+              src: editingItem.storageUrl,
+              alt: editDraft.alt || editingItem.alt || ""
+            }
+          ),
+          /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-detail-body", children: [
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-detail-stats", children: [
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "Uploaded" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: formatUploadedAt(editingItem.uploadedAt) })
+              ] }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "File size" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: formatBytes(editingItem.size) })
+              ] }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "Dimensions" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: editingDimensions ? `${editingDimensions.width} x ${editingDimensions.height}` : "Loading..." })
+              ] })
             ] }),
-            pending.state === "pending-meta" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _framermotion.AnimatePresence, { mode: "wait", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
-              _framermotion.motion.div,
-              {
-                className: "jeeby-cms-media-card-meta-form",
-                initial: { opacity: 0 },
-                animate: { opacity: 1 },
-                exit: { opacity: 0 },
-                transition: { duration: reduced ? 0.01 : 0.2 },
-                children: [
-                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "pending-title-" + pending.id, children: "Title" }),
-                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
-                    "input",
-                    {
-                      id: "pending-title-" + pending.id,
-                      type: "text",
-                      value: pending.title,
-                      onChange: (e) => updatePending(pending.id, { title: e.target.value })
-                    }
-                  ),
-                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "pending-alt-" + pending.id, children: "Alt text" }),
-                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
-                    "input",
-                    {
-                      id: "pending-alt-" + pending.id,
-                      type: "text",
-                      value: pending.alt,
-                      onChange: (e) => updatePending(pending.id, { alt: e.target.value })
-                    }
-                  ),
-                  !pending.alt.trim() && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-field-hint", role: "alert", children: "Images without alt text may fail accessibility checks." }),
-                  /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: [
-                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-primary", onClick: () => handleSavePending(pending), children: "Save to Library" }),
-                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => removePending(pending.id), children: "Discard upload" })
-                  ] })
-                ]
-              },
-              pending.id + "-meta"
-            ) })
-          ] }, pending.id)),
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Edit media metadata", children: [
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "edit-title-" + editingItem.id, children: "Title" }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+                "input",
+                {
+                  id: "edit-title-" + editingItem.id,
+                  type: "text",
+                  value: editDraft.title,
+                  onChange: (e) => setEditDraft((d) => ({ ...d, title: e.target.value }))
+                }
+              ),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "edit-alt-" + editingItem.id, children: "Alt text" }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+                "input",
+                {
+                  id: "edit-alt-" + editingItem.id,
+                  type: "text",
+                  value: editDraft.alt,
+                  onChange: (e) => setEditDraft((d) => ({ ...d, alt: e.target.value }))
+                }
+              ),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "edit-url-" + editingItem.id, children: "File URL" }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-detail-url-row", children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "input", { id: "edit-url-" + editingItem.id, type: "text", value: editingItem.storageUrl, readOnly: true }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => handleCopy(editingItem.storageUrl), children: copiedValue === editingItem.storageUrl ? "Copied" : "Copy" })
+              ] }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-primary", onClick: handleSaveEdit, children: "Save" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => setEditingId(null), children: "Close" })
+              ] })
+            ] })
+          ] })
+        ] }),
+        pendingUploads.length > 0 && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "section", { className: "jeeby-cms-media-upload-queue", "aria-label": "Pending uploads", children: pendingUploads.map((pending, idx) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-upload-item", children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "img", { className: "jeeby-cms-media-detail-thumb", src: pending.storageUrl || pending.previewUrl, alt: "", "aria-hidden": "true" }),
+          /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-upload-item-body", children: [
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "p", { className: "jeeby-cms-field-label", children: [
+              "Upload ",
+              idx + 1
+            ] }),
+            pending.state === "uploading" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": pending.progress, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress for image " + (idx + 1), children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${pending.progress}%` } }) }),
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: [
+              pending.state === "uploading" ? `Uploading \u2014 ${Math.round(pending.progress)}%` : null,
+              pending.state === "pending-meta" ? "Upload complete. Ready to save metadata." : null,
+              pending.state === "failed" ? pending.error : null
+            ] }),
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-detail-stats", children: [
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "File size" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: formatBytes(pending.size) })
+              ] }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "Dimensions" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: pending.dimensions ? `${pending.dimensions.width} x ${pending.dimensions.height}` : "Loading..." })
+              ] }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { children: [
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "Storage path" }),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "span", { children: pending.storagePath })
+              ] })
+            ] }),
+            /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Metadata for upload " + (idx + 1), children: [
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "pending-title-" + pending.id, children: "Title" }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+                "input",
+                {
+                  id: "pending-title-" + pending.id,
+                  type: "text",
+                  value: pending.title,
+                  onChange: (e) => handlePendingTitleChange(pending.id, e.target.value)
+                }
+              ),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "pending-alt-" + pending.id, children: "Alt text" }),
+              /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+                "input",
+                {
+                  id: "pending-alt-" + pending.id,
+                  type: "text",
+                  value: pending.alt,
+                  onChange: (e) => updatePending(pending.id, { alt: e.target.value, altManuallyEdited: true })
+                }
+              ),
+              !pending.alt.trim() && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-field-hint", role: "alert", children: "Images without alt text may fail accessibility checks." }),
+              /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: [
+                pending.state === "failed" ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => retryPendingUpload(pending), children: "Retry upload" }) : /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+                  "button",
+                  {
+                    type: "button",
+                    className: "jeeby-cms-btn-primary",
+                    disabled: pending.state !== "pending-meta" || !pending.storageUrl,
+                    onClick: () => handleSavePending(pending),
+                    children: "Save to Library"
+                  }
+                ),
+                /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => removePending(pending.id), children: "Skip" })
+              ] })
+            ] })
+          ] })
+        ] }, pending.id)) }),
+        isLoading ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-library-loading", "aria-hidden": "true", children: Array.from({ length: 12 }, (_, i) => /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-card-skeleton" }, i)) }) : /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-library-grid", children: [
           items.map((item) => {
             const checked = selected.has(item.id);
-            const inEdit = editingId === item.id;
-            return /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
+            return /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
               "div",
               {
                 className: ["jeeby-cms-media-card", checked ? "jeeby-cms-media-card--selected" : ""].filter(Boolean).join(" "),
-                onClick: () => {
-                  if (!inEdit) handleCardClick(item);
-                },
-                children: [
-                  !inEdit && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
-                    /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "img", { className: "jeeby-cms-media-card-thumb", src: item.storageUrl, alt: item.alt || "", loading: "lazy" }),
-                    mode === "select-multi" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
-                      "input",
-                      {
-                        className: "jeeby-cms-media-card-checkbox",
-                        type: "checkbox",
-                        checked,
-                        "aria-label": item.title || "Untitled image",
-                        onChange: () => handleCardClick(item),
-                        onClick: (e) => e.stopPropagation()
-                      }
-                    ),
-                    mode === "browse" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-card-edit-overlay", children: "Edit details" })
-                  ] }),
-                  inEdit && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, _framermotion.AnimatePresence, { mode: "wait", children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, 
-                    _framermotion.motion.div,
+                onClick: () => handleCardClick(item),
+                children: /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
+                  /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "img", { className: "jeeby-cms-media-card-thumb", src: item.storageUrl, alt: item.alt || "", loading: "lazy" }),
+                  mode === "select-multi" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+                    "input",
                     {
-                      className: "jeeby-cms-media-card-meta-form",
-                      initial: { opacity: 0 },
-                      animate: { opacity: 1 },
-                      exit: { opacity: 0 },
-                      transition: { duration: reduced ? 0.01 : 0.2 },
-                      onClick: (e) => e.stopPropagation(),
-                      children: [
-                        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "edit-title-" + item.id, children: "Title" }),
-                        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
-                          "input",
-                          {
-                            id: "edit-title-" + item.id,
-                            type: "text",
-                            value: editDraft.title,
-                            onChange: (e) => setEditDraft((d) => ({ ...d, title: e.target.value }))
-                          }
-                        ),
-                        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "edit-alt-" + item.id, children: "Alt text" }),
-                        /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
-                          "input",
-                          {
-                            id: "edit-alt-" + item.id,
-                            type: "text",
-                            value: editDraft.alt,
-                            onChange: (e) => setEditDraft((d) => ({ ...d, alt: e.target.value }))
-                          }
-                        ),
-                        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: [
-                          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-primary", onClick: handleSaveEdit, children: "Save" }),
-                          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => setEditingId(null), children: "Cancel" })
-                        ] })
-                      ]
-                    },
-                    item.id + "-edit"
-                  ) })
-                ]
+                      className: "jeeby-cms-media-card-checkbox",
+                      type: "checkbox",
+                      checked,
+                      "aria-label": item.title || "Untitled image",
+                      onChange: () => handleCardClick(item),
+                      onClick: (e) => e.stopPropagation()
+                    }
+                  ),
+                  mode === "browse" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-media-card-edit-overlay", children: "Edit details" })
+                ] })
               },
               item.id
             );
           }),
-          items.length === 0 && pendingUploads.length === 0 && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-library-empty", children: [
+          items.length === 0 && /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-media-library-empty", children: [
             /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "strong", { children: "No media yet" }) }),
             /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { children: "Upload your first image to get started." })
           ] }),
@@ -25378,13 +25525,8 @@ function VideoEditor({ data, onChange, blockId }) {
 function updateItem(items, index, field, value) {
   return items.map((item, i) => i === index ? { ...item, [field]: value } : item);
 }
-async function withConcurrency(factories, limit2 = 3) {
-  const results = [];
-  for (let i = 0; i < factories.length; i += limit2) {
-    const batch = await Promise.allSettled(factories.slice(i, i + limit2).map((fn) => fn()));
-    results.push(...batch);
-  }
-  return results;
+function makeBatchUploadId() {
+  return "batch-" + crypto.randomUUID();
 }
 var GalleryItem = _react.memo.call(void 0, function GalleryItem2({ item, index, items, blockId, onChange, data, storage, db, filePickerOpen, onUploadStart, onUploadEnd }) {
   const controls = _framermotion.useDragControls.call(void 0, );
@@ -25680,6 +25822,11 @@ function GalleryEditor({ data, onChange, blockId }) {
   const libraryTriggerRef = _react.useRef.call(void 0, null);
   const [libraryOpen, setLibraryOpen] = _react.useState.call(void 0, false);
   const [batchError, setBatchError] = _react.useState.call(void 0, null);
+  const [batchUploads, setBatchUploads] = _react.useState.call(void 0, []);
+  const latestDataRef = _react.useRef.call(void 0, data);
+  const latestItemsRef = _react.useRef.call(void 0, items);
+  const batchUploadsRef = _react.useRef.call(void 0, batchUploads);
+  const batchCancelRefs = _react.useRef.call(void 0, /* @__PURE__ */ new Map());
   const [activeUploads, setActiveUploads] = _react.useState.call(void 0, 0);
   const handleUploadStart = _react.useCallback.call(void 0, () => {
     uploadCountRef.current++;
@@ -25688,6 +25835,123 @@ function GalleryEditor({ data, onChange, blockId }) {
   const handleUploadEnd = _react.useCallback.call(void 0, () => {
     uploadCountRef.current--;
     setActiveUploads((c) => c - 1);
+  }, []);
+  _react.useEffect.call(void 0, () => {
+    latestDataRef.current = data;
+  }, [data]);
+  _react.useEffect.call(void 0, () => {
+    latestItemsRef.current = items;
+  }, [items]);
+  _react.useEffect.call(void 0, () => {
+    batchUploadsRef.current = batchUploads;
+  }, [batchUploads]);
+  function removeBatchUpload(id) {
+    var _a;
+    setBatchUploads((prev) => {
+      const target = prev.find((u) => u.id === id);
+      if (target == null ? void 0 : target.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((u) => u.id !== id);
+    });
+    const ref2 = batchCancelRefs.current.get(id);
+    (_a = ref2 == null ? void 0 : ref2.current) == null ? void 0 : _a.call(ref2);
+    batchCancelRefs.current.delete(id);
+  }
+  function updateBatchUpload(id, patch) {
+    setBatchUploads((prev) => prev.map((u) => u.id === id ? { ...u, ...patch } : u));
+  }
+  function handleBatchTitleChange(id, nextTitle) {
+    setBatchUploads((prev) => prev.map((u) => {
+      if (u.id !== id) return u;
+      return {
+        ...u,
+        title: nextTitle,
+        alt: u.altManuallyEdited ? u.alt : nextTitle
+      };
+    }));
+  }
+  function handleBatchAltChange(id, nextAlt) {
+    setBatchUploads((prev) => prev.map((u) => u.id === id ? { ...u, alt: nextAlt, altManuallyEdited: true } : u));
+  }
+  async function saveBatchUploadToLibrary(id) {
+    const upload = batchUploadsRef.current.find((u) => u.id === id);
+    if (!(upload == null ? void 0 : upload.storageUrl)) return;
+    try {
+      const trimmedAlt = upload.alt.trim();
+      await addMediaItem(db, {
+        storageUrl: upload.storageUrl,
+        storagePath: upload.storagePath,
+        title: upload.title.trim(),
+        alt: trimmedAlt,
+        mimeType: upload.mimeType,
+        size: upload.size
+      });
+      if (upload.galleryItemId) {
+        const latestData = latestDataRef.current;
+        const latestItems = latestItemsRef.current;
+        onChange({
+          ...latestData,
+          items: latestItems.map((it) => it.id === upload.galleryItemId ? { ...it, alt: trimmedAlt } : it)
+        });
+      }
+      removeBatchUpload(id);
+    } catch (err) {
+      console.error("[jeeby-cms] Failed to save batch upload to media library:", err);
+    }
+  }
+  async function startBatchUpload(upload) {
+    const cancelRef = { current: null };
+    batchCancelRefs.current.set(upload.id, cancelRef);
+    handleUploadStart();
+    try {
+      const url = await uploadFile(
+        storage,
+        upload.file,
+        upload.storagePath,
+        (pct) => updateBatchUpload(upload.id, { progress: pct }),
+        cancelRef
+      );
+      const galleryItemId = crypto.randomUUID();
+      const latestData = latestDataRef.current;
+      const latestItems = latestItemsRef.current;
+      onChange({
+        ...latestData,
+        items: [...latestItems, { src: url, alt: upload.alt.trim(), id: galleryItemId }]
+      });
+      updateBatchUpload(upload.id, {
+        state: "pending-meta",
+        progress: 100,
+        storageUrl: url,
+        galleryItemId
+      });
+    } catch (err) {
+      if (err.code === "storage/canceled") return;
+      console.error("[jeeby-cms] Batch upload failed:", err);
+      updateBatchUpload(upload.id, {
+        state: "failed",
+        error: "Upload failed \u2014 check your connection and try again."
+      });
+    } finally {
+      handleUploadEnd();
+      batchCancelRefs.current.delete(upload.id);
+    }
+  }
+  function retryBatchUpload(id) {
+    const upload = batchUploadsRef.current.find((u) => u.id === id);
+    if (!(upload == null ? void 0 : upload.file)) return;
+    updateBatchUpload(id, { state: "uploading", progress: 0, error: null });
+    startBatchUpload(upload);
+  }
+  _react.useEffect.call(void 0, () => {
+    return () => {
+      var _a;
+      for (const upload of batchUploadsRef.current) {
+        if (upload.previewUrl) URL.revokeObjectURL(upload.previewUrl);
+      }
+      for (const ref2 of batchCancelRefs.current.values()) {
+        (_a = ref2 == null ? void 0 : ref2.current) == null ? void 0 : _a.call(ref2);
+      }
+      batchCancelRefs.current.clear();
+    };
   }, []);
   function handleContainerBlur() {
     if (suppressNextBlur.current) {
@@ -25713,29 +25977,32 @@ function GalleryEditor({ data, onChange, blockId }) {
       filePickerOpen.current = false;
       return;
     }
-    try {
-      const results = await withConcurrency(
-        valid.map((file) => () => {
-          const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : _nullishCoalesce(MIME_TO_EXT[file.type], () => ( "jpg"));
-          const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
-          return uploadFile(storage, file, path);
-        })
-      );
-      const newItems = results.filter((r) => r.status === "fulfilled").map((r) => ({ src: r.value, alt: "", id: crypto.randomUUID() }));
-      if (newItems.length > 0) {
-        onChange({ ...data, items: [...items, ...newItems] });
-      }
-      const totalFailed = invalidCount + results.filter((r) => r.status === "rejected").length;
-      if (totalFailed > 0) {
-        setBatchError(`${totalFailed} file${totalFailed !== 1 ? "s" : ""} could not be uploaded.`);
-      }
-    } catch (err) {
-      console.error("[jeeby-cms] Batch upload failed:", err);
-      setBatchError("Upload failed \u2014 check your connection and try again.");
-    } finally {
-      if (batchInputRef.current) batchInputRef.current.value = "";
-      filePickerOpen.current = false;
+    if (invalidCount > 0) {
+      setBatchError(`${invalidCount} file${invalidCount !== 1 ? "s" : ""} skipped (invalid type or size).`);
     }
+    const pending = valid.map((file) => {
+      const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : _nullishCoalesce(MIME_TO_EXT[file.type], () => ( "jpg"));
+      return {
+        id: makeBatchUploadId(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        progress: 0,
+        state: "uploading",
+        error: null,
+        storageUrl: "",
+        storagePath: `cms/media/images/${crypto.randomUUID()}.${ext}`,
+        title: "",
+        alt: "",
+        altManuallyEdited: false,
+        mimeType: file.type,
+        size: file.size,
+        galleryItemId: null
+      };
+    });
+    setBatchUploads((prev) => [...pending, ...prev]);
+    pending.forEach((upload) => startBatchUpload(upload));
+    if (batchInputRef.current) batchInputRef.current.value = "";
+    filePickerOpen.current = false;
   }
   function handleLibrarySelect(selectedItems) {
     const picked = Array.isArray(selectedItems) ? selectedItems : [];
@@ -25879,6 +26146,65 @@ function GalleryEditor({ data, onChange, blockId }) {
       )
     ] }),
     batchError && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { role: "alert", className: "jeeby-cms-inline-error", children: batchError }),
+    batchUploads.length > 0 && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-gallery-batch-queue", role: "region", "aria-label": "Batch uploads", children: batchUploads.map((upload, idx) => /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-gallery-batch-item", children: [
+      /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+        "img",
+        {
+          src: upload.storageUrl || upload.previewUrl,
+          alt: "",
+          className: "jeeby-cms-gallery-preview",
+          "aria-hidden": "true"
+        }
+      ),
+      /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-gallery-batch-item-body", children: [
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "p", { className: "jeeby-cms-field-label", children: [
+          "Upload ",
+          idx + 1
+        ] }),
+        upload.state === "uploading" && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": Math.round(upload.progress), "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress for selected image " + (idx + 1), children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${upload.progress}%` } }) }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: [
+          upload.state === "uploading" ? `Uploading \u2014 ${Math.round(upload.progress)}%` : null,
+          upload.state === "pending-meta" ? "Upload complete. Ready to save metadata." : null,
+          upload.state === "failed" ? upload.error : null
+        ] }),
+        /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Metadata for selected image " + (idx + 1), children: [
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "gallery-batch-title-" + upload.id, children: "Title" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+            "input",
+            {
+              id: "gallery-batch-title-" + upload.id,
+              type: "text",
+              value: upload.title,
+              onChange: (e) => handleBatchTitleChange(upload.id, e.target.value)
+            }
+          ),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "label", { className: "jeeby-cms-field-label", htmlFor: "gallery-batch-alt-" + upload.id, children: "Alt text" }),
+          /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+            "input",
+            {
+              id: "gallery-batch-alt-" + upload.id,
+              type: "text",
+              value: upload.alt,
+              onChange: (e) => handleBatchAltChange(upload.id, e.target.value)
+            }
+          ),
+          !upload.alt.trim() && /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "p", { className: "jeeby-cms-field-hint", role: "alert", children: "Images without alt text may fail accessibility checks." }),
+          /* @__PURE__ */ _jsxruntime.jsxs.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: [
+            upload.state === "failed" ? /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => retryBatchUpload(upload.id), children: "Retry upload" }) : /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
+              "button",
+              {
+                type: "button",
+                className: "jeeby-cms-btn-primary",
+                disabled: upload.state !== "pending-meta" || !upload.storageUrl,
+                onClick: () => saveBatchUploadToLibrary(upload.id),
+                children: "Save to Library"
+              }
+            ),
+            /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => removeBatchUpload(upload.id), children: "Skip" })
+          ] })
+        ] })
+      ] })
+    ] }, upload.id)) }),
     /* @__PURE__ */ _jsxruntime.jsx.call(void 0, "div", { className: "jeeby-cms-image-done-row", children: /* @__PURE__ */ _jsxruntime.jsx.call(void 0, 
       "button",
       {
@@ -26776,7 +27102,7 @@ function PageEditor({ slug }) {
           setHasDraftChanges(_nullishCoalesce((page == null ? void 0 : page.hasDraftChanges), () => ( false)));
           setLoading(false);
         }
-      } catch (e8) {
+      } catch (e10) {
         if (!cancelled) {
           setLoading(false);
           setLoadError(true);
@@ -26841,7 +27167,7 @@ function PageEditor({ slug }) {
         setSaveStatus("saved");
         setHasDraftChanges(true);
         pendingSaveRef.current = false;
-      } catch (e9) {
+      } catch (e11) {
         setSaveStatus("error");
         pendingSaveRef.current = false;
       }
@@ -26890,7 +27216,7 @@ function PageEditor({ slug }) {
       try {
         await saveDraft(db, slug, blocksRef.current.filter((b) => b.id !== block.id));
         setSaveStatus("saved");
-      } catch (e10) {
+      } catch (e12) {
         setSaveStatus("error");
       }
       setDeletedBlock(null);
@@ -26911,7 +27237,7 @@ function PageEditor({ slug }) {
     try {
       await saveDraft(db, slug, blocksRef.current);
       setSaveStatus("saved");
-    } catch (e11) {
+    } catch (e13) {
       setSaveStatus("error");
     }
   }
@@ -26928,7 +27254,7 @@ function PageEditor({ slug }) {
         if (updated == null ? void 0 : updated.lastPublishedAt) setLastPublishedAt(updated.lastPublishedAt);
       }).catch(() => {
       });
-    } catch (e12) {
+    } catch (e14) {
       setPublishStatus("error");
       setPublishError(true);
     }
@@ -26942,7 +27268,7 @@ function PageEditor({ slug }) {
     try {
       await savePage(db, slug, { name: newName });
       setPageName(newName);
-    } catch (e13) {
+    } catch (e15) {
       setSaveStatus("error");
     }
   }
@@ -26952,7 +27278,7 @@ function PageEditor({ slug }) {
       clearTimeout(debounceRef.current);
       pendingSaveRef.current = false;
       window.location.href = "/admin/pages/" + encodeURIComponent(newSlug);
-    } catch (e14) {
+    } catch (e16) {
       setSaveStatus("error");
     }
   }
@@ -28333,7 +28659,7 @@ function AdminPanel({ children, siteName }) {
       setSignOutModal(null);
       await signOut();
       window.location.replace("/admin");
-    } catch (e15) {
+    } catch (e17) {
       setPublishing(false);
       setPublishError(true);
     }
