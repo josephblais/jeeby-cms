@@ -2558,3 +2558,270 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Media Library ──────────────────────────────────────────────── */
+
+.jeeby-cms-admin .jeeby-cms-modal-card--full {
+  max-width: 90vw;
+  width: 90vw;
+  max-height: 85vh;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 32px 16px;
+  flex-shrink: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-header h2 {
+  margin: 0;
+  font-size: var(--jeeby-cms-text-lg);
+  font-weight: 600;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-toolbar {
+  padding: 0 32px 16px;
+  flex-shrink: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  padding: 0 32px 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  align-content: start;
+}
+
+@media (max-width: 800px) {
+  .jeeby-cms-admin .jeeby-cms-media-library-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .jeeby-cms-admin .jeeby-cms-media-library-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-sentinel {
+  height: 1px;
+  grid-column: 1 / -1;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 8px 32px;
+  border-top: 1px solid var(--jeeby-cms-border);
+  background: var(--jeeby-cms-bg-card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 32px;
+  color: var(--jeeby-cms-text-muted);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-error {
+  padding: 16px 32px;
+  color: var(--jeeby-cms-error);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-loading {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  padding: 0 32px 16px;
+}
+
+@media (max-width: 800px) {
+  .jeeby-cms-admin .jeeby-cms-media-library-loading {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .jeeby-cms-admin .jeeby-cms-media-library-loading {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--jeeby-cms-bg-input);
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card::before {
+  content: '';
+  display: block;
+  padding-top: 100%;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card:focus-within {
+  outline: 2px solid var(--jeeby-cms-focus-ring);
+  outline-offset: 2px;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card--selected {
+  outline: 2px solid var(--jeeby-cms-accent);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card--pending-meta {
+  background: var(--jeeby-cms-bg-card);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card-checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--jeeby-cms-accent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card:hover .jeeby-cms-media-card-checkbox,
+.jeeby-cms-admin .jeeby-cms-media-card:focus-within .jeeby-cms-media-card-checkbox,
+.jeeby-cms-admin .jeeby-cms-media-card--selected .jeeby-cms-media-card-checkbox {
+  opacity: 1;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card-meta-form {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--jeeby-cms-bg-card);
+  overflow-y: auto;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card-meta-form input {
+  width: 100%;
+  min-height: 36px;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card-skeleton {
+  width: 100%;
+  min-height: 0;
+  background: var(--jeeby-cms-bg-hover);
+  border-radius: 6px;
+  aspect-ratio: 1 / 1;
+  animation: jeeby-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes jeeby-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.jeeby-cms-admin .jeeby-cms-media-alt-conflict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: var(--jeeby-cms-bg-input);
+  border-radius: 4px;
+  font-size: var(--jeeby-cms-text-sm);
+  flex-wrap: wrap;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-alt-conflict span {
+  flex: 1;
+  min-width: 200px;
+}
+
+.jeeby-cms-admin .jeeby-cms-media-library-close-guard {
+  padding: 8px 32px;
+  color: var(--jeeby-cms-error);
+  font-size: var(--jeeby-cms-text-sm);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card-edit-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--jeeby-cms-text-primary);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  font-size: var(--jeeby-cms-text-sm);
+}
+
+.jeeby-cms-admin .jeeby-cms-media-card:hover .jeeby-cms-media-card-edit-overlay,
+.jeeby-cms-admin .jeeby-cms-media-card:focus-within .jeeby-cms-media-card-edit-overlay {
+  opacity: 1;
+}
+
+@media (max-width: 580px) {
+  .jeeby-cms-admin .jeeby-cms-modal-card--full {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-library-header {
+    padding: 16px 16px 12px;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-library-toolbar,
+  .jeeby-cms-admin .jeeby-cms-media-library-grid,
+  .jeeby-cms-admin .jeeby-cms-media-library-loading,
+  .jeeby-cms-admin .jeeby-cms-media-library-footer,
+  .jeeby-cms-admin .jeeby-cms-media-library-error,
+  .jeeby-cms-admin .jeeby-cms-media-library-close-guard,
+  .jeeby-cms-admin .jeeby-cms-media-library-empty {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .jeeby-cms-admin .jeeby-cms-media-library-grid,
+  .jeeby-cms-admin .jeeby-cms-media-library-loading {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}

@@ -124,9 +124,9 @@ test('deletePage calls deleteDoc', { skip: !deletePage }, async () => {
   assert.ok(!threw || true, 'deletePage should be callable with (db, pageId)')
 })
 
-test('listPages uses collection(db, cms, pages) path', async () => {
+test('listPages uses top-level pages collection path', async () => {
   const src = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
-  assert.ok(src.includes("collection(db, 'cms', 'pages')"), 'listPages must use separate string segments for collection path')
+  assert.ok(src.includes("collection(db, 'pages')"), 'listPages must query the top-level pages collection')
 })
 
 test('renamePage calls getPage then savePage then deletePage', async () => {
@@ -170,8 +170,8 @@ test('publishPage includes hasDraftChanges: false in updateDoc payload', async (
 
 const firestoreSrc = readFileSync(new URL('./firestore.js', import.meta.url), 'utf8')
 
-test('addMediaItem uses setDoc on cms/media collection', () => {
-  assert.ok(firestoreSrc.includes("doc(db, 'cms', 'media', id)"), 'addMediaItem must write to cms/media collection')
+test('addMediaItem uses setDoc on media collection', () => {
+  assert.ok(firestoreSrc.includes("doc(db, 'media', id)"), 'addMediaItem must write to media collection')
 })
 
 test('addMediaItem spreads item and adds serverTimestamp', () => {
@@ -183,8 +183,8 @@ test('addMediaItem generates a UUID for the document ID', () => {
   assert.ok(firestoreSrc.includes('crypto.randomUUID()'), 'addMediaItem must generate a UUID')
 })
 
-test('listMediaPaginated queries cms/media ordered by uploadedAt desc', () => {
-  assert.ok(firestoreSrc.includes("collection(db, 'cms', 'media')"), 'listMediaPaginated must query cms/media collection')
+test('listMediaPaginated queries media ordered by uploadedAt desc', () => {
+  assert.ok(firestoreSrc.includes("collection(db, 'media')"), 'listMediaPaginated must query media collection')
   assert.ok(firestoreSrc.includes("orderBy('uploadedAt', 'desc')"), 'listMediaPaginated must order by uploadedAt desc')
 })
 
@@ -203,7 +203,7 @@ test('listMediaPaginated defaults to pageSize 24', () => {
   assert.ok(firestoreSrc.includes('pageSize = 24'), 'default pageSize must be 24')
 })
 
-test('updateMediaItem calls updateDoc on cms/media/{id}', () => {
-  assert.ok(firestoreSrc.includes("doc(db, 'cms', 'media', id)"), 'updateMediaItem must target cms/media/{id}')
+test('updateMediaItem calls updateDoc on media/{id}', () => {
+  assert.ok(firestoreSrc.includes("doc(db, 'media', id)"), 'updateMediaItem must target media/{id}')
   assert.ok(firestoreSrc.includes('updateDoc('), 'updateMediaItem must call updateDoc')
 })

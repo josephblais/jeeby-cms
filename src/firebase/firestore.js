@@ -99,12 +99,12 @@ export function validateSlug(pattern, slug) {
   return new RegExp('^' + regexStr + '$').test(slug)
 }
 
-// Write a new media record to the /cms/media collection.
+// Write a new media record to the /media collection.
 // item: { storageUrl, storagePath, title, alt, mimeType, size }
 // Returns the generated document ID.
 export async function addMediaItem(db, item) {
   const id = crypto.randomUUID()
-  await setDoc(doc(db, 'cms', 'media', id), {
+  await setDoc(doc(db, 'media', id), {
     ...item,
     uploadedAt: serverTimestamp(),
   })
@@ -115,7 +115,7 @@ export async function addMediaItem(db, item) {
 // for the next page and a hasMore flag. Fetches pageSize+1 to detect overflow.
 // cursor: Firestore DocumentSnapshot from a previous call's nextCursor.
 export async function listMediaPaginated(db, { pageSize = 24, cursor = null } = {}) {
-  const col = collection(db, 'cms', 'media')
+  const col = collection(db, 'media')
   const constraints = cursor
     ? [orderBy('uploadedAt', 'desc'), startAfter(cursor), limit(pageSize + 1)]
     : [orderBy('uploadedAt', 'desc'), limit(pageSize + 1)]
@@ -131,5 +131,5 @@ export async function listMediaPaginated(db, { pageSize = 24, cursor = null } = 
 
 // Update title/alt or other fields on an existing media record.
 export async function updateMediaItem(db, id, updates) {
-  await updateDoc(doc(db, 'cms', 'media', id), updates)
+  await updateDoc(doc(db, 'media', id), updates)
 }

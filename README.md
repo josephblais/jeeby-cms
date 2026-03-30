@@ -139,7 +139,7 @@ export default async function Page({ params }) {
 
 ### Firestore security rules
 
-The CMS reads and writes to a `pages` collection. Add these rules in Firebase Console → Firestore → Rules:
+The CMS reads and writes to `pages` and `media` collections. Add these rules in Firebase Console → Firestore → Rules:
 
 ```
 rules_version = '2';
@@ -149,11 +149,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
+
+    match /media/{mediaId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
 ```
 
-This allows anyone to read published content and only authenticated users to write. Tighten as needed for your project.
+This allows anyone to read published page content, while media library records require an authenticated user for read/write in the admin. Tighten as needed for your project.
 
 ---
 
