@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 09.1
 current_plan: 4
 status: executing
-last_updated: "2026-04-14T04:47:23.948Z"
+last_updated: "2026-04-14T04:58:23.761Z"
 progress:
   total_phases: 13
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 42
-  completed_plans: 41
+  completed_plans: 42
 ---
 
 # Session State
@@ -53,6 +53,8 @@ See: .planning/PROJECT.md
 - [Phase 09.1]: CSS .jeeby-cms-slug-prefix scoped under .jeeby-cms-slug-prefixed parent to prevent cascade into PageManager slug row
 - [Phase 09.1]: Object spread for pageType conditional Firestore fields: ...(pageType=collection ? { isCollectionIndex: true } : { parentSlug })
 - [Phase 09.1]: Admin SDK chained API chosen for server getCollectionPages — consistent with getCMSContent chained db.doc().get() pattern; no db parameter, calls getAdminFirestore() internally
+- [Phase 09.1]: Entry rows read-only in PageManager: no inline-edit or delete on entries (intentional scope reduction per plan)
+- [Phase 09.1]: handleDeleteClick async guard: getCollectionPages(db, slug) check before DeletePageModal opens for collection delete
 
 ## Roadmap Evolution
 
