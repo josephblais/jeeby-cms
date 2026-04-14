@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 09.1
 current_plan: 4
 status: executing
-last_updated: "2026-04-14T22:20:07.147Z"
+last_updated: "2026-04-14T22:23:23.350Z"
 progress:
   total_phases: 13
   completed_phases: 11
   total_plans: 46
-  completed_plans: 44
+  completed_plans: 45
 ---
 
 # Session State
@@ -58,6 +58,8 @@ See: .planning/PROJECT.md
 - [Phase 11-i18n]: I18N Wave 0: all 13 requirements have red tests before any implementation; src/utils/ directory established for resolveLocale utility
 - [Phase 11]: resolveLocale uses || not ?? — empty string in FR must fall through to EN per I18N-03 spec
 - [Phase 11]: isLocalized defaults to false in CMSProvider for zero backward-compat impact (D-06)
+- [Phase 11]: Locale resolution deferred to block render layer: getCMSContent and useCMSContent return raw published data — block components apply resolveLocale at render time for stable data shape
+- [Phase 11]: void locale used in read functions to accept the param without unused-variable lint while keeping signature pattern for I18N-06 source-scan test
 
 ## Roadmap Evolution
 
