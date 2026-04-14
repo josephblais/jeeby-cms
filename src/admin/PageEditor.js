@@ -10,6 +10,7 @@ import { PublishConfirmModal } from './PublishConfirmModal.js'
 import { PublishToast } from './PublishToast.js'
 import { PageMetaModal } from './PageMetaModal.js'
 import { useSignOutGuard } from './SignOutGuardContext.js'
+import { LocaleSwitcher } from './LocaleSwitcher.js'
 
 const DEFAULT_BLOCK_DATA = {
   title:    { level: 'h2', text: '' },
@@ -21,7 +22,7 @@ const DEFAULT_BLOCK_DATA = {
 }
 
 export function PageEditor({ slug }) {
-  const { db } = useCMSFirebase()
+  const { db, isLocalized } = useCMSFirebase()
   const signOutGuard = useSignOutGuard()
 
   const [blocks, setBlocks] = useState([])
@@ -327,6 +328,7 @@ export function PageEditor({ slug }) {
         metaBtnRef={metaBtnRef}
       />
       <div className="jeeby-cms-editor-main">
+        {isLocalized && <LocaleSwitcher />}
         <BlockCanvas
           blocks={blocks}
           onReorder={handleReorder}
