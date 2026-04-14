@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 09.1
 current_plan: 1
 status: executing
-last_updated: "2026-04-14T04:37:30.118Z"
+last_updated: "2026-04-14T04:42:42.304Z"
 progress:
   total_phases: 13
   completed_phases: 10
   total_plans: 42
-  completed_plans: 39
+  completed_plans: 40
 ---
 
 # Session State
@@ -49,6 +49,9 @@ See: .planning/PROJECT.md
 - [Phase 09.1]: firebase-admin/firestore mock expanded with collection().where().orderBy().get() chain for getCollectionPages server tests
 - [Phase 09.1]: renameCollection fetches children before parent rename to guard against Pitfall 4 race condition
 - [Phase 09.1]: firestore.indexes.json added to repo root as Firebase CLI deployment aid for parentSlug+updatedAt composite index
+- [Phase 09.1]: CreatePageModal: eager listPages fetch on open with cancellation flag — avoids double network call on submit
+- [Phase 09.1]: CSS .jeeby-cms-slug-prefix scoped under .jeeby-cms-slug-prefixed parent to prevent cascade into PageManager slug row
+- [Phase 09.1]: Object spread for pageType conditional Firestore fields: ...(pageType=collection ? { isCollectionIndex: true } : { parentSlug })
 
 ## Roadmap Evolution
 
