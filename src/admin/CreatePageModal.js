@@ -92,6 +92,10 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     }
   }
 
+  // Derived values for parent picker and slug hint
+  const collections = existingPages.filter(p => p.pageType === 'collection')
+  const fullPath = parentSlug ? `${parentSlug}/${slug}` : slug
+
   return (
     <ModalShell open={open} labelId="create-modal-heading" triggerRef={triggerRef} onClose={onClose}>
       <h2 id="create-modal-heading">Create New Page</h2>
@@ -105,13 +109,69 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
               if (!slugTouched) handleSlugChange(toKebabSlug(e.target.value))
             }} />
         </div>
-        {/* Slug field */}
+        {/* Page type selector — D-07, D-08 */}
+        <div className="jeeby-cms-field">
+          <label htmlFor="cms-page-type">Page type</label>
+          <select
+            id="cms-page-type"
+            value={pageType}
+            onChange={e => {
+              setPageType(e.target.value)
+              // Collections are always top-level — clear parentSlug when switching (D-12)
+              if (e.target.value === 'collection') setParentSlug('')
+            }}
+          >
+            <option value="page">Page</option>
+            <option value="collection">Collection</option>
+          </select>
+        </div>
+        {/* Parent collection picker — only for Page type (D-09, D-12) */}
+        {pageType === 'page' && collections.length > 0 && (
+          <div className="jeeby-cms-field">
+            <label htmlFor="cms-parent-collection">Parent collection</label>
+            <select
+              id="cms-parent-collection"
+              value={parentSlug}
+              onChange={e => setParentSlug(e.target.value)}
+            >
+              <option value="">None (top-level page)</option>
+              {collections.map(c => (
+                <option key={c.slug} value={c.slug}>/{c.slug}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {/* Slug field — D-10: split prefix+leaf when parent is selected */}
         <div className="jeeby-cms-field">
           <label htmlFor="cms-page-slug">Slug</label>
-          <input id="cms-page-slug" type="text" required value={slug}
-            onChange={e => { setSlugTouched(true); handleSlugChange(e.target.value) }}
-            aria-describedby="cms-slug-hint cms-slug-error" />
-          <p id="cms-slug-hint">e.g. /about or /blog/my-post</p>
+          {parentSlug ? (
+            <div className="jeeby-cms-slug-prefixed">
+              <span className="jeeby-cms-slug-prefix" aria-hidden="true">/{parentSlug}/</span>
+              <input
+                id="cms-page-slug"
+                type="text"
+                required
+                value={slug}
+                aria-label={`Slug leaf segment (full path will be /${parentSlug}/${slug || 'my-slug'})`}
+                aria-describedby="cms-slug-hint cms-slug-error"
+                onChange={e => { setSlugTouched(true); handleSlugChange(e.target.value) }}
+              />
+            </div>
+          ) : (
+            <input
+              id="cms-page-slug"
+              type="text"
+              required
+              value={slug}
+              aria-describedby="cms-slug-hint cms-slug-error"
+              onChange={e => { setSlugTouched(true); handleSlugChange(e.target.value) }}
+            />
+          )}
+          <p id="cms-slug-hint">
+            {parentSlug
+              ? `Full path: /${parentSlug}/${slug || 'my-slug'}`
+              : 'e.g. /about or /blog/my-post'}
+          </p>
           {slugError && <p id="cms-slug-error" role="alert" className="jeeby-cms-inline-error">{slugError}</p>}
         </div>
         {/* Template dropdown — hidden when no templates */}
