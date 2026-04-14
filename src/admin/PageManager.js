@@ -2,7 +2,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCMSFirebase } from '../index.js'
-import { listPages, listPagesPaginated, renamePage, savePage, validateSlug } from '../firebase/firestore.js'
+import {
+  listPages, listPagesPaginated, renamePage, savePage, validateSlug,
+  getCollectionPages, renameCollection,
+} from '../firebase/firestore.js'
 import { CreatePageModal } from './CreatePageModal.js'
 import { DeletePageModal } from './DeletePageModal.js'
 import { MediaLibraryModal } from './MediaLibraryModal.js'
@@ -338,6 +341,40 @@ export function PageManager() {
     [isPaginated, processedPages, pageNum]
   )
 
+  // ── Collection grouping (09.1) ────────────────────────────────────
+  // A page is a "collection" if pageType === 'collection'.
+  // A page is an "entry" if it has a truthy parentSlug (regardless of pageType).
+  // A page is "standalone" otherwise — this also covers legacy pages with no pageType (D-03).
+  const collectionPages = useMemo(
+    () => pages.filter(p => p.pageType === 'collection'),
+    [pages],
+  )
+  const entryPages = useMemo(
+    () => pages.filter(p => !!p.parentSlug),
+    [pages],
+  )
+  const standalonePages = useMemo(
+    () => pages.filter(p => p.pageType !== 'collection' && !p.parentSlug),
+    [pages],
+  )
+  // Top-level items = collections + standalone pages. Sort/filter/search apply to THIS list.
+  const topLevelItems = useMemo(() => [...collectionPages, ...standalonePages], [collectionPages, standalonePages])
+  const displayedTopLevel = useMemo(
+    () => applySearch(applySortFilter(topLevelItems, sortMode), debouncedQuery),
+    [topLevelItems, sortMode, debouncedQuery],
+  )
+  // Entries grouped by parentSlug, always sorted updatedAt desc (D-17).
+  // Search query matches entry name/slug too — hidden parents become visible if ANY child matches.
+  const entriesByParent = useMemo(() => {
+    const byParent = new Map()
+    const sortedEntries = [...entryPages].sort((a, b) => tsToMs(b.updatedAt) - tsToMs(a.updatedAt))
+    for (const e of sortedEntries) {
+      if (!byParent.has(e.parentSlug)) byParent.set(e.parentSlug, [])
+      byParent.get(e.parentSlug).push(e)
+    }
+    return byParent
+  }, [entryPages])
+
   const totalPages = isPaginated ? null : Math.max(1, Math.ceil(processedPages.length / PAGE_SIZE))
   const canGoPrev = pageNum > 1
   const canGoNext = isPaginated ? hasNextPage : pageNum < (totalPages ?? 1)
@@ -458,6 +495,29 @@ export function PageManager() {
   useEffect(() => {
     if (!showSearch) setSearchQuery('')
   }, [showSearch])
+
+  // Default: all collections expanded (Claude's Discretion per CONTEXT.md)
+  const [expandedCollections, setExpandedCollections] = useState(() => new Set())
+
+  // Keep the set in sync when pages load — expand any newly observed collection by default
+  useEffect(() => {
+    setExpandedCollections(prev => {
+      const next = new Set(prev)
+      for (const c of collectionPages) {
+        if (!prev.has(c.slug)) next.add(c.slug)
+      }
+      return next
+    })
+  }, [collectionPages])
+
+  function toggleCollection(slug) {
+    setExpandedCollections(prev => {
+      const next = new Set(prev)
+      if (next.has(slug)) next.delete(slug)
+      else next.add(slug)
+      return next
+    })
+  }
 
 // --- Inline edit handlers ---
 
