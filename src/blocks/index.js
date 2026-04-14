@@ -50,7 +50,7 @@ export function Block({ id, className, children }) {
 // components: optional object { customType: CustomComponent } merged with BLOCK_REGISTRY.
 // className: applied to the outer container div (for layout/spacing control).
 // blockClassName: applied to each individual Block wrapper div alongside jeeby-cms-block.
-export function Blocks({ data, components, className, blockClassName }) {
+export function Blocks({ data, components, className, blockClassName, locale = 'en' }) {
   if (!data?.blocks?.length) return null
 
   const registry = components ? { ...BLOCK_REGISTRY, ...components } : BLOCK_REGISTRY
@@ -66,7 +66,7 @@ export function Blocks({ data, components, className, blockClassName }) {
       return createElement(
         Block,
         { key: block.id ?? i, id: block.id, className: blockClassName },
-        createElement(Component, { data: block.data })
+        createElement(Component, { data: block.data, locale })
       )
     })
   )

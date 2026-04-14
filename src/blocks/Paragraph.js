@@ -8,7 +8,8 @@
 // so the dist output is correct.
 
 import { createElement } from 'react'
+import { resolveLocale } from '../utils/resolveLocale.js'
 
-export function Paragraph({ data, className }) {
-  return createElement('p', { className }, data?.text)
+export function Paragraph({ data, className, locale = 'en' }) {
+  return createElement('p', { className }, resolveLocale(data?.text, locale))
 }

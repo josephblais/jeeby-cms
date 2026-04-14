@@ -18,6 +18,7 @@
 // so the dist output is correct.
 
 import { createElement, useState, useEffect } from 'react'
+import { resolveLocale } from '../utils/resolveLocale.js'
 import * as DOMPurifyModule from 'dompurify'
 const DOMPurify = DOMPurifyModule.default ?? DOMPurifyModule
 
@@ -40,8 +41,8 @@ function stripDangerous(html) {
     .replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href=""')
 }
 
-export function RichText({ data, className }) {
-  const raw = data?.html ?? ''
+export function RichText({ data, className, locale = 'en' }) {
+  const raw = resolveLocale(data?.html, locale) ?? ''
 
   // SSR + first client paint: use stripDangerous so server and client produce identical HTML
   // (no hydration mismatch). typeof window / DOMPurify.sanitize checks are unreliable in

@@ -11,21 +11,25 @@
 // so the dist output is correct.
 
 import { createElement } from 'react'
+import { resolveLocale } from '../utils/resolveLocale.js'
 
-export function Image({ data, className }) {
+export function Image({ data, className, locale = 'en' }) {
   if (!data?.src) return null
+
+  const alt = resolveLocale(data?.alt, locale)
+  const caption = resolveLocale(data?.caption, locale)
 
   const imgProps = {
     src: data.src,
-    alt: data?.alt ?? '',          // empty string = decorative; never undefined/missing
+    alt,                           // empty string = decorative; never undefined/missing
     width: data?.width,
     height: data?.height,
   }
 
-  if (data?.caption) {
+  if (caption) {
     return createElement('figure', { className },
       createElement('img', imgProps),
-      createElement('figcaption', null, data.caption)
+      createElement('figcaption', null, caption)
     )
   }
 

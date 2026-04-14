@@ -8,6 +8,7 @@
 // so the dist output is correct.
 
 import { createElement } from 'react'
+import { resolveLocale } from '../utils/resolveLocale.js'
 
 const VALID_LEVELS = ['h2', 'h3', 'h4', 'h5', 'h6']
 
@@ -17,7 +18,7 @@ const VALID_LEVELS = ['h2', 'h3', 'h4', 'h5', 'h6']
 //   Anything else (undefined, 'span', 'invalid') → 'h3' (default)
 const normalizeLevel = (l) => l === 'h1' ? 'h2' : (VALID_LEVELS.includes(l) ? l : 'h3')
 
-export function Title({ data, className }) {
+export function Title({ data, className, locale = 'en' }) {
   const tag = normalizeLevel(data?.level)
-  return createElement(tag, { className }, data?.text)
+  return createElement(tag, { className }, resolveLocale(data?.text, locale))
 }

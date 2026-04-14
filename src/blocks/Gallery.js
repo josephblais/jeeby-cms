@@ -11,8 +11,9 @@
 // the Node.js test runner without a JSX transform. TSUP compiles it with JSX enabled anyway.
 
 import { createElement } from 'react'
+import { resolveLocale } from '../utils/resolveLocale.js'
 
-export function Gallery({ data, className }) {
+export function Gallery({ data, className, locale = 'en' }) {
   const items = data?.items ?? []
   return createElement(
     'ul',
@@ -21,17 +22,19 @@ export function Gallery({ data, className }) {
       'aria-label': 'Gallery',
       style: { listStyle: 'none', padding: 0, margin: 0 },
     },
-    ...items.map((item, i) =>
-      createElement(
+    ...items.map((item, i) => {
+      const alt = resolveLocale(item.alt, locale)
+      const caption = resolveLocale(item.caption, locale)
+      return createElement(
         'li',
         { key: item.id ?? i },
-        item.caption
+        caption
           ? createElement('figure', null,
-              createElement('img', { src: item.src, alt: item.alt ?? '', loading: 'lazy' }),
-              createElement('figcaption', null, item.caption)
+              createElement('img', { src: item.src, alt, loading: 'lazy' }),
+              createElement('figcaption', null, caption)
             )
-          : createElement('img', { src: item.src, alt: item.alt ?? '', loading: 'lazy' })
+          : createElement('img', { src: item.src, alt, loading: 'lazy' })
       )
-    )
+    })
   )
 }

@@ -11,6 +11,7 @@
 // the Node.js test runner without a JSX transform. TSUP compiles it with JSX enabled anyway.
 
 import { createElement, useRef, useEffect } from 'react'
+import { resolveLocale } from '../utils/resolveLocale.js'
 
 // --- URL Parsing Utilities ---
 
@@ -92,9 +93,9 @@ function VideoJSPlayer({ url, title }) {
 
 // --- Main Video Component ---
 
-export function Video({ data, className }) {
+export function Video({ data, className, locale = 'en' }) {
   const src = data?.url ?? data?.src
-  const titleText = data?.title || 'Embedded video'
+  const titleText = resolveLocale(data?.title, locale) || 'Embedded video'
 
   if (!src) return null
 
