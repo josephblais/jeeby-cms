@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 09.1
 current_plan: 1
 status: executing
-last_updated: "2026-04-14T04:32:55.457Z"
+last_updated: "2026-04-14T04:37:30.118Z"
 progress:
   total_phases: 13
   completed_phases: 10
   total_plans: 42
-  completed_plans: 38
+  completed_plans: 39
 ---
 
 # Session State
@@ -47,6 +47,8 @@ See: .planning/PROJECT.md
 - [Phase 09-media-handling]: Promise.allSettled for batch gallery uploads — partial success appends fulfilled URLs without blocking on a single failure
 - [Phase 09.1]: Wave 0 tests use skip guards for import-probe tests; source-scan tests are unguarded to fail red until implementation ships
 - [Phase 09.1]: firebase-admin/firestore mock expanded with collection().where().orderBy().get() chain for getCollectionPages server tests
+- [Phase 09.1]: renameCollection fetches children before parent rename to guard against Pitfall 4 race condition
+- [Phase 09.1]: firestore.indexes.json added to repo root as Firebase CLI deployment aid for parentSlug+updatedAt composite index
 
 ## Roadmap Evolution
 

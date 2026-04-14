@@ -231,11 +231,11 @@ Plans:
 **Goal:** Admins can designate pages as Collection indexes and create Entry pages scoped under them, with grouped display in PageManager and a server-side getCollectionPages helper for front-end rendering.
 **Requirements**: PAGE-COLL-01 (client getCollectionPages + renameCollection), PAGE-COLL-02 (server getCollectionPages), PAGE-COLL-03 (CreatePageModal type selector + parent picker), PAGE-COLL-04 (prefix-locked split slug + full-path uniqueness), PAGE-COLL-05 (PageManager grouped display + delete guard + rename cascade)
 **Depends on:** Phase 9
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Plans:
 - [x] 09.1-01-PLAN.md — Wave 0 test stubs for firestore, server, CreatePageModal, PageManager
-- [ ] 09.1-02-PLAN.md — Client-SDK getCollectionPages + renameCollection + firestore.indexes.json
+- [x] 09.1-02-PLAN.md — Client-SDK getCollectionPages + renameCollection + firestore.indexes.json
 - [ ] 09.1-03-PLAN.md — Admin-SDK getCollectionPages export from src/server/index.js
 - [ ] 09.1-04-PLAN.md — CreatePageModal: type selector, parent picker, split slug, full-path uniqueness
 - [ ] 09.1-05-PLAN.md — PageManager: grouped display, expand/collapse, rename cascade, delete guard
