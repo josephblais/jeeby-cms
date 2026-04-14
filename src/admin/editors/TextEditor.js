@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { useCMSFirebase } from '../../index.js'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import { Extension } from '@tiptap/core'
@@ -107,9 +108,13 @@ function isEmptyHtml(html) {
 }
 
 export function TextEditor({ data, onChange, blockId }) {
+  const { locale, isLocalized } = useCMSFirebase()
   const [linkInputOpen, setLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const linkInputRef = useRef(null)
+
+  // Resolve the current locale's HTML value for Tiptap to display.
+  const resolvedHtml = isLocalized ? (data?.html?.[locale] ?? '') : (data?.html ?? '')
 
   const editor = useEditor({
     extensions: [
@@ -117,20 +122,26 @@ export function TextEditor({ data, onChange, blockId }) {
       TabEscape,
       Link.configure({ openOnClick: false }),
     ],
-    content: data?.html ?? '',
+    content: resolvedHtml,
     immediatelyRender: false,
     onUpdate({ editor }) {
-      onChange({ html: editor.getHTML() })
+      const newHtml = editor.getHTML()
+      onChange(
+        isLocalized
+          ? { ...data, html: { ...(data.html ?? {}), [locale]: newHtml } }
+          : { ...data, html: newHtml }
+      )
     },
   })
 
-  // Sync external data.html changes into the editor (e.g. loading saved content).
-  // Only updates when data.html differs from editor's current HTML to avoid cursor reset.
+  // Sync external data.html changes into the editor (e.g. loading saved content, locale switch).
+  // Only updates when the resolved locale value differs from the editor's current HTML
+  // to avoid cursor reset during active editing.
   useEffect(() => {
-    if (editor && data?.html !== undefined && data.html !== editor.getHTML()) {
-      editor.commands.setContent(data.html, false)
+    if (editor && resolvedHtml !== editor.getHTML()) {
+      editor.commands.setContent(resolvedHtml, false)
     }
-  }, [data?.html]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data?.html, locale, isLocalized]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Focus the link input when it opens
   useEffect(() => {

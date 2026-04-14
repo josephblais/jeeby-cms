@@ -56,7 +56,29 @@ export function ImageEditor({ data, onChange, blockId }) {
   const containerRef = useRef(null)
   const urlInputRef = useRef(null)
   const viewButtonRef = useRef(null)
-  const { storage, db } = useCMSFirebase()
+  const { storage, db, locale, isLocalized } = useCMSFirebase()
+
+  // Locale-aware read helpers — resolved to current locale's string value.
+  // When isLocalized is false, reads the plain string field (D-06 compatibility).
+  const alt = isLocalized ? (data?.alt?.[locale] ?? '') : (data?.alt ?? '')
+  const caption = isLocalized ? (data?.caption?.[locale] ?? '') : (data?.caption ?? '')
+
+  function updateAlt(newAlt) {
+    onChange(
+      isLocalized
+        ? { ...data, alt: { ...(data.alt ?? {}), [locale]: newAlt } }
+        : { ...data, alt: newAlt }
+    )
+  }
+
+  function updateCaption(newCaption) {
+    onChange(
+      isLocalized
+        ? { ...data, caption: { ...(data.caption ?? {}), [locale]: newCaption } }
+        : { ...data, caption: newCaption }
+    )
+  }
+
   // null | 0–100 (uploading) | { message: string, retryable: boolean } (error/validation fail)
   const [uploadProgress, setUploadProgress] = useState(null)
   const isUploading = typeof uploadProgress === 'number'
@@ -196,7 +218,12 @@ export function ImageEditor({ data, onChange, blockId }) {
         size: pendingLibraryItem.size,
       })
       // Keep editor alt in sync with metadata entered during Save to Library.
-      onChange({ ...data, alt: trimmedAlt })
+      // When isLocalized, write to the current locale key; otherwise write plain string.
+      if (isLocalized) {
+        onChange({ ...data, alt: { ...(data.alt ?? {}), [locale]: trimmedAlt } })
+      } else {
+        onChange({ ...data, alt: trimmedAlt })
+      }
       setPendingLibraryItem(null)
     } catch (err) {
       console.error('[jeeby-cms] Failed to save uploaded image to library:', err)
@@ -215,18 +242,20 @@ export function ImageEditor({ data, onChange, blockId }) {
   }
 
   function applySelectedMedia(item, { replaceAlt }) {
-    onChange({
-      ...data,
-      src: item.storageUrl,
-      alt: replaceAlt ? (item.alt ?? '') : (data?.alt ?? ''),
-    })
+    const newAlt = replaceAlt ? (item.alt ?? '') : alt
+    onChange(
+      isLocalized
+        ? { ...data, src: item.storageUrl, alt: { ...(data.alt ?? {}), [locale]: newAlt } }
+        : { ...data, src: item.storageUrl, alt: newAlt }
+    )
     setAltConflict(null)
     isPickingFile.current = false
     setLibraryOpen(false)
   }
 
   function handleLibrarySelect(item) {
-    const existingAlt = (data?.alt ?? '').trim()
+    // Use the locale-resolved alt value for conflict detection (D-06 + I18N-12 compatible).
+    const existingAlt = alt.trim()
     const incomingAlt = (item?.alt ?? '').trim()
     if (existingAlt && incomingAlt && existingAlt !== incomingAlt) {
       setAltConflict({ item, existingAlt, incomingAlt })
@@ -411,10 +440,10 @@ export function ImageEditor({ data, onChange, blockId }) {
             <input
               id={altInputId}
               type="text"
-              value={data?.alt ?? ''}
+              value={alt}
               aria-describedby={altHintId}
               placeholder="Describe the image for screen readers"
-              onChange={(e) => onChange({ ...data, alt: e.target.value })}
+              onChange={(e) => updateAlt(e.target.value)}
             />
             <p id={altHintId} className="jeeby-cms-field-hint">
               Leave blank only if the image adds no meaning (e.g., a background pattern).
@@ -450,7 +479,7 @@ export function ImageEditor({ data, onChange, blockId }) {
           ref={viewButtonRef}
           role="button"
           tabIndex={0}
-          aria-label={data?.alt ? `Edit image: ${data.alt}` : 'Image block — click to edit'}
+          aria-label={alt ? `Edit image: ${alt}` : 'Image block — click to edit'}
           aria-expanded={false}
           className="jeeby-cms-image-editor jeeby-cms-image-editor--view"
           onClick={enterEditMode}
@@ -461,7 +490,7 @@ export function ImageEditor({ data, onChange, blockId }) {
           <figure className="jeeby-cms-image-figure">
             <img
               src={displaySrc}
-              alt={data?.alt ?? ''}
+              alt={alt}
               onError={() => setImgError(true)}
               className="jeeby-cms-image-preview"
             />
@@ -489,7 +518,7 @@ export function ImageEditor({ data, onChange, blockId }) {
         <figure className="jeeby-cms-image-figure">
           <img
             src={displaySrc}
-            alt={data?.alt ?? ''}
+            alt={alt}
             onError={() => setImgError(true)}
             className="jeeby-cms-image-preview"
           />
@@ -507,10 +536,10 @@ export function ImageEditor({ data, onChange, blockId }) {
           <input
             id={altInputId}
             type="text"
-            value={data?.alt ?? ''}
+            value={alt}
             aria-describedby={altHintId}
             placeholder="Describe the image for screen readers"
-            onChange={(e) => onChange({ ...data, alt: e.target.value })}
+            onChange={(e) => updateAlt(e.target.value)}
           />
           <p id={altHintId} className="jeeby-cms-field-hint">
             Leave blank only if the image adds no meaning (e.g., a background pattern).

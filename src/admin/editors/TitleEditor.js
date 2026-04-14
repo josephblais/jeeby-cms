@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
+import { useCMSFirebase } from '../../index.js'
 
 // Admin preview sizes — rough approximations only.
 // The Title block renders unstyled <h2>/<h3> etc. on the front end; actual size
@@ -146,6 +147,7 @@ function HeadingLevelPicker({ value, onChange }) {
 // ACCESSIBILITY: WCAG 1.3.1 (role="textbox"), 4.1.2 (aria-label, aria-multiline),
 //   2.1.1 (keyboard — Enter blocked to enforce single-line)
 export function TitleEditor({ data, onChange, blockId }) {
+  const { locale, isLocalized } = useCMSFirebase()
   const divRef = useRef(null)
   // Track whether the last text change came from user typing (internal) vs external prop update.
   // Without this guard, re-setting textContent during typing clobbers the cursor position.
@@ -153,19 +155,36 @@ export function TitleEditor({ data, onChange, blockId }) {
 
   function handleInput(e) {
     isInternalChange.current = true
-    onChange({ ...data, text: e.currentTarget.textContent })
+    const newText = e.currentTarget.textContent
+    if (isLocalized) {
+      // Spread data?.text (existing locale keys) then override with [locale]: newText.
+      // When data.text is a plain string (pre-i18n data), start a fresh locale object.
+      const newLocaleText = data?.text && typeof data?.text === 'object'
+        ? { ...data?.text, [locale]: newText }
+        : { [locale]: newText }
+      onChange({ ...data, text: newLocaleText })
+    } else {
+      onChange({ ...data, text: newText })
+    }
   }
 
-  // Sync external data.text changes into the DOM (e.g. undo, programmatic update).
+  // Sync external data.text changes into the DOM (e.g. undo, programmatic update, locale switch).
   // Skip when the change originated from the user typing to avoid cursor reset.
+  // The `locale` dependency ensures the contenteditable repaints when the LocaleSwitcher
+  // flips the active locale — showing the new locale's text immediately.
   useEffect(() => {
-    if (!isInternalChange.current && divRef.current && data?.text !== undefined) {
-      if (divRef.current.textContent !== data.text) {
-        divRef.current.textContent = data.text
-      }
+    if (isInternalChange.current) {
+      isInternalChange.current = false
+      return
     }
-    isInternalChange.current = false
-  }, [data?.text]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!divRef.current) return
+    const resolved = isLocalized
+      ? (data?.text?.[locale] ?? '')
+      : (data?.text ?? '')
+    if (divRef.current.textContent !== resolved) {
+      divRef.current.textContent = resolved
+    }
+  }, [data?.text, locale, isLocalized]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>

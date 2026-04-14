@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { toEmbedUrl } from '../../blocks/Video.js'
+import { useCMSFirebase } from '../../index.js'
 
 // VideoEditor — URL input with iframe preview for recognized embed URLs.
 // Props: { data: { url }, onChange, blockId }
@@ -18,10 +19,23 @@ import { toEmbedUrl } from '../../blocks/Video.js'
 // ACCESSIBILITY: WCAG 4.1.2 (iframe title, labelled input), 1.4.3 (error color not sole indicator),
 //   role="alert" on error so screen readers announce it immediately (WCAG 4.1.3)
 export function VideoEditor({ data, onChange, blockId }) {
+  const { locale, isLocalized } = useCMSFirebase()
   const rawUrl = data?.url ?? ''
   const embedUrl = rawUrl ? toEmbedUrl(rawUrl) : null
   const isRecognized = rawUrl && embedUrl !== rawUrl
   const showError = rawUrl.length > 0 && !isRecognized
+
+  // Locale-aware read/write for the video title (caption shown below the embed).
+  // url is non-localizable — the embed link is the same for all locales.
+  const title = isLocalized ? (data?.title?.[locale] ?? '') : (data?.title ?? '')
+
+  function updateTitle(newTitle) {
+    onChange(
+      isLocalized
+        ? { ...data, title: { ...(data.title ?? {}), [locale]: newTitle } }
+        : { ...data, title: newTitle }
+    )
+  }
 
   const [isEditing, setIsEditing] = useState(false)
   const containerRef = useRef(null)
@@ -117,7 +131,7 @@ export function VideoEditor({ data, onChange, blockId }) {
         />
       </div>
 
-      {/* Aux editing controls — URL input, revealed on block hover/focus */}
+      {/* Aux editing controls — URL input + optional title, revealed on block hover/focus */}
       <div className="jeeby-cms-block-aux">
         <input
           id={'block-input-' + blockId}
@@ -129,6 +143,14 @@ export function VideoEditor({ data, onChange, blockId }) {
           style={{ width: '100%', minHeight: '44px' }}
         />
         <p className="jeeby-cms-field-hint">YouTube, Vimeo, or Loom URLs are supported</p>
+        <input
+          type="text"
+          value={title}
+          aria-label="Video title (optional caption)"
+          placeholder="Add an optional title or caption…"
+          onChange={(e) => updateTitle(e.target.value)}
+          style={{ width: '100%', minHeight: '44px' }}
+        />
       </div>
     </div>
   )

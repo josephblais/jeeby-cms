@@ -29,6 +29,7 @@ function makeBatchUploadId() {
 // Memoized — prevents re-renders during concurrent upload progress ticks.
 // onUploadStart/onUploadEnd must be stabilized with useCallback in the parent.
 const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onChange, data, storage, db, filePickerOpen, onUploadStart, onUploadEnd }) {
+  const { locale, isLocalized } = useCMSFirebase()
   const controls = useDragControls()
   // null | 0–100 (uploading) | { message: string, retryable: boolean } (error/validation fail)
   const [uploadProgress, setUploadProgress] = useState(null)
@@ -116,7 +117,16 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
   function handleGalleryAltChange(nextAlt) {
     onChange({
       ...data,
-      items: updateItem(items, index, 'alt', nextAlt),
+      items: items.map((it, i) =>
+        i === index
+          ? {
+              ...it,
+              alt: isLocalized
+                ? { ...(it.alt ?? {}), [locale]: nextAlt }
+                : nextAlt,
+            }
+          : it
+      ),
     })
 
     // Keep metadata alt in sync with the gallery item's alt while uploading,
@@ -183,7 +193,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
         {displaySrc && !imgLoadError && (
           <img
             src={displaySrc}
-            alt={item.alt || ''}
+            alt={(isLocalized ? (item.alt?.[locale] ?? '') : (item.alt ?? '')) || ''}
             className="jeeby-cms-gallery-preview"
             onError={() => setImgLoadError(true)}
           />
@@ -281,7 +291,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
           )}
           <input
             type="text"
-            value={item.alt ?? ''}
+            value={isLocalized ? (item.alt?.[locale] ?? '') : (item.alt ?? '')}
             aria-label={'Alt text for item ' + (index + 1)}
             placeholder="Describe the image"
             onChange={(e) => handleGalleryAltChange(e.target.value)}
@@ -308,13 +318,13 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
 })
 
 export function GalleryEditor({ data, onChange, blockId }) {
+  const { storage, db, locale, isLocalized } = useCMSFirebase()
   const items = data?.items ?? []
   // Skip view mode entirely when there are no items — nothing to preview, so the
   // click-to-enter step is pure friction. Start in edit mode immediately.
   const [isEditing, setIsEditing] = useState(items.length === 0)
   const containerRef = useRef(null)
   const addButtonRef = useRef(null)
-  const { storage, db } = useCMSFirebase()
   const batchInputRef = useRef(null)
   const filePickerOpen = useRef(false)
   // Counter tracking concurrent in-progress item uploads. When an upload starts,
@@ -532,7 +542,9 @@ export function GalleryEditor({ data, onChange, blockId }) {
     }
     const appended = picked.map((item) => ({
       src: item.storageUrl,
-      alt: item.alt ?? '',
+      alt: isLocalized
+        ? { ...(item.alt ? { en: item.alt } : {}), [locale]: item.alt ?? '' }
+        : (item.alt ?? ''),
       id: crypto.randomUUID(),
     }))
     onChange({
@@ -561,7 +573,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
           {itemsWithSrc.length > 0 ? (
             <div className="jeeby-cms-gallery-thumb-strip">
               {itemsWithSrc.map((item, i) => (
-                <img key={i} src={item.src} alt={item.alt || ''} className="jeeby-cms-gallery-thumb" onError={e => { e.currentTarget.style.display = 'none' }} />
+                <img key={i} src={item.src} alt={(isLocalized ? (item.alt?.[locale] ?? '') : (item.alt ?? '')) || ''} className="jeeby-cms-gallery-thumb" onError={e => { e.currentTarget.style.display = 'none' }} />
               ))}
             </div>
           ) : (
