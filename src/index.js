@@ -9,13 +9,18 @@ import { signIn as _signIn, signOut as _signOut, subscribeToAuthState } from './
 
 const CMSContext = createContext(null)
 
-export function CMSProvider({ firebaseConfig, templates = [], children }) {
+export function CMSProvider({ firebaseConfig, templates = [], isLocalized = false, children }) {
   // useMemo prevents re-initializing Firebase on every render.
   // initFirebase itself is idempotent via getApps() guard, but useMemo avoids
   // the overhead of calling getFirestore/getAuth/getStorage on every render.
   const firebase = useMemo(() => initFirebase(firebaseConfig), [firebaseConfig])
+  const [locale, setLocale] = useState('en')
   // Memoize combined value to avoid new object reference on every render (Pitfall 2).
-  const value = useMemo(() => ({ ...firebase, templates }), [firebase, templates])
+  // setLocale identity is stable from useState — excluded from deps array intentionally.
+  const value = useMemo(
+    () => ({ ...firebase, templates, isLocalized, locale, setLocale }),
+    [firebase, templates, isLocalized, locale]
+  )
   return <CMSContext.Provider value={value}>{children}</CMSContext.Provider>
 }
 
