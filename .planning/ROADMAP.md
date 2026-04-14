@@ -276,13 +276,23 @@ Plans:
 
 ### Phase 11: i18n localization for admin panel and block components
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Add bilingual (EN/FR) support to the CMS — content localization via per-field locale objects, locale-aware read API, admin language switcher, and hand-rolled admin UI string translations. Single `isLocalized` prop gates the entire feature; when absent the CMS is identical to non-localized.
+**Requirements**: I18N-01, I18N-02, I18N-03, I18N-04, I18N-05, I18N-06, I18N-07, I18N-08, I18N-09, I18N-10, I18N-11, I18N-12, I18N-13
 **Depends on:** Phase 10
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 11 to break down)
+- [ ] 11-01-PLAN.md — Wave 0: test stubs for all 13 I18N requirements (resolveLocale, ADMIN_STRINGS, LocaleSwitcher, CMSProvider, getCMSContent, Blocks, Title, TitleEditor)
+- [ ] 11-02-PLAN.md — Core primitives: resolveLocale utility + CMSProvider isLocalized/locale/setLocale context + ADMIN_STRINGS EN/FR map
+- [ ] 11-03-PLAN.md — API layer + block components: getCMSContent/useCMSContent locale option + 6 block components accept locale prop
+- [ ] 11-04-PLAN.md — Admin editor: LocaleSwitcher tablist + PageEditor wiring + 5 editor forms bilingual read/write
+
+**Success Criteria:**
+1. `getCMSContent('about', { locale: 'fr' })` returns French text for blocks where FR content was entered
+2. `<Blocks data={content} locale="fr" />` renders French field values, falling back to EN when FR is missing
+3. Admin panel shows a language tab bar (EN / FR) in the page editor when `isLocalized` is true; switching tabs switches the active editing locale
+4. All 5 block editor forms write locale-keyed objects (`{ en: "...", fr: "..." }`) without overwriting the other locale's content
+5. `isLocalized: false` (default) — CMS behaves identically to non-localized; zero UI change, zero data shape change
 
 ---
 *Roadmap created: 2026-03-10*
