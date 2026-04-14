@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 09.1
-current_plan: 1
+current_plan: 4
 status: executing
-last_updated: "2026-04-14T04:42:42.304Z"
+last_updated: "2026-04-14T04:47:23.948Z"
 progress:
   total_phases: 13
   completed_phases: 10
   total_plans: 42
-  completed_plans: 40
+  completed_plans: 41
 ---
 
 # Session State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 09.1
-**Current plan:** 1
+**Current plan:** 4
 **Status:** Executing Phase 09.1
 
 ## Decisions
@@ -52,6 +52,7 @@ See: .planning/PROJECT.md
 - [Phase 09.1]: CreatePageModal: eager listPages fetch on open with cancellation flag — avoids double network call on submit
 - [Phase 09.1]: CSS .jeeby-cms-slug-prefix scoped under .jeeby-cms-slug-prefixed parent to prevent cascade into PageManager slug row
 - [Phase 09.1]: Object spread for pageType conditional Firestore fields: ...(pageType=collection ? { isCollectionIndex: true } : { parentSlug })
+- [Phase 09.1]: Admin SDK chained API chosen for server getCollectionPages — consistent with getCMSContent chained db.doc().get() pattern; no db parameter, calls getAdminFirestore() internally
 
 ## Roadmap Evolution
 
@@ -68,3 +69,4 @@ See: .planning/PROJECT.md
 - 2026-03-23: Completed 09-media-handling/09-01-PLAN.md — wave 0 TDD stubs (12 failing) and 7 upload CSS classes added
 - 2026-03-23: Completed 09-media-handling/09-02-PLAN.md — ImageEditor Firebase Storage upload wired; all 13 tests pass; MEDIA-04 complete
 - 2026-03-23: Completed 09-media-handling/09-03-PLAN.md — GalleryEditor Firebase Storage upload wired; all 11 tests pass; MEDIA-03 complete
+- 2026-04-14: Completed 09.1-page-collections-and-index-pattern/09.1-03-PLAN.md — Admin SDK getCollectionPages(parentSlug) exported from server/index.js; source-scan test green; PAGE-COLL-02 complete
