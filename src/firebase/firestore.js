@@ -3,7 +3,7 @@
 // No other file in this package makes direct Firestore calls.
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp,
-  collection, getDocs, query, orderBy, limit, startAfter,
+  collection, getDocs, query, orderBy, limit, startAfter, where,
 } from 'firebase/firestore'
 
 // Internal helper — not exported
@@ -76,6 +76,20 @@ export async function listPagesPaginated(db, { pageSize = 20, cursor = null } = 
     nextCursor: hasMore ? pageDocs[pageDocs.length - 1] : null,
     hasMore,
   }
+}
+
+// Returns all Entry pages whose parentSlug matches the given collection slug,
+// ordered by updatedAt desc. Used by PageManager for grouped display and by
+// renameCollection to cascade parentSlug updates.
+//
+// NOTE: `where('parentSlug','==',...) + orderBy('updatedAt','desc')` requires
+// a Firestore composite index. See firestore.indexes.json.
+export async function getCollectionPages(db, parentSlug) {
+  const col = collection(db, 'pages')
+  const snap = await getDocs(
+    query(col, where('parentSlug', '==', parentSlug), orderBy('updatedAt', 'desc'))
+  )
+  return snap.docs.map(d => ({ slug: d.id, ...d.data() }))
 }
 
 // Rename a page by reading the old doc, writing under new slug, then deleting old.
