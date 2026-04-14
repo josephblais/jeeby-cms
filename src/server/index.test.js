@@ -114,3 +114,9 @@ test('server/index.js uses Admin SDK chained collection().where().orderBy().get(
   assert.ok(/\.orderBy\(['"]updatedAt['"]\s*,\s*['"]desc['"]\)/.test(serverSrc), 'must chain .orderBy("updatedAt", "desc")')
   assert.ok(/getAdminFirestore\(\)/.test(serverSrc), 'must call getAdminFirestore() like getCMSContent does')
 })
+
+test('I18N-06: getCMSContent accepts optional locale option without breaking existing callers', () => {
+  const src = readFileSync(new URL('./index.js', import.meta.url), 'utf8')
+  assert.match(src, /getCMSContent\s*\(\s*slug\s*,\s*\{\s*locale\s*=\s*['"]en['"]\s*\}\s*=\s*\{\}\s*\)/,
+    'getCMSContent signature must be (slug, { locale = "en" } = {})')
+})

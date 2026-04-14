@@ -32,3 +32,22 @@ test('Title applies className prop', { skip: !Title }, () => {
   const html = renderToStaticMarkup(createElement(Title, { data: { text: 'A' }, className: 'my-title' }))
   assert.ok(html.includes('my-title'))
 })
+
+function renderTitle(props) {
+  return renderToStaticMarkup(createElement(Title, props))
+}
+
+test('I18N-13: Title renders plain string text unchanged when locale is en', { skip: !Title }, () => {
+  const out = renderTitle({ data: { level: 'h2', text: 'Hello' }, locale: 'en' })
+  assert.match(out, /Hello/)
+})
+
+test('I18N-13: Title resolves locale object via resolveLocale', { skip: !Title }, () => {
+  const out = renderTitle({ data: { level: 'h2', text: { en: 'Hello', fr: 'Bonjour' } }, locale: 'fr' })
+  assert.match(out, /Bonjour/)
+})
+
+test('I18N-13: Title falls back to en when requested locale missing', { skip: !Title }, () => {
+  const out = renderTitle({ data: { level: 'h2', text: { en: 'Hello' } }, locale: 'fr' })
+  assert.match(out, /Hello/)
+})

@@ -45,3 +45,15 @@ test('TitleEditor writes data.level', () => {
 test('TitleEditor has canvas font sizes for h2', () => {
   assert.ok(src.includes('28px'), 'TitleEditor must use 28px font size for h2 canvas fidelity')
 })
+
+test('I18N-11: TitleEditor writes locale-keyed object when isLocalized is true', () => {
+  assert.match(src, /isLocalized/, 'TitleEditor must read isLocalized from context')
+  assert.match(src, /\[locale\]/, 'TitleEditor must use computed [locale] key when writing')
+  assert.match(src, /\.\.\.\(?\s*(?:typeof\s+)?data\??\.?text/, 'TitleEditor must preserve existing locale values via spread')
+})
+
+test('I18N-12: TitleEditor preserves the non-active locale on change (spread pattern)', () => {
+  // The spread pattern `{ ...existing, [locale]: newVal }` is the only safe way to avoid
+  // overwriting the other locale when saving. Assert the spread-before-[locale] idiom.
+  assert.match(src, /\{\s*\.\.\.[^}]*\[locale\]\s*:/, 'must spread existing locale object before assigning [locale]')
+})

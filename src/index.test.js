@@ -52,3 +52,12 @@ test('useCMSContent returns only published sub-object (PUB-03)', async () => {
     'useCMSContent must return published sub-object only — draft must never leak to front-end'
   )
 })
+
+test('I18N-05: CMSProvider accepts isLocalized prop and exposes locale state via context', () => {
+  const src = readFileSync(new URL('./index.js', import.meta.url), 'utf8')
+  assert.match(src, /isLocalized\s*=\s*false/, 'CMSProvider must default isLocalized to false')
+  assert.match(src, /useState\(['"]en['"]\)/, 'CMSProvider must initialise locale state to "en"')
+  assert.match(src, /setLocale/, 'CMSProvider must expose setLocale in context value')
+  assert.match(src, /isLocalized/, 'context value must include isLocalized')
+  assert.match(src, /locale/, 'context value must include locale')
+})

@@ -1,5 +1,6 @@
 import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
@@ -55,4 +56,10 @@ test('Blocks applies blockClassName to each block wrapper', { skip: !Blocks }, (
   const html = renderToStaticMarkup(createElement(Blocks, { data, blockClassName: 'my-block' }))
   assert.ok(html.includes('jeeby-cms-block'), `Got: ${html}`)
   assert.ok(html.includes('my-block'), `Got: ${html}`)
+})
+
+test('I18N-07: Blocks accepts locale prop and forwards it to block components', () => {
+  const src = readFileSync(new URL('./index.js', import.meta.url), 'utf8')
+  assert.match(src, /locale\s*=\s*['"]en['"]/, 'Blocks must accept locale prop with default "en"')
+  assert.match(src, /locale\s*\}/, 'Blocks must forward locale to each block component')
 })
