@@ -660,6 +660,11 @@ export function PageManager() {
   function goToNextPage() { setPageNum(p => p + 1) }
   function goToPrevPage() { setPageNum(p => Math.max(1, p - 1)) }
 
+  // Temporary — real implementation in Task 3
+  function handleDeleteClick(page) {
+    setDeleteTarget(page)
+  }
+
   // --- Render ---
 
   // Loading state (initial load with empty pages)
@@ -887,153 +892,264 @@ export function PageManager() {
             <th scope="col">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          {(() => {
-            if (displayedPages.length === 0) {
-              const currentOpt = SORT_OPTIONS.find(o => o.key === sortMode)
-              const hasFilter = currentOpt?.isFilter
-              const hasSearch = !!debouncedQuery
-              const queryChars = [...debouncedQuery]
-              const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join('') + '…' : debouncedQuery
-              const emptyMsg = hasSearch && hasFilter
-                ? 'No pages match this search and filter.'
-                : hasSearch
-                  ? `No pages match "${shortQuery}".`
-                  : 'No pages match this filter.'
-              return (
+        {(() => {
+          const displayedCollections = displayedTopLevel.filter(p => p.pageType === 'collection')
+          const displayedStandalone = displayedTopLevel.filter(p => p.pageType !== 'collection' && !p.parentSlug)
+          const nothingToShow = displayedCollections.length === 0 && displayedStandalone.length === 0
+
+          if (nothingToShow) {
+            const currentOpt = SORT_OPTIONS.find(o => o.key === sortMode)
+            const hasFilter = currentOpt?.isFilter
+            const hasSearch = !!debouncedQuery
+            const queryChars = [...debouncedQuery]
+            const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join('') + '…' : debouncedQuery
+            const emptyMsg = hasSearch && hasFilter
+              ? 'No pages match this search and filter.'
+              : hasSearch
+                ? `No pages match "${shortQuery}".`
+                : 'No pages match this filter.'
+            return (
+              <tbody>
                 <tr>
                   <td colSpan={5} className="jeeby-cms-filter-empty">
                     <span>{emptyMsg}</span>
                     {hasSearch && (
-                      <button
-                        type="button"
-                        className="jeeby-cms-btn-ghost"
-                        onClick={() => { setSearchQuery(''); setAnnouncement('Search cleared.') }}
-                      >Clear search</button>
+                      <button type="button" className="jeeby-cms-btn-ghost"
+                        onClick={() => { setSearchQuery(''); setAnnouncement('Search cleared.') }}>Clear search</button>
                     )}
                     {hasFilter && (
-                      <button
-                        type="button"
-                        className="jeeby-cms-btn-ghost"
-                        onClick={() => { setSortMode('recent'); setAnnouncement('Filter cleared. Showing all pages.') }}
-                      >Clear filter</button>
+                      <button type="button" className="jeeby-cms-btn-ghost"
+                        onClick={() => { setSortMode('recent'); setAnnouncement('Filter cleared. Showing all pages.') }}>Clear filter</button>
                     )}
                   </td>
                 </tr>
-              )
-            }
-            return (
-              <AnimatePresence>
-                {displayedPages.map(page => (
-            <Fragment key={page.slug}>
-              <motion.tr
-                exit={{ opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } }}
-              >
-                {/* Name cell — inline editable */}
-                <td>
-                  {editingSlug === page.slug && editField === 'name' ? (
-                    <input
-                      type="text"
-                      className="jeeby-cms-inline-edit-input"
-                      value={editValue}
-                      aria-label={`Rename: ${page.name || page.slug}`}
-                      aria-describedby={`cms-rename-error-${page.slug}`}
-                      onChange={e => handleEditChange(e.target.value)}
-                      onKeyDown={handleEditKeyDown}
-                      onBlur={commitEdit}
-                      autoFocus
-                    />
-                  ) : (
-                    <span className="jeeby-cms-cell-read">
-                      <a href={'/admin/pages/' + encodeURIComponent(page.slug)}>{page.name || page.slug}</a>
-                      <button
-                        ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
-                        type="button"
-                        className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                        aria-label={`Rename ${page.name || page.slug}`}
-                        onClick={() => startEdit(page.slug, 'name', page.name || '')}
-                      >Rename</button>
-                    </span>
-                  )}
-                </td>
-
-                {/* Slug cell — inline editable */}
-                <td>
-                  {editingSlug === page.slug && editField === 'slug' ? (
-                    <input
-                      type="text"
-                      className="jeeby-cms-inline-edit-input"
-                      value={editValue}
-                      aria-label={`Rename slug: ${page.name || page.slug}`}
-                      aria-describedby={`cms-rename-error-${page.slug}`}
-                      onChange={e => handleEditChange(e.target.value)}
-                      onKeyDown={handleEditKeyDown}
-                      onBlur={commitEdit}
-                      autoFocus
-                    />
-                  ) : (
-                    <span className="jeeby-cms-cell-read">
-                      <span>{page.slug}</span>
-                      <button
-                        ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
-                        type="button"
-                        className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                        aria-label={`Rename slug for ${page.name || page.slug}`}
-                        onClick={() => startEdit(page.slug, 'slug', page.slug)}
-                      >Rename</button>
-                    </span>
-                  )}
-                </td>
-
-                {/* Status cell */}
-                <td>
-                  {(() => {
-                    const { label, cls } = STATUS_PROPS[pageStatus(page)]
-                    return <span className={cls}>{label}</span>
-                  })()}
-                </td>
-
-                {/* Last Published cell */}
-                <td>
-                  {formatDate(page.lastPublishedAt)}
-                </td>
-
-                {/* Actions cell */}
-                <td>
-                  <div className="jeeby-cms-table-actions">
-                    <a
-                      href={'/admin/pages/' + encodeURIComponent(page.slug)}
-                      aria-label={'Edit blocks for ' + page.slug}
-                      className="jeeby-cms-btn-primary"
-                    >Edit</a>
-                    <button
-                      type="button"
-                      className="jeeby-cms-btn-ghost"
-                      aria-label={`Delete ${page.slug}`}
-                      onClick={(e) => { deleteBtnRef.current = e.currentTarget; setDeleteTarget(page) }}
-                    >Delete</button>
-                  </div>
-                </td>
-              </motion.tr>
-
-              {/* Inline error row — rendered below the row when there's an error for this page */}
-              {editError && editingSlug === page.slug && (
-                <tr>
-                  <td colSpan={5}>
-                    <p
-                      id={`cms-rename-error-${page.slug}`}
-                      role="alert"
-                      className="jeeby-cms-inline-error"
-                    >{editError}</p>
-                  </td>
-                </tr>
-              )}
-            </Fragment>
-                ))}
-              </AnimatePresence>
+              </tbody>
             )
-          })()}
-        </tbody>
+          }
+
+          return (
+            <>
+              {displayedCollections.length > 0 && (
+                <tbody>
+                  <tr className="jeeby-cms-table-section-header">
+                    <td colSpan={5}>Collections</td>
+                  </tr>
+                </tbody>
+              )}
+              {displayedCollections.map(coll => {
+                const isExpanded = expandedCollections.has(coll.slug)
+                const kids = entriesByParent.get(coll.slug) || []
+                const { label: collLabel, cls: collCls } = STATUS_PROPS[pageStatus(coll)]
+                return (
+                  <tbody
+                    key={`coll-${coll.slug}`}
+                    id={`cms-collection-entries-${coll.slug}`}
+                    className="jeeby-cms-collection-group"
+                  >
+                    {/* Collection header row — same cell shape as standalone page rows (D-18) */}
+                    <tr className="jeeby-cms-collection-row">
+                      <td>
+                        {editingSlug === coll.slug && editField === 'name' ? (
+                          <input
+                            type="text"
+                            className="jeeby-cms-inline-edit-input"
+                            value={editValue}
+                            aria-label={`Rename: ${coll.name || coll.slug}`}
+                            aria-describedby={`cms-rename-error-${coll.slug}`}
+                            onChange={e => handleEditChange(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            onBlur={commitEdit}
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="jeeby-cms-cell-read">
+                            <button
+                              type="button"
+                              className="jeeby-cms-collection-toggle"
+                              aria-expanded={expandedCollections.has(coll.slug)}
+                              aria-controls={`cms-collection-entries-${coll.slug}`}
+                              data-expanded={isExpanded ? 'true' : undefined}
+                              onClick={() => toggleCollection(coll.slug)}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+                                <path d="M3 1.5l4 3.5-4 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              <span>{coll.name || coll.slug}</span>
+                            </button>
+                            <button
+                              ref={el => { editTriggerRefs.current[`${coll.slug}-name`] = el }}
+                              type="button"
+                              className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
+                              aria-label={`Rename ${coll.name || coll.slug}`}
+                              onClick={() => startEdit(coll.slug, 'name', coll.name || '')}
+                            >Rename</button>
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {editingSlug === coll.slug && editField === 'slug' ? (
+                          <input
+                            type="text"
+                            className="jeeby-cms-inline-edit-input"
+                            value={editValue}
+                            aria-label={`Rename slug: ${coll.name || coll.slug}`}
+                            aria-describedby={`cms-rename-error-${coll.slug}`}
+                            onChange={e => handleEditChange(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            onBlur={commitEdit}
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="jeeby-cms-cell-read">
+                            <span>{coll.slug}</span>
+                            <button
+                              ref={el => { editTriggerRefs.current[`${coll.slug}-slug`] = el }}
+                              type="button"
+                              className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
+                              aria-label={`Rename slug for ${coll.name || coll.slug}`}
+                              onClick={() => startEdit(coll.slug, 'slug', coll.slug)}
+                            >Rename</button>
+                          </span>
+                        )}
+                      </td>
+                      <td><span className={collCls}>{collLabel}</span></td>
+                      <td>{formatDate(coll.lastPublishedAt)}</td>
+                      <td>
+                        <div className="jeeby-cms-table-actions">
+                          <a
+                            href={'/admin/pages/' + encodeURIComponent(coll.slug)}
+                            aria-label={'Edit blocks for ' + coll.slug}
+                            className="jeeby-cms-btn-primary"
+                          >Edit</a>
+                          <button
+                            type="button"
+                            className="jeeby-cms-btn-ghost"
+                            aria-label={`Delete ${coll.slug}`}
+                            onClick={(e) => { deleteBtnRef.current = e.currentTarget; handleDeleteClick(coll) }}
+                          >Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                    {/* Inline rename error for collection header */}
+                    {editError && editingSlug === coll.slug && (
+                      <tr>
+                        <td colSpan={5}>
+                          <p id={`cms-rename-error-${coll.slug}`} role="alert" className="jeeby-cms-inline-error">{editError}</p>
+                        </td>
+                      </tr>
+                    )}
+                    {/* Entry rows (read-only in this phase) */}
+                    {isExpanded && kids.map(entry => {
+                      const { label, cls } = STATUS_PROPS[pageStatus(entry)]
+                      return (
+                        <tr key={entry.slug} className="jeeby-cms-entry-row">
+                          <td>
+                            <span className="jeeby-cms-entry-indent jeeby-cms-cell-read">
+                              <a href={'/admin/pages/' + encodeURIComponent(entry.slug)}>{entry.name || entry.slug}</a>
+                            </span>
+                          </td>
+                          <td><span>/{entry.parentSlug}/{entry.slug}</span></td>
+                          <td><span className={cls}>{label}</span></td>
+                          <td>{formatDate(entry.lastPublishedAt)}</td>
+                          <td>
+                            <div className="jeeby-cms-table-actions">
+                              <a
+                                href={'/admin/pages/' + encodeURIComponent(entry.slug)}
+                                aria-label={'Edit blocks for ' + entry.slug}
+                                className="jeeby-cms-btn-primary"
+                              >Edit</a>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                )
+              })}
+              {displayedStandalone.length > 0 && (
+                <tbody>
+                  <tr className="jeeby-cms-table-section-header">
+                    <td colSpan={5}>Pages</td>
+                  </tr>
+                </tbody>
+              )}
+              <tbody>
+                <AnimatePresence>
+                  {displayedStandalone.map(page => (
+                    <Fragment key={page.slug}>
+                      <motion.tr
+                        exit={{ opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } }}
+                      >
+                        <td>
+                          {editingSlug === page.slug && editField === 'name' ? (
+                            <input type="text" className="jeeby-cms-inline-edit-input" value={editValue}
+                              aria-label={`Rename: ${page.name || page.slug}`}
+                              aria-describedby={`cms-rename-error-${page.slug}`}
+                              onChange={e => handleEditChange(e.target.value)}
+                              onKeyDown={handleEditKeyDown}
+                              onBlur={commitEdit}
+                              autoFocus />
+                          ) : (
+                            <span className="jeeby-cms-cell-read">
+                              <a href={'/admin/pages/' + encodeURIComponent(page.slug)}>{page.name || page.slug}</a>
+                              <button
+                                ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
+                                type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
+                                aria-label={`Rename ${page.name || page.slug}`}
+                                onClick={() => startEdit(page.slug, 'name', page.name || '')}
+                              >Rename</button>
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {editingSlug === page.slug && editField === 'slug' ? (
+                            <input type="text" className="jeeby-cms-inline-edit-input" value={editValue}
+                              aria-label={`Rename slug: ${page.name || page.slug}`}
+                              aria-describedby={`cms-rename-error-${page.slug}`}
+                              onChange={e => handleEditChange(e.target.value)}
+                              onKeyDown={handleEditKeyDown}
+                              onBlur={commitEdit}
+                              autoFocus />
+                          ) : (
+                            <span className="jeeby-cms-cell-read">
+                              <span>{page.slug}</span>
+                              <button
+                                ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
+                                type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
+                                aria-label={`Rename slug for ${page.name || page.slug}`}
+                                onClick={() => startEdit(page.slug, 'slug', page.slug)}
+                              >Rename</button>
+                            </span>
+                          )}
+                        </td>
+                        <td>{(() => { const { label, cls } = STATUS_PROPS[pageStatus(page)]; return <span className={cls}>{label}</span> })()}</td>
+                        <td>{formatDate(page.lastPublishedAt)}</td>
+                        <td>
+                          <div className="jeeby-cms-table-actions">
+                            <a href={'/admin/pages/' + encodeURIComponent(page.slug)}
+                              aria-label={'Edit blocks for ' + page.slug}
+                              className="jeeby-cms-btn-primary">Edit</a>
+                            <button type="button" className="jeeby-cms-btn-ghost"
+                              aria-label={`Delete ${page.slug}`}
+                              onClick={(e) => { deleteBtnRef.current = e.currentTarget; handleDeleteClick(page) }}
+                            >Delete</button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                      {editError && editingSlug === page.slug && (
+                        <tr>
+                          <td colSpan={5}>
+                            <p id={`cms-rename-error-${page.slug}`} role="alert" className="jeeby-cms-inline-error">{editError}</p>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </>
+          )
+        })()}
       </table>
       </motion.div>
       </AnimatePresence>

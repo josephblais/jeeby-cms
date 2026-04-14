@@ -3223,3 +3223,52 @@
     align-items: stretch;
   }
 }
+
+/* ─── Section: Page Collections grouped view (09.1) ─────────────── */
+
+.jeeby-cms-admin .jeeby-cms-table-section-header td {
+  padding-top: 1rem;
+  padding-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jeeby-cms-text-muted, #9a9a95);
+  background: transparent;
+  border: none;
+}
+.jeeby-cms-admin .jeeby-cms-collection-group {
+  border-top: 1px solid var(--jeeby-cms-border, #3a3a36);
+}
+.jeeby-cms-admin .jeeby-cms-collection-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.3rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.jeeby-cms-admin .jeeby-cms-collection-toggle:focus-visible {
+  outline: 2px solid var(--jeeby-cms-focus-ring, #4a90d9);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.jeeby-cms-admin .jeeby-cms-collection-toggle svg {
+  transition: transform 0.18s ease;
+}
+.jeeby-cms-admin .jeeby-cms-collection-toggle[data-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+.jeeby-cms-admin .jeeby-cms-entry-row td {
+  background: var(--jeeby-cms-surface-sunken, #1c1c18);
+}
+.jeeby-cms-admin .jeeby-cms-entry-indent {
+  padding-left: 1.75rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .jeeby-cms-admin .jeeby-cms-collection-toggle svg { transition: none; }
+}
