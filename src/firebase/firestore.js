@@ -101,6 +101,32 @@ export async function renamePage(db, oldSlug, newSlug) {
   await deletePage(db, oldSlug)
 }
 
+// Rename a Collection page and cascade the parentSlug field on all its children.
+// Non-atomic by design (matches renamePage trade-off).
+//
+// CRITICAL ORDERING (see RESEARCH Pitfall 4): children MUST be fetched BEFORE
+// the parent is renamed. Once renamePage deletes the old parent doc, any
+// subsequent getCollectionPages(db, oldSlug) still returns the children because
+// the query is by parentSlug (not by parent doc existence), but fetching after
+// rename would race with any external writer — we fetch first for determinism.
+//
+// Steps:
+//   1. Fetch children with parentSlug == oldSlug.
+//   2. Rename parent doc (copy under newSlug, delete old).
+//   3. Update each child's parentSlug to newSlug.
+export async function renameCollection(db, oldSlug, newSlug) {
+  const children = await getCollectionPages(db, oldSlug)
+  await renamePage(db, oldSlug, newSlug)
+  await Promise.all(
+    children.map(child =>
+      updateDoc(doc(db, 'pages', child.slug), {
+        parentSlug: newSlug,
+        updatedAt: serverTimestamp(),
+      })
+    )
+  )
+}
+
 // Validate a slug against a Next.js dynamic segment template pattern.
 // [slug] → single path segment (no slashes), [...path] → catch-all (any chars).
 // Returns true when pattern is falsy (no template = any slug valid).
