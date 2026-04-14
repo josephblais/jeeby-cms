@@ -44,3 +44,33 @@ export async function getCMSContent(slug) {
   // Return published sub-object only. Never expose draft to the front end.
   return pageData?.published ?? null
 }
+
+// Server-side getter: returns all Entry pages belonging to a parent collection slug.
+// Intended for Next.js Server Components, e.g. app/blog/page.js:
+//
+//   import { getCollectionPages } from 'jeeby-cms/server'
+//   export default async function BlogIndex() {
+//     const posts = await getCollectionPages('blog')
+//     return <ul>{posts.map(p => <li key={p.slug}>{p.name}</li>)}</ul>
+//   }
+//
+// Uses the Admin SDK chained API (same pattern as getCMSContent above) — NOT the
+// client SDK's modular `query/where/getDocs` API. The client-side equivalent
+// lives in src/firebase/firestore.js and takes a `db` parameter; this version
+// calls `getAdminFirestore()` internally for consistency with getCMSContent.
+//
+// Returns ALL entries regardless of draft/published status (per D-21 — same
+// behavior as the client `listPages`). Pages without a parentSlug field are
+// excluded automatically by the where clause.
+//
+// Requires a Firestore composite index on (parentSlug ASC, updatedAt DESC) —
+// see firestore.indexes.json at the repo root.
+export async function getCollectionPages(parentSlug) {
+  const db = getAdminFirestore()
+  const snap = await db
+    .collection('pages')
+    .where('parentSlug', '==', parentSlug)
+    .orderBy('updatedAt', 'desc')
+    .get()
+  return snap.docs.map(d => ({ slug: d.id, ...d.data() }))
+}
