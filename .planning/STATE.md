@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 09.1
 current_plan: 4
 status: executing
-last_updated: "2026-04-14T04:58:23.761Z"
+last_updated: "2026-04-14T22:17:12.017Z"
 progress:
   total_phases: 13
   completed_phases: 11
-  total_plans: 42
-  completed_plans: 42
+  total_plans: 46
+  completed_plans: 43
 ---
 
 # Session State
@@ -55,6 +55,7 @@ See: .planning/PROJECT.md
 - [Phase 09.1]: Admin SDK chained API chosen for server getCollectionPages — consistent with getCMSContent chained db.doc().get() pattern; no db parameter, calls getAdminFirestore() internally
 - [Phase 09.1]: Entry rows read-only in PageManager: no inline-edit or delete on entries (intentional scope reduction per plan)
 - [Phase 09.1]: handleDeleteClick async guard: getCollectionPages(db, slug) check before DeletePageModal opens for collection delete
+- [Phase 11-i18n]: I18N Wave 0: all 13 requirements have red tests before any implementation; src/utils/ directory established for resolveLocale utility
 
 ## Roadmap Evolution
 
