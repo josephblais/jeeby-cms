@@ -591,7 +591,6 @@ export function PageManager() {
           cancelEdit()
           return
         }
-        // Immediate validation before save
         const page = pages.find(p => p.slug === currentSlug)
         const template = templates && page?.template
           ? templates.find(t => t.name === page.template)
@@ -602,7 +601,12 @@ export function PageManager() {
           setEditError(`Slug does not match the ${templateName} pattern.`)
           return
         }
-        await renamePage(db, currentSlug, trimmed)
+        // D-19: collections cascade parentSlug updates to children via renameCollection.
+        if (page?.pageType === 'collection') {
+          await renameCollection(db, currentSlug, trimmed)
+        } else {
+          await renamePage(db, currentSlug, trimmed)
+        }
         allPagesCacheRef.current = null
         prefetchRef.current = null
         await loadPages()
@@ -660,8 +664,24 @@ export function PageManager() {
   function goToNextPage() { setPageNum(p => p + 1) }
   function goToPrevPage() { setPageNum(p => Math.max(1, p - 1)) }
 
-  // Temporary — real implementation in Task 3
-  function handleDeleteClick(page) {
+  // D-20: block delete on a collection that still has children
+  const [deleteBlockedError, setDeleteBlockedError] = useState(null) // { slug, count }
+
+  async function handleDeleteClick(page) {
+    setDeleteBlockedError(null)
+    if (page?.pageType === 'collection') {
+      try {
+        const kids = await getCollectionPages(db, page.slug)
+        if (kids.length > 0) {
+          setDeleteBlockedError({ slug: page.slug, count: kids.length })
+          setAnnouncement(`Cannot delete ${page.slug}: ${kids.length} entries remain.`)
+          setTimeout(() => setAnnouncement(''), 1500)
+          return
+        }
+      } catch {
+        // If the query fails, fall through and let DeletePageModal handle normally
+      }
+    }
     setDeleteTarget(page)
   }
 
@@ -872,6 +892,21 @@ export function PageManager() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {deleteBlockedError && (
+        <div className="jeeby-cms-inline-error" role="alert" style={{ marginBottom: '0.75rem' }}>
+          {deleteBlockedError.count === 1
+            ? 'This collection has 1 entry. Delete or reassign them first.'
+            : `This collection has ${deleteBlockedError.count} entries. Delete or reassign them first.`}
+          {' '}
+          <button
+            type="button"
+            className="jeeby-cms-btn-ghost"
+            onClick={() => setDeleteBlockedError(null)}
+            aria-label="Dismiss error"
+          >Dismiss</button>
+        </div>
+      )}
 
       <AnimatePresence mode="wait" initial={false}>
       <motion.div
