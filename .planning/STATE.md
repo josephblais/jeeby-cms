@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 09.1
 current_plan: 4
 status: executing
-last_updated: "2026-04-14T22:17:12.017Z"
+last_updated: "2026-04-14T22:20:07.147Z"
 progress:
   total_phases: 13
   completed_phases: 11
   total_plans: 46
-  completed_plans: 43
+  completed_plans: 44
 ---
 
 # Session State
@@ -56,6 +56,8 @@ See: .planning/PROJECT.md
 - [Phase 09.1]: Entry rows read-only in PageManager: no inline-edit or delete on entries (intentional scope reduction per plan)
 - [Phase 09.1]: handleDeleteClick async guard: getCollectionPages(db, slug) check before DeletePageModal opens for collection delete
 - [Phase 11-i18n]: I18N Wave 0: all 13 requirements have red tests before any implementation; src/utils/ directory established for resolveLocale utility
+- [Phase 11]: resolveLocale uses || not ?? — empty string in FR must fall through to EN per I18N-03 spec
+- [Phase 11]: isLocalized defaults to false in CMSProvider for zero backward-compat impact (D-06)
 
 ## Roadmap Evolution
 
