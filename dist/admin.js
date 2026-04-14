@@ -24536,7 +24536,7 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
   const lightboxCloseRef = _react.useRef.call(void 0, null);
   const copyTimeoutRef = _react.useRef.call(void 0, null);
   const closeGuardActive = _react.useMemo.call(void 0, 
-    () => pendingUploads.some((u) => u.state === "pending-meta"),
+    () => pendingUploads.some((u) => u.state === "pending-meta" || u.state === "uploading"),
     [pendingUploads]
   );
   const editingItem = _react.useMemo.call(void 0, 
@@ -24883,6 +24883,7 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
                 className: "jeeby-cms-btn-ghost",
                 onClick: guardedOnClose,
                 "aria-label": "Close media library",
+                disabled: closeGuardActive,
                 children: "Close"
               }
             )

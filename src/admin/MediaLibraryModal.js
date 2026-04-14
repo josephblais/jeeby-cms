@@ -80,7 +80,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
   const copyTimeoutRef = useRef(null)
 
   const closeGuardActive = useMemo(
-    () => pendingUploads.some((u) => u.state === 'pending-meta'),
+    () => pendingUploads.some((u) => u.state === 'pending-meta' || u.state === 'uploading'),
     [pendingUploads]
   )
 
@@ -479,6 +479,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
             className="jeeby-cms-btn-ghost"
             onClick={guardedOnClose}
             aria-label="Close media library"
+            disabled={closeGuardActive}
           >
             Close
           </button>
