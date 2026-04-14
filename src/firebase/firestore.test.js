@@ -23,6 +23,13 @@ try {
   // src/firebase/firestore.js does not exist yet — all tests will be skipped
 }
 
+let getCollectionPages, renameCollection
+try {
+  const mod = await import('./firestore.js')
+  getCollectionPages = mod.getCollectionPages
+  renameCollection = mod.renameCollection
+} catch { /* skipped */ }
+
 // Helper: build a minimal fake Firestore db stub
 function makeDb() {
   return { type: 'firestore-stub' }
@@ -206,4 +213,43 @@ test('listMediaPaginated defaults to pageSize 24', () => {
 test('updateMediaItem calls updateDoc on media/{id}', () => {
   assert.ok(firestoreSrc.includes("doc(db, 'media', id)"), 'updateMediaItem must target media/{id}')
   assert.ok(firestoreSrc.includes('updateDoc('), 'updateMediaItem must call updateDoc')
+})
+
+// ── Page Collections (PAGE-COLL-01 / PAGE-COLL-03) ───────────────────
+
+test('getCollectionPages is exported as a function', { skip: !getCollectionPages }, () => {
+  assert.equal(typeof getCollectionPages, 'function')
+})
+
+test('firestore.js imports `where` from firebase/firestore', () => {
+  assert.match(
+    firestoreSrc,
+    /import\s*\{[^}]*\bwhere\b[^}]*\}\s*from\s*['"]firebase\/firestore['"]/,
+  )
+})
+
+test('getCollectionPages queries pages collection by parentSlug with updatedAt desc', () => {
+  assert.ok(firestoreSrc.includes('export async function getCollectionPages'))
+  assert.ok(firestoreSrc.includes("where('parentSlug', '==', parentSlug)"))
+  assert.ok(firestoreSrc.includes("orderBy('updatedAt', 'desc')"))
+  assert.ok(firestoreSrc.includes("collection(db, 'pages')"))
+})
+
+test('renameCollection is exported as a function', { skip: !renameCollection }, () => {
+  assert.equal(typeof renameCollection, 'function')
+})
+
+test('renameCollection fetches children BEFORE renaming parent', () => {
+  assert.ok(firestoreSrc.includes('export async function renameCollection'))
+  const body = firestoreSrc.slice(firestoreSrc.indexOf('export async function renameCollection'))
+  const fetchIdx = body.indexOf('getCollectionPages(db, oldSlug)')
+  const renameIdx = body.indexOf('renamePage(db, oldSlug, newSlug)')
+  assert.ok(fetchIdx > -1, 'renameCollection must call getCollectionPages(db, oldSlug)')
+  assert.ok(renameIdx > -1, 'renameCollection must call renamePage(db, oldSlug, newSlug)')
+  assert.ok(fetchIdx < renameIdx, 'Children must be fetched BEFORE parent is renamed (see RESEARCH Pitfall 4)')
+})
+
+test('renameCollection updates each child parentSlug to newSlug', () => {
+  const body = firestoreSrc.slice(firestoreSrc.indexOf('export async function renameCollection'))
+  assert.ok(/parentSlug:\s*newSlug/.test(body), 'Children must be updated with parentSlug: newSlug')
 })
