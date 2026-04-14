@@ -14,13 +14,18 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
   const [slugError, setSlugError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
+  const [pageType, setPageType] = useState('page')        // D-07: 'page' | 'collection'
+  const [parentSlug, setParentSlug] = useState('')         // '' means top-level
+  const [existingPages, setExistingPages] = useState([])   // cache for parent picker + uniqueness
+  const [pagesLoadError, setPagesLoadError] = useState(null)
+
   const debounceRef = useRef(null)
 
   function toKebabSlug(str) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   }
 
-  // Reset form state when modal opens
+  // Reset form state when modal opens + eager listPages for parent picker and uniqueness check
   useEffect(() => {
     if (open) {
       setName('')
@@ -29,6 +34,15 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setTemplate('')
       setSlugError(null)
       setSubmitting(false)
+      setPageType('page')
+      setParentSlug('')
+      setExistingPages([])
+      setPagesLoadError(null)
+      let cancelled = false
+      listPages(db)
+        .then(pages => { if (!cancelled) setExistingPages(pages) })
+        .catch(err => { if (!cancelled) setPagesLoadError(err.message || 'Failed to load pages') })
+      return () => { cancelled = true }
     }
   }, [open])
 
