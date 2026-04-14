@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 09.2
+current_phase: 09.1
 current_plan: 1
 status: executing
-last_updated: "2026-03-30T01:44:33.358Z"
+last_updated: "2026-04-14T04:32:55.457Z"
 progress:
   total_phases: 13
-  completed_phases: 9
-  total_plans: 37
-  completed_plans: 32
+  completed_phases: 10
+  total_plans: 42
+  completed_plans: 38
 ---
 
 # Session State
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 09.2
+**Current phase:** 09.1
 **Current plan:** 1
-**Status:** Executing Phase 09.2
+**Status:** Executing Phase 09.1
 
 ## Decisions
 
@@ -45,6 +45,8 @@ See: .planning/PROJECT.md
 - [Phase 09-media-handling]: Upload button label changes during upload for WCAG 2.5.3 compliance; uploadProgress guard prevents blur-dismiss during active upload
 - [Phase 09-media-handling]: Upload state local to GalleryItem (not GalleryEditor) — drag reorder cannot corrupt per-item progress
 - [Phase 09-media-handling]: Promise.allSettled for batch gallery uploads — partial success appends fulfilled URLs without blocking on a single failure
+- [Phase 09.1]: Wave 0 tests use skip guards for import-probe tests; source-scan tests are unguarded to fail red until implementation ships
+- [Phase 09.1]: firebase-admin/firestore mock expanded with collection().where().orderBy().get() chain for getCollectionPages server tests
 
 ## Roadmap Evolution
 
