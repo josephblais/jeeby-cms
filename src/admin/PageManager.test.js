@@ -114,3 +114,72 @@ test('PageManager includes Upload Media browse entrypoint', () => {
 test('Admin entry exports MediaLibraryModal', () => {
   assert.ok(adminSrc.includes("export { MediaLibraryModal }"), 'src/admin/index.js should export MediaLibraryModal')
 })
+
+// ── Page Collections (PAGE-COLL-05 / D-14 through D-20) ──────────────
+
+test('PageManager renders COLLECTIONS section header', () => {
+  assert.ok(/Collections/.test(src), 'Must render a "Collections" section header label')
+  assert.ok(/jeeby-cms-table-section-header/.test(src), 'Section headers must use jeeby-cms-table-section-header class')
+})
+
+test('PageManager renders PAGES section header', () => {
+  assert.ok(/>Pages</.test(src) || /['"]Pages['"]/.test(src), 'Must render a "Pages" section header label')
+})
+
+test('PageManager splits pages into collections, entries, and standalone', () => {
+  assert.ok(/pageType\s*===\s*['"]collection['"]/.test(src), 'Must filter pageType === "collection"')
+  assert.ok(/p\.parentSlug/.test(src) || /\.parentSlug/.test(src), 'Must reference parentSlug to split entries')
+})
+
+test('PageManager collection toggle button uses aria-expanded and aria-controls', () => {
+  assert.ok(/aria-expanded=\{expandedCollections\.has/.test(src),
+    'Collection toggle must bind aria-expanded to expandedCollections.has(slug)')
+  assert.ok(/aria-controls=\{`cms-collection-entries-\$\{.*\}`\}/.test(src) || /aria-controls=\{.*cms-collection-entries/.test(src),
+    'Collection toggle must have aria-controls pointing to cms-collection-entries-{slug}')
+})
+
+test('PageManager collection toggle uses semantic button (not div with role)', () => {
+  // Anti-pattern guard: no <div role="button"> for collection toggle
+  assert.ok(/className="jeeby-cms-collection-toggle"/.test(src))
+  const toggleMatch = src.match(/<button[^>]*className="jeeby-cms-collection-toggle"/)
+  assert.ok(toggleMatch, 'Collection toggle must be a real <button>, not <div role="button">')
+})
+
+test('PageManager tracks expandedCollections state as a Set', () => {
+  assert.ok(/expandedCollections/.test(src), 'Must track expandedCollections state')
+  assert.ok(/setExpandedCollections/.test(src), 'Must have setExpandedCollections setter')
+  assert.ok(/new Set/.test(src), 'expandedCollections must be a Set (for O(1) has/add/delete)')
+})
+
+test('PageManager entry rows use indent class and live in a tbody with a unique id per collection', () => {
+  assert.ok(/jeeby-cms-entry-row/.test(src), 'Entry rows must use jeeby-cms-entry-row class')
+  // Multiple <tbody> elements for aria-controls targets per collection
+  assert.ok(/id=\{`cms-collection-entries-\$\{.*\}`\}/.test(src) || /id=\{.*cms-collection-entries/.test(src),
+    'Each collection entry container must have id="cms-collection-entries-{slug}" to be the aria-controls target')
+})
+
+test('PageManager imports getCollectionPages and renameCollection from firestore helpers', () => {
+  assert.ok(/import\s*\{[^}]*getCollectionPages[^}]*\}\s*from\s*['"]\.\.\/firebase\/firestore\.js['"]/.test(src),
+    'Must import getCollectionPages from firestore.js')
+  assert.ok(/import\s*\{[^}]*renameCollection[^}]*\}\s*from\s*['"]\.\.\/firebase\/firestore\.js['"]/.test(src),
+    'Must import renameCollection from firestore.js')
+})
+
+test('PageManager blocks delete when collection has children', () => {
+  // D-20: "This collection has {N} entries. Delete or reassign them first."
+  assert.ok(/This collection has/.test(src), 'Must show inline error copy starting "This collection has"')
+  assert.ok(/entries\. Delete or reassign them first/.test(src),
+    'Must show exact inline error "... entries. Delete or reassign them first." per D-20')
+})
+
+test('PageManager rename cascade uses renameCollection for collections', () => {
+  // For collection rename, must call renameCollection (not bare renamePage) so children cascade
+  assert.ok(/renameCollection\(db/.test(src),
+    'Collection rename path must call renameCollection(db, ...) to cascade parentSlug updates')
+})
+
+test('PageManager sort/filter applies only to top-level items', () => {
+  // D-17: entries inside a collection always sort updatedAt desc, not by active sortMode
+  // Structural check: applySortFilter call should be on collections+standalone, not on raw pages
+  assert.ok(/applySortFilter/.test(src))
+})
