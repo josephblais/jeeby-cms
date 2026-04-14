@@ -1073,29 +1073,76 @@ export function PageManager() {
                         </td>
                       </tr>
                     )}
-                    {/* Entry rows (read-only in this phase) */}
+                    {/* Entry rows */}
                     {isExpanded && kids.map(entry => {
                       const { label, cls } = STATUS_PROPS[pageStatus(entry)]
                       return (
-                        <tr key={entry.slug} className="jeeby-cms-entry-row">
-                          <td>
-                            <span className="jeeby-cms-entry-indent jeeby-cms-cell-read">
-                              <a href={'/admin/pages/' + encodeURIComponent(entry.slug)}>{entry.name || entry.slug}</a>
-                            </span>
-                          </td>
-                          <td><span>/{entry.parentSlug}/{entry.slug}</span></td>
-                          <td><span className={cls}>{label}</span></td>
-                          <td>{formatDate(entry.lastPublishedAt)}</td>
-                          <td>
-                            <div className="jeeby-cms-table-actions">
-                              <a
-                                href={'/admin/pages/' + encodeURIComponent(entry.slug)}
-                                aria-label={'Edit blocks for ' + entry.slug}
-                                className="jeeby-cms-btn-primary"
-                              >Edit</a>
-                            </div>
-                          </td>
-                        </tr>
+                        <Fragment key={entry.slug}>
+                          <tr className="jeeby-cms-entry-row">
+                            <td>
+                              {editingSlug === entry.slug && editField === 'name' ? (
+                                <input type="text" className="jeeby-cms-inline-edit-input jeeby-cms-entry-indent" value={editValue}
+                                  aria-label={`Rename: ${entry.name || entry.slug}`}
+                                  aria-describedby={`cms-rename-error-${entry.slug}`}
+                                  onChange={e => handleEditChange(e.target.value)}
+                                  onKeyDown={handleEditKeyDown}
+                                  onBlur={commitEdit}
+                                  autoFocus />
+                              ) : (
+                                <span className="jeeby-cms-entry-indent jeeby-cms-cell-read">
+                                  <a href={'/admin/pages/' + encodeURIComponent(entry.slug)}>{entry.name || entry.slug}</a>
+                                  <button
+                                    ref={el => { editTriggerRefs.current[`${entry.slug}-name`] = el }}
+                                    type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
+                                    aria-label={`Rename ${entry.name || entry.slug}`}
+                                    onClick={() => startEdit(entry.slug, 'name', entry.name || '')}
+                                  >Rename</button>
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              {editingSlug === entry.slug && editField === 'slug' ? (
+                                <input type="text" className="jeeby-cms-inline-edit-input" value={editValue}
+                                  aria-label={`Rename slug: ${entry.name || entry.slug}`}
+                                  aria-describedby={`cms-rename-error-${entry.slug}`}
+                                  onChange={e => handleEditChange(e.target.value)}
+                                  onKeyDown={handleEditKeyDown}
+                                  onBlur={commitEdit}
+                                  autoFocus />
+                              ) : (
+                                <span className="jeeby-cms-cell-read">
+                                  <span>/{entry.parentSlug}/{entry.slug}</span>
+                                  <button
+                                    ref={el => { editTriggerRefs.current[`${entry.slug}-slug`] = el }}
+                                    type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
+                                    aria-label={`Rename slug for ${entry.name || entry.slug}`}
+                                    onClick={() => startEdit(entry.slug, 'slug', entry.slug)}
+                                  >Rename</button>
+                                </span>
+                              )}
+                            </td>
+                            <td><span className={cls}>{label}</span></td>
+                            <td>{formatDate(entry.lastPublishedAt)}</td>
+                            <td>
+                              <div className="jeeby-cms-table-actions">
+                                <a href={'/admin/pages/' + encodeURIComponent(entry.slug)}
+                                  aria-label={'Edit blocks for ' + entry.slug}
+                                  className="jeeby-cms-btn-primary">Edit</a>
+                                <button type="button" className="jeeby-cms-btn-ghost"
+                                  aria-label={`Delete ${entry.slug}`}
+                                  onClick={(e) => { deleteBtnRef.current = e.currentTarget; handleDeleteClick(entry) }}
+                                >Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                          {editError && editingSlug === entry.slug && (
+                            <tr>
+                              <td colSpan={5}>
+                                <p id={`cms-rename-error-${entry.slug}`} role="alert" className="jeeby-cms-inline-error">{editError}</p>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       )
                     })}
                   </tbody>

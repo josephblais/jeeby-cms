@@ -45,6 +45,37 @@ export async function getCMSContent(slug) {
   return pageData?.published ?? null
 }
 
+// Server-side getter: returns published content + entries for a Collection page.
+// Fetches the collection page's own published blocks and all child entries in parallel.
+//
+//   import { getCollectionContent } from 'jeeby-cms/server'
+//   export default async function BlogIndex() {
+//     const { content, entries } = await getCollectionContent('blog')
+//     return (
+//       <>
+//         {content?.blocks?.length > 0 && <CMSBlocks blocks={content.blocks} />}
+//         <ul>{entries.map(p => <li key={p.slug}>{p.name}</li>)}</ul>
+//       </>
+//     )
+//   }
+//
+// content: the published sub-object (same shape as getCMSContent), or null if page has no
+//          published blocks or the collection page document does not exist.
+// entries: array of all child pages with parentSlug === slug, ordered by updatedAt desc.
+//          Empty array when no entries exist.
+export async function getCollectionContent(slug) {
+  const db = getAdminFirestore()
+  const [contentSnap, entriesSnap] = await Promise.all([
+    db.doc('pages/' + slug).get(),
+    db.collection('pages').where('parentSlug', '==', slug).orderBy('updatedAt', 'desc').get(),
+  ])
+  const pageData = contentSnap.exists ? contentSnap.data() : null
+  return {
+    content: pageData?.published ?? null,
+    entries: entriesSnap.docs.map(d => ({ slug: d.id, ...d.data() })),
+  }
+}
+
 // Server-side getter: returns all Entry pages belonging to a parent collection slug.
 // Intended for Next.js Server Components, e.g. app/blog/page.js:
 //

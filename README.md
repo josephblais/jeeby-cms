@@ -128,6 +128,26 @@ export default async function Page({ params }) {
 
 `getCMSContent` returns the published version of a page, never draft content.
 
+### Collection pages
+
+Collection pages can have their own blocks (a header, intro copy, etc.) alongside their list of entries. Use `getCollectionContent` instead:
+
+```js
+import { getCollectionContent } from 'jeeby-cms/server'
+
+export default async function BlogIndex() {
+  const { content, entries } = await getCollectionContent('blog')
+  return (
+    <>
+      {content?.blocks?.length > 0 && <CMSBlocks blocks={content.blocks} />}
+      <ul>{entries.map(p => <li key={p.slug}>{p.name}</li>)}</ul>
+    </>
+  )
+}
+```
+
+`content` is the published sub-object (same shape as `getCMSContent`), or `null` if the collection page has no published blocks. `entries` is always an array — empty when no child pages exist.
+
 ---
 
 ## Firebase Console setup
@@ -136,6 +156,24 @@ export default async function Page({ params }) {
 2. Create an admin user: Authentication → Users → Add user
 3. Set up Firestore with a `pages` collection for CMS content
 4. Enable Storage if using media uploads
+
+### Firestore indexes
+
+`getCollectionPages` queries Firestore with `where('parentSlug', '==', ...)` and `orderBy('updatedAt', 'desc')`. Firestore requires a composite index for this combination.
+
+Deploy the included index definition from your project root:
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
+Or create it manually: Firebase Console → Firestore → Indexes → Add index:
+
+| Collection | Fields | Query scope |
+|------------|--------|-------------|
+| `pages` | `parentSlug` ASC, `updatedAt` DESC | Collection |
+
+Without this index, any call to `getCollectionPages` will throw a `FAILED_PRECONDITION` error with a link to create the index automatically.
 
 ### Firestore security rules
 

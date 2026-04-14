@@ -8,6 +8,7 @@ import { UndoToast } from './UndoToast.js'
 import { UnsavedChangesWarning } from './UnsavedChangesWarning.js'
 import { PublishConfirmModal } from './PublishConfirmModal.js'
 import { PublishToast } from './PublishToast.js'
+import { PageMetaModal } from './PageMetaModal.js'
 import { useSignOutGuard } from './SignOutGuardContext.js'
 
 const DEFAULT_BLOCK_DATA = {
@@ -32,6 +33,11 @@ export function PageEditor({ slug }) {
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
   const [lastPublishedAt, setLastPublishedAt] = useState(null)
   const [hasDraftChanges, setHasDraftChanges] = useState(false)
+  const [parentSlug, setParentSlug] = useState(null)
+  const [meta, setMeta] = useState(null)
+  const [showMetaModal, setShowMetaModal] = useState(false)
+  const [metaSaving, setMetaSaving] = useState(false)
+  const metaBtnRef = useRef(null)
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [publishStatus, setPublishStatus] = useState('idle')
   const [publishError, setPublishError] = useState(null)
@@ -58,6 +64,8 @@ export function PageEditor({ slug }) {
           setPageName(page?.name ?? slug)
           setLastPublishedAt(page?.lastPublishedAt ?? null)
           setHasDraftChanges(page?.hasDraftChanges ?? false)
+          setParentSlug(page?.parentSlug ?? null)
+          setMeta(page?.meta ?? null)
           setLoading(false)
         }
       } catch {
@@ -234,6 +242,19 @@ export function PageEditor({ slug }) {
     setShowPublishModal(true)
   }
 
+  async function handleSaveMeta(newMeta) {
+    setMetaSaving(true)
+    try {
+      await savePage(db, slug, { meta: newMeta })
+      setMeta(newMeta)
+      setShowMetaModal(false)
+    } catch {
+      setSaveStatus('error')
+    } finally {
+      setMetaSaving(false)
+    }
+  }
+
   async function handleRenameName(newName) {
     try {
       await savePage(db, slug, { name: newName })
@@ -291,6 +312,7 @@ export function PageEditor({ slug }) {
       <EditorHeader
         pageName={pageName}
         slug={slug}
+        pageUrl={parentSlug ? `/${parentSlug}/${slug}` : `/${slug}`}
         saveStatus={saveStatus}
         onRetry={handleRetry}
         onBackClick={handleBackClick}
@@ -301,6 +323,8 @@ export function PageEditor({ slug }) {
         onPublish={openPublishModal}
         publishStatus={publishStatus}
         publishBtnRef={publishBtnRef}
+        onOpenMeta={() => setShowMetaModal(true)}
+        metaBtnRef={metaBtnRef}
       />
       <div className="jeeby-cms-editor-main">
         <BlockCanvas
@@ -335,6 +359,14 @@ export function PageEditor({ slug }) {
         />
       )}
       {showPublishToast && <PublishToast />}
+      <PageMetaModal
+        open={showMetaModal}
+        onClose={() => setShowMetaModal(false)}
+        triggerRef={metaBtnRef}
+        meta={meta}
+        onSave={handleSaveMeta}
+        saving={metaSaving}
+      />
     </div>
   )
 }

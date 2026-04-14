@@ -36,7 +36,7 @@ const FOCUSABLE =
  *   cardClassName string?      additional class(es) for the card element
  *   children      ReactNode
  */
-export function ModalShell({ open = true, role = 'dialog', labelId, descId, triggerRef, onClose, backdropStyle, cardClassName, children }) {
+export function ModalShell({ open = true, role = 'dialog', labelId, descId, triggerRef, onClose, backdropStyle, backdropClassName, cardClassName, children }) {
   const dialogRef = useRef(null)
   const reduced = useReducedMotion()
 
@@ -89,7 +89,7 @@ export function ModalShell({ open = true, role = 'dialog', labelId, descId, trig
     <AnimatePresence>
       {open && (
         <motion.div
-          className="jeeby-cms-modal-backdrop"
+          className={['jeeby-cms-modal-backdrop', backdropClassName].filter(Boolean).join(' ')}
           style={backdropStyle}
           onMouseDown={onClose}
           initial={{ opacity: 0 }}

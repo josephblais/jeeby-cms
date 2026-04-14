@@ -49,7 +49,7 @@ function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
   return { label: 'Not yet live', tone: 'muted', retry: false, sublabel: null }
 }
 
-export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
+export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef, onOpenMeta, metaBtnRef }) {
   const displayName = pageName || slug
 
   // Title inline edit
@@ -62,6 +62,15 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
   const [slugDirty, setSlugDirty] = useState(false)
 
   const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt })
+
+  // Copy URL feedback
+  const [copied, setCopied] = useState(false)
+  function handleCopyUrl() {
+    navigator.clipboard.writeText(window.location.origin + pageUrl).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   // Sync from props after external rename
   useEffect(() => { setTitleValue(pageName || slug) }, [pageName, slug])
@@ -210,6 +219,31 @@ export function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick,
             <span className="jeeby-cms-doc-status-sublabel">{status.sublabel}</span>
           )}
         </div>
+        <button
+          ref={metaBtnRef}
+          type="button"
+          className="jeeby-cms-btn-ghost"
+          onClick={onOpenMeta}
+          aria-label="Page settings"
+        >Settings</button>
+        {lastPublishedAt && (
+          <div className="jeeby-cms-editor-page-links">
+            <a
+              href={pageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="jeeby-cms-btn-ghost"
+              aria-label={`View published page: ${pageUrl}`}
+            >View page</a>
+            <button
+              type="button"
+              className="jeeby-cms-btn-ghost"
+              onClick={handleCopyUrl}
+              aria-label={copied ? 'URL copied' : `Copy page URL: ${pageUrl}`}
+              aria-live="polite"
+            >{copied ? 'Copied!' : 'Copy URL'}</button>
+          </div>
+        )}
         <button
           ref={publishBtnRef}
           type="button"

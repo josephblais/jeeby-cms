@@ -1,7 +1,7 @@
 "use client";
 
 // src/admin/PageEditor.js
-import { useState as useState14, useEffect as useEffect12, useRef as useRef15, useCallback as useCallback3 } from "react";
+import { useState as useState15, useEffect as useEffect13, useRef as useRef16, useCallback as useCallback3 } from "react";
 import { useCMSFirebase as useCMSFirebase4 } from "jeeby-cms";
 
 // src/firebase/firestore.js
@@ -17,7 +17,8 @@ import {
   query,
   orderBy,
   limit,
-  startAfter
+  startAfter,
+  where
 } from "firebase/firestore";
 function pageRef(db, slug) {
   return doc(db, "pages", slug);
@@ -70,11 +71,30 @@ async function listPagesPaginated(db, { pageSize = 20, cursor = null } = {}) {
     hasMore
   };
 }
+async function getCollectionPages(db, parentSlug) {
+  const col = collection(db, "pages");
+  const snap = await getDocs(
+    query(col, where("parentSlug", "==", parentSlug), orderBy("updatedAt", "desc"))
+  );
+  return snap.docs.map((d) => ({ slug: d.id, ...d.data() }));
+}
 async function renamePage(db, oldSlug, newSlug) {
   const data = await getPage(db, oldSlug);
   if (!data) throw new Error(`Page "${oldSlug}" not found`);
   await savePage(db, newSlug, { ...data, slug: newSlug });
   await deletePage(db, oldSlug);
+}
+async function renameCollection(db, oldSlug, newSlug) {
+  const children = await getCollectionPages(db, oldSlug);
+  await renamePage(db, oldSlug, newSlug);
+  await Promise.all(
+    children.map(
+      (child) => updateDoc(doc(db, "pages", child.slug), {
+        parentSlug: newSlug,
+        updatedAt: serverTimestamp()
+      })
+    )
+  );
 }
 function validateSlug(pattern, slug) {
   if (!pattern) return true;
@@ -150,7 +170,7 @@ function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
   }
   return { label: "Not yet live", tone: "muted", retry: false, sublabel: null };
 }
-function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef }) {
+function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef, onOpenMeta, metaBtnRef }) {
   const displayName3 = pageName || slug;
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(displayName3);
@@ -158,6 +178,13 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
   const [slugValue, setSlugValue] = useState(slug);
   const [slugDirty, setSlugDirty] = useState(false);
   const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt });
+  const [copied, setCopied] = useState(false);
+  function handleCopyUrl() {
+    navigator.clipboard.writeText(window.location.origin + pageUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2e3);
+    });
+  }
   useEffect(() => {
     setTitleValue(pageName || slug);
   }, [pageName, slug]);
@@ -314,6 +341,41 @@ function EditorHeader({ pageName, slug, saveStatus, onRetry, onBackClick, onRena
           ]
         }
       ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          ref: metaBtnRef,
+          type: "button",
+          className: "jeeby-cms-btn-ghost",
+          onClick: onOpenMeta,
+          "aria-label": "Page settings",
+          children: "Settings"
+        }
+      ),
+      lastPublishedAt && /* @__PURE__ */ jsxs("div", { className: "jeeby-cms-editor-page-links", children: [
+        /* @__PURE__ */ jsx(
+          "a",
+          {
+            href: pageUrl,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            className: "jeeby-cms-btn-ghost",
+            "aria-label": `View published page: ${pageUrl}`,
+            children: "View page"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            className: "jeeby-cms-btn-ghost",
+            onClick: handleCopyUrl,
+            "aria-label": copied ? "URL copied" : `Copy page URL: ${pageUrl}`,
+            "aria-live": "polite",
+            children: copied ? "Copied!" : "Copy URL"
+          }
+        )
+      ] }),
       /* @__PURE__ */ jsx(
         "button",
         {
@@ -24282,6 +24344,37 @@ function uploadFile(storage, file, path, onProgress, cancelRef) {
     );
   });
 }
+function generateThumbnail(file, maxPx = 400) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * scale);
+      const h2 = Math.round(img.naturalHeight * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h2;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h2);
+      canvas.toBlob(
+        (blob) => resolve(blob ? new File([blob], "thumb.webp", { type: "image/webp" }) : null),
+        "image/webp",
+        0.82
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
 
 // src/admin/editors/ImageEditor.js
 import { useCMSFirebase as useCMSFirebase2 } from "jeeby-cms";
@@ -24303,7 +24396,7 @@ function unlockScroll() {
   if (_scrollLockCount === 0) document.body.style.overflow = "";
 }
 var FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
-function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef, onClose, backdropStyle, cardClassName, children }) {
+function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef, onClose, backdropStyle, backdropClassName, cardClassName, children }) {
   const dialogRef = useRef4(null);
   const reduced = useReducedMotion();
   useEffect5(() => {
@@ -24349,7 +24442,7 @@ function ModalShell({ open = true, role = "dialog", labelId, descId, triggerRef,
   return /* @__PURE__ */ jsx10(AnimatePresence, { children: open && /* @__PURE__ */ jsx10(
     motion.div,
     {
-      className: "jeeby-cms-modal-backdrop",
+      className: ["jeeby-cms-modal-backdrop", backdropClassName].filter(Boolean).join(" "),
       style: backdropStyle,
       onMouseDown: onClose,
       initial: { opacity: 0 },
@@ -24395,6 +24488,10 @@ function formatBytes(bytes) {
   }
   return `${size.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
 }
+function truncateName(name, max = 24) {
+  if (!name) return "Untitled";
+  return name.length > max ? name.slice(0, max) + "\u2026" : name;
+}
 function formatUploadedAt(uploadedAt) {
   if (!uploadedAt) return "Unknown upload date";
   try {
@@ -24426,10 +24523,17 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
   const [editDraft, setEditDraft] = useState5({ title: "", alt: "" });
   const [dimensionsByKey, setDimensionsByKey] = useState5({});
   const [copiedValue, setCopiedValue] = useState5("");
+  const [closeConfirmActive, setCloseConfirmActive] = useState5(false);
+  const [editSaveError, setEditSaveError] = useState5(null);
+  const [lightboxOpen, setLightboxOpen] = useState5(false);
+  const [panelAnnouncement, setPanelAnnouncement] = useState5("");
   const cursorRef = useRef5(null);
   const sentinelRef = useRef5(null);
   const fileInputRef = useRef5(null);
   const pendingUploadsRef = useRef5([]);
+  const lightboxRef = useRef5(null);
+  const lightboxCloseRef = useRef5(null);
+  const copyTimeoutRef = useRef5(null);
   const closeGuardActive = useMemo3(
     () => pendingUploads.some((u) => u.state === "pending-meta"),
     [pendingUploads]
@@ -24439,6 +24543,8 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
     [items, editingId]
   );
   const editingDimensions = editingItem ? dimensionsByKey[editingItem.id] : null;
+  const headingText = mode === "select-single" ? "Select an image" : mode === "select-multi" ? "Select images" : "Media Library";
+  const subtitleText = mode === "select-single" ? "Click an image to use it." : mode === "select-multi" && selected.size === 0 ? "Click images to select them." : null;
   const updatePending = useCallback((id, patch) => {
     setPendingUploads((prev) => prev.map((u) => u.id === id ? { ...u, ...patch } : u));
   }, []);
@@ -24532,17 +24638,71 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
     observer.observe(el);
     return () => observer.disconnect();
   }, [open, hasMore, isLoading, isLoadingMore, fetchNextPage]);
+  useEffect6(() => {
+    if (!closeGuardActive) setCloseConfirmActive(false);
+  }, [closeGuardActive]);
+  useEffect6(() => {
+    if (!editingId) setLightboxOpen(false);
+  }, [editingId]);
+  useEffect6(() => {
+    var _a;
+    if (!lightboxOpen) return;
+    (_a = lightboxCloseRef.current) == null ? void 0 : _a.focus();
+    function onKeyDown(e) {
+      var _a2;
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setLightboxOpen(false);
+        return;
+      }
+      if (e.key === "Tab") {
+        const nodes = (_a2 = lightboxRef.current) == null ? void 0 : _a2.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (!(nodes == null ? void 0 : nodes.length)) {
+          e.preventDefault();
+          return;
+        }
+        const first2 = nodes[0];
+        const last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first2) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first2.focus();
+        }
+        e.stopPropagation();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [lightboxOpen]);
+  useEffect6(() => {
+    setPanelAnnouncement(editingItem ? `Details panel opened for ${editingItem.title || "Untitled image"}` : "");
+  }, [editingItem]);
+  useEffect6(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
   const guardedOnClose = useCallback(() => {
-    if (closeGuardActive) return;
+    if (closeGuardActive) {
+      setCloseConfirmActive(true);
+      return;
+    }
     onClose == null ? void 0 : onClose();
   }, [closeGuardActive, onClose]);
   async function handleUpload(file) {
     const validationError = validateImageFile(file);
     if (validationError) return;
+    setEditingId(null);
     const id = makeTempId();
+    const uuid = crypto.randomUUID();
     const previewUrl = URL.createObjectURL(file);
     const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : MIME_TO_EXT[file.type] ?? "jpg";
-    const path = `cms/media/images/${crypto.randomUUID()}.${ext}`;
+    const path = `cms/media/images/${uuid}.${ext}`;
+    const thumbPath = `cms/media/thumbs/${uuid}_thumb.webp`;
     setPendingUploads((prev) => [
       {
         id,
@@ -24553,6 +24713,8 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
         progress: 0,
         state: "uploading",
         storageUrl: "",
+        thumbUrl: "",
+        thumbPath,
         previewUrl,
         storagePath: path,
         mimeType: file.type,
@@ -24565,9 +24727,17 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
       if (!dims) return;
       updatePending(id, { dimensions: dims });
     });
+    const thumbUploadPromise = generateThumbnail(file).then((thumbFile) => thumbFile ? uploadFile(storage, thumbFile, thumbPath) : null).then((url) => url ? { thumbUrl: url, thumbPath } : null).catch(() => null);
     try {
       const storageUrl = await uploadFile(storage, file, path, (pct) => updatePending(id, { progress: pct }));
-      updatePending(id, { state: "pending-meta", progress: 100, storageUrl });
+      const thumbResult = await thumbUploadPromise;
+      updatePending(id, {
+        state: "pending-meta",
+        progress: 100,
+        storageUrl,
+        thumbUrl: (thumbResult == null ? void 0 : thumbResult.thumbUrl) ?? "",
+        thumbPath: (thumbResult == null ? void 0 : thumbResult.thumbPath) ?? thumbPath
+      });
     } catch (err) {
       console.error("[jeeby-cms] Upload failed:", err);
       updatePending(id, { state: "failed", error: "Upload failed \u2014 check your connection and try again." });
@@ -24580,12 +24750,14 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
   }
   async function handleSavePending(pending) {
     if (!pending.storageUrl) return;
+    updatePending(pending.id, { saveError: null });
     try {
       const trimmedTitle = pending.title.trim();
       const trimmedAlt = pending.alt.trim();
       const newId = await addMediaItem(db, {
         storageUrl: pending.storageUrl,
         storagePath: pending.storagePath,
+        ...pending.thumbUrl && { thumbUrl: pending.thumbUrl, thumbPath: pending.thumbPath },
         title: trimmedTitle,
         alt: trimmedAlt,
         mimeType: pending.mimeType,
@@ -24595,6 +24767,8 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
         id: newId,
         storageUrl: pending.storageUrl,
         storagePath: pending.storagePath,
+        thumbUrl: pending.thumbUrl || "",
+        thumbPath: pending.thumbPath || "",
         title: trimmedTitle,
         alt: trimmedAlt,
         mimeType: pending.mimeType,
@@ -24604,6 +24778,7 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
       removePending(pending.id);
     } catch (err) {
       console.error("[jeeby-cms] Failed to save media item:", err);
+      updatePending(pending.id, { saveError: "Could not save \u2014 check your connection and try again." });
     }
   }
   function handlePendingTitleChange(id, nextTitle) {
@@ -24619,9 +24794,17 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
   async function retryPendingUpload(pending) {
     if (!(pending == null ? void 0 : pending.file)) return;
     updatePending(pending.id, { state: "uploading", progress: 0, error: null });
+    const thumbUploadPromise = pending.thumbUrl ? Promise.resolve({ thumbUrl: pending.thumbUrl, thumbPath: pending.thumbPath }) : generateThumbnail(pending.file).then((f) => f ? uploadFile(storage, f, pending.thumbPath) : null).then((url) => url ? { thumbUrl: url, thumbPath: pending.thumbPath } : null).catch(() => null);
     try {
       const storageUrl = await uploadFile(storage, pending.file, pending.storagePath, (pct) => updatePending(pending.id, { progress: pct }));
-      updatePending(pending.id, { state: "pending-meta", progress: 100, storageUrl });
+      const thumbResult = await thumbUploadPromise;
+      updatePending(pending.id, {
+        state: "pending-meta",
+        progress: 100,
+        storageUrl,
+        thumbUrl: (thumbResult == null ? void 0 : thumbResult.thumbUrl) ?? "",
+        thumbPath: (thumbResult == null ? void 0 : thumbResult.thumbPath) ?? pending.thumbPath
+      });
     } catch (err) {
       if (err.code === "storage/canceled") return;
       console.error("[jeeby-cms] Upload failed:", err);
@@ -24645,9 +24828,11 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
     }
     setEditingId(item.id);
     setEditDraft({ title: item.title ?? "", alt: item.alt ?? "" });
+    setEditSaveError(null);
   }
   async function handleSaveEdit() {
     if (!editingId) return;
+    setEditSaveError(null);
     try {
       await updateMediaItem(db, editingId, { title: editDraft.title.trim(), alt: editDraft.alt.trim() });
       setItems((prev) => prev.map((it) => it.id === editingId ? { ...it, title: editDraft.title.trim(), alt: editDraft.alt.trim() } : it));
@@ -24655,14 +24840,16 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
       setEditDraft({ title: "", alt: "" });
     } catch (err) {
       console.error("[jeeby-cms] Failed to update media item:", err);
+      setEditSaveError("Could not save \u2014 check your connection and try again.");
     }
   }
   async function handleCopy(text) {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
       setCopiedValue(text);
-      setTimeout(() => setCopiedValue(""), 1200);
+      copyTimeoutRef.current = setTimeout(() => setCopiedValue(""), 1200);
     } catch {
       setCopiedValue("");
     }
@@ -24672,220 +24859,319 @@ function MediaLibraryModal({ open, mode = "browse", onSelect, triggerRef, onClos
     onSelect == null ? void 0 : onSelect(picked);
     onClose == null ? void 0 : onClose();
   }
-  return /* @__PURE__ */ jsx11(
+  return /* @__PURE__ */ jsxs5(
     ModalShell,
     {
       open,
       labelId: "media-library-heading",
       triggerRef,
       onClose: guardedOnClose,
-      backdropStyle: { zIndex: 1100 },
+      backdropClassName: "jeeby-cms-modal-backdrop--elevated",
       cardClassName: "jeeby-cms-modal-card--full",
-      children: /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library", children: [
-        /* @__PURE__ */ jsxs5("header", { className: "jeeby-cms-media-library-header", children: [
-          /* @__PURE__ */ jsx11("h2", { id: "media-library-heading", children: "Media Library" }),
-          /* @__PURE__ */ jsx11(
-            "button",
-            {
-              type: "button",
-              className: "jeeby-cms-btn-ghost",
-              onClick: guardedOnClose,
-              "aria-label": "Close media library",
-              disabled: closeGuardActive,
-              children: "Close"
-            }
-          )
-        ] }),
-        closeGuardActive && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-library-close-guard", role: "alert", children: "Finish saving the upload details before closing." }),
-        /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-toolbar", children: [
-          /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-primary", onClick: () => {
-            var _a;
-            return (_a = fileInputRef.current) == null ? void 0 : _a.click();
-          }, children: "Upload images" }),
-          /* @__PURE__ */ jsx11(
-            "input",
-            {
-              ref: fileInputRef,
-              type: "file",
-              accept: "image/jpeg,image/png,image/gif,image/webp",
-              multiple: true,
-              style: { display: "none" },
-              "aria-hidden": "true",
-              tabIndex: -1,
-              onChange: (e) => handleFilesSelected(e.target.files)
-            }
-          )
-        ] }),
-        error && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-library-error", role: "alert", children: error }),
-        mode === "browse" && editingItem && /* @__PURE__ */ jsxs5("section", { className: "jeeby-cms-media-detail-panel", "aria-label": "Media details", children: [
-          /* @__PURE__ */ jsx11(
-            "img",
-            {
-              className: "jeeby-cms-media-detail-thumb",
-              src: editingItem.storageUrl,
-              alt: editDraft.alt || editingItem.alt || ""
-            }
-          ),
-          /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-body", children: [
-            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-stats", children: [
-              /* @__PURE__ */ jsxs5("div", { children: [
-                /* @__PURE__ */ jsx11("strong", { children: "Uploaded" }),
-                /* @__PURE__ */ jsx11("span", { children: formatUploadedAt(editingItem.uploadedAt) })
-              ] }),
-              /* @__PURE__ */ jsxs5("div", { children: [
-                /* @__PURE__ */ jsx11("strong", { children: "File size" }),
-                /* @__PURE__ */ jsx11("span", { children: formatBytes(editingItem.size) })
-              ] }),
-              /* @__PURE__ */ jsxs5("div", { children: [
-                /* @__PURE__ */ jsx11("strong", { children: "Dimensions" }),
-                /* @__PURE__ */ jsx11("span", { children: editingDimensions ? `${editingDimensions.width} x ${editingDimensions.height}` : "Loading..." })
-              ] })
+      children: [
+        /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library", children: [
+          /* @__PURE__ */ jsxs5("header", { className: "jeeby-cms-media-library-header", children: [
+            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-header-title", children: [
+              /* @__PURE__ */ jsx11("h2", { id: "media-library-heading", children: headingText }),
+              subtitleText && /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-media-library-subtitle", children: subtitleText })
             ] }),
-            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Edit media metadata", children: [
-              /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "edit-title-" + editingItem.id, children: "Title" }),
-              /* @__PURE__ */ jsx11(
-                "input",
-                {
-                  id: "edit-title-" + editingItem.id,
-                  type: "text",
-                  value: editDraft.title,
-                  onChange: (e) => setEditDraft((d) => ({ ...d, title: e.target.value }))
-                }
-              ),
-              /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "edit-alt-" + editingItem.id, children: "Alt text" }),
-              /* @__PURE__ */ jsx11(
-                "input",
-                {
-                  id: "edit-alt-" + editingItem.id,
-                  type: "text",
-                  value: editDraft.alt,
-                  onChange: (e) => setEditDraft((d) => ({ ...d, alt: e.target.value }))
-                }
-              ),
-              /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "edit-url-" + editingItem.id, children: "File URL" }),
-              /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-url-row", children: [
-                /* @__PURE__ */ jsx11("input", { id: "edit-url-" + editingItem.id, type: "text", value: editingItem.storageUrl, readOnly: true }),
-                /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => handleCopy(editingItem.storageUrl), children: copiedValue === editingItem.storageUrl ? "Copied" : "Copy" })
-              ] }),
-              /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-done-row", children: [
-                /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-primary", onClick: handleSaveEdit, children: "Save" }),
-                /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => setEditingId(null), children: "Close" })
-              ] })
-            ] })
-          ] })
-        ] }),
-        pendingUploads.length > 0 && /* @__PURE__ */ jsx11("section", { className: "jeeby-cms-media-upload-queue", "aria-label": "Pending uploads", children: pendingUploads.map((pending, idx) => /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-upload-item", children: [
-          /* @__PURE__ */ jsx11("img", { className: "jeeby-cms-media-detail-thumb", src: pending.storageUrl || pending.previewUrl, alt: "", "aria-hidden": "true" }),
-          /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-upload-item-body", children: [
-            /* @__PURE__ */ jsxs5("p", { className: "jeeby-cms-field-label", children: [
-              "Upload ",
-              idx + 1
-            ] }),
-            pending.state === "uploading" && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": pending.progress, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress for image " + (idx + 1), children: /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${pending.progress}%` } }) }),
-            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: [
-              pending.state === "uploading" ? `Uploading \u2014 ${Math.round(pending.progress)}%` : null,
-              pending.state === "pending-meta" ? "Upload complete. Ready to save metadata." : null,
-              pending.state === "failed" ? pending.error : null
-            ] }),
-            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-stats", children: [
-              /* @__PURE__ */ jsxs5("div", { children: [
-                /* @__PURE__ */ jsx11("strong", { children: "File size" }),
-                /* @__PURE__ */ jsx11("span", { children: formatBytes(pending.size) })
-              ] }),
-              /* @__PURE__ */ jsxs5("div", { children: [
-                /* @__PURE__ */ jsx11("strong", { children: "Dimensions" }),
-                /* @__PURE__ */ jsx11("span", { children: pending.dimensions ? `${pending.dimensions.width} x ${pending.dimensions.height}` : "Loading..." })
-              ] }),
-              /* @__PURE__ */ jsxs5("div", { children: [
-                /* @__PURE__ */ jsx11("strong", { children: "Storage path" }),
-                /* @__PURE__ */ jsx11("span", { children: pending.storagePath })
-              ] })
-            ] }),
-            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Metadata for upload " + (idx + 1), children: [
-              /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "pending-title-" + pending.id, children: "Title" }),
-              /* @__PURE__ */ jsx11(
-                "input",
-                {
-                  id: "pending-title-" + pending.id,
-                  type: "text",
-                  value: pending.title,
-                  onChange: (e) => handlePendingTitleChange(pending.id, e.target.value)
-                }
-              ),
-              /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "pending-alt-" + pending.id, children: "Alt text" }),
-              /* @__PURE__ */ jsx11(
-                "input",
-                {
-                  id: "pending-alt-" + pending.id,
-                  type: "text",
-                  value: pending.alt,
-                  onChange: (e) => updatePending(pending.id, { alt: e.target.value, altManuallyEdited: true })
-                }
-              ),
-              !pending.alt.trim() && /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-field-hint", role: "alert", children: "Images without alt text may fail accessibility checks." }),
-              /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-done-row", children: [
-                pending.state === "failed" ? /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => retryPendingUpload(pending), children: "Retry upload" }) : /* @__PURE__ */ jsx11(
-                  "button",
-                  {
-                    type: "button",
-                    className: "jeeby-cms-btn-primary",
-                    disabled: pending.state !== "pending-meta" || !pending.storageUrl,
-                    onClick: () => handleSavePending(pending),
-                    children: "Save to Library"
-                  }
-                ),
-                /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => removePending(pending.id), children: "Skip" })
-              ] })
-            ] })
-          ] })
-        ] }, pending.id)) }),
-        isLoading ? /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-library-loading", "aria-hidden": "true", children: Array.from({ length: 12 }, (_, i) => /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-card-skeleton" }, i)) }) : /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-grid", children: [
-          items.map((item) => {
-            const checked = selected.has(item.id);
-            return /* @__PURE__ */ jsx11(
-              "div",
+            /* @__PURE__ */ jsx11(
+              "button",
               {
-                className: ["jeeby-cms-media-card", checked ? "jeeby-cms-media-card--selected" : ""].filter(Boolean).join(" "),
-                onClick: () => handleCardClick(item),
-                children: /* @__PURE__ */ jsxs5(Fragment4, { children: [
-                  /* @__PURE__ */ jsx11("img", { className: "jeeby-cms-media-card-thumb", src: item.storageUrl, alt: item.alt || "", loading: "lazy" }),
-                  mode === "select-multi" && /* @__PURE__ */ jsx11(
-                    "input",
+                type: "button",
+                className: "jeeby-cms-btn-ghost",
+                onClick: guardedOnClose,
+                "aria-label": "Close media library",
+                children: "Close"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx11("div", { className: `jeeby-cms-media-library-close-guard${closeGuardActive ? "" : " jeeby-cms-visually-hidden"}`, role: "status", "aria-live": "polite", "aria-atomic": "true", children: closeGuardActive && (closeConfirmActive ? /* @__PURE__ */ jsxs5(Fragment4, { children: [
+            /* @__PURE__ */ jsxs5("svg", { "aria-hidden": "true", focusable: "false", width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", style: { flexShrink: 0 }, children: [
+              /* @__PURE__ */ jsx11("path", { d: "M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" }),
+              /* @__PURE__ */ jsx11("path", { d: "M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" })
+            ] }),
+            /* @__PURE__ */ jsx11("span", { children: "You have unsaved uploads. Leave anyway?" }),
+            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-close-guard-actions", children: [
+              /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => {
+                setCloseConfirmActive(false);
+                onClose == null ? void 0 : onClose();
+              }, children: "Leave" }),
+              /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => setCloseConfirmActive(false), children: "Stay" })
+            ] })
+          ] }) : /* @__PURE__ */ jsxs5(Fragment4, { children: [
+            /* @__PURE__ */ jsxs5("svg", { "aria-hidden": "true", focusable: "false", width: "14", height: "14", viewBox: "0 0 16 16", fill: "currentColor", style: { flexShrink: 0 }, children: [
+              /* @__PURE__ */ jsx11("path", { d: "M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" }),
+              /* @__PURE__ */ jsx11("path", { d: "M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" })
+            ] }),
+            /* @__PURE__ */ jsx11("span", { children: "Finish saving the upload details before closing." })
+          ] })) }),
+          /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-visually-hidden", "aria-live": "polite", "aria-atomic": "true", children: panelAnnouncement }),
+          /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-toolbar", children: [
+            /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-primary", "data-autofocus": true, onClick: () => {
+              var _a;
+              return (_a = fileInputRef.current) == null ? void 0 : _a.click();
+            }, children: "Upload images" }),
+            /* @__PURE__ */ jsx11(
+              "input",
+              {
+                ref: fileInputRef,
+                type: "file",
+                accept: "image/jpeg,image/png,image/gif,image/webp",
+                multiple: true,
+                style: { display: "none" },
+                "aria-hidden": "true",
+                tabIndex: -1,
+                onChange: (e) => handleFilesSelected(e.target.files)
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-visually-hidden", "aria-live": "polite", "aria-atomic": "true", children: isLoading ? "Loading media library\u2026" : "" }),
+          error && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-library-error", role: "alert", children: error }),
+          /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-body", children: [
+            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-main", children: [
+              pendingUploads.length > 0 && /* @__PURE__ */ jsx11("section", { className: "jeeby-cms-media-upload-queue", "aria-label": "Pending uploads", children: pendingUploads.map((pending) => /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-upload-item", children: [
+                /* @__PURE__ */ jsx11("img", { className: "jeeby-cms-media-detail-thumb", src: pending.storageUrl || pending.previewUrl, alt: "", "aria-hidden": "true" }),
+                /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-upload-item-body", children: [
+                  /* @__PURE__ */ jsx11("span", { className: "jeeby-cms-field-label", children: truncateName(pending.title) }),
+                  pending.state === "uploading" && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-upload-progress", role: "progressbar", "aria-valuenow": pending.progress, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": "Upload progress for " + truncateName(pending.title), children: /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-upload-progress-fill", style: { width: `${pending.progress}%` } }) }),
+                  /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-upload-status", "aria-live": "polite", children: [
+                    pending.state === "uploading" ? `Uploading \u2014 ${Math.round(pending.progress)}%` : null,
+                    pending.state === "pending-meta" ? "Upload complete. Ready to save metadata." : null,
+                    pending.state === "failed" ? pending.error : null
+                  ] }),
+                  /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-detail-stats", children: /* @__PURE__ */ jsxs5("div", { children: [
+                    /* @__PURE__ */ jsx11("strong", { children: "Dimensions" }),
+                    /* @__PURE__ */ jsx11("span", { children: pending.dimensions ? `${pending.dimensions.width} x ${pending.dimensions.height}` : "Loading..." })
+                  ] }) }),
+                  /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Metadata for " + truncateName(pending.title), children: [
+                    /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "pending-title-" + pending.id, children: "Title" }),
+                    /* @__PURE__ */ jsx11(
+                      "input",
+                      {
+                        id: "pending-title-" + pending.id,
+                        type: "text",
+                        value: pending.title,
+                        onChange: (e) => handlePendingTitleChange(pending.id, e.target.value)
+                      }
+                    ),
+                    /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label jeeby-cms-image-alt-label", htmlFor: "pending-alt-" + pending.id, children: "Alt text" }),
+                    /* @__PURE__ */ jsx11(
+                      "input",
+                      {
+                        id: "pending-alt-" + pending.id,
+                        type: "text",
+                        value: pending.alt,
+                        "aria-describedby": "pending-alt-hint-" + pending.id,
+                        placeholder: "Describe the image for screen readers",
+                        onChange: (e) => updatePending(pending.id, { alt: e.target.value, altManuallyEdited: true })
+                      }
+                    ),
+                    /* @__PURE__ */ jsx11("p", { id: "pending-alt-hint-" + pending.id, className: "jeeby-cms-field-hint", children: "Leave blank only if the image adds no meaning (e.g., a background pattern)." }),
+                    /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-done-row", children: [
+                      pending.state === "failed" ? /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => retryPendingUpload(pending), children: "Retry upload" }) : /* @__PURE__ */ jsx11(
+                        "button",
+                        {
+                          type: "button",
+                          className: "jeeby-cms-btn-primary",
+                          disabled: pending.state !== "pending-meta" || !pending.storageUrl,
+                          onClick: () => handleSavePending(pending),
+                          children: "Save to Library"
+                        }
+                      ),
+                      /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => removePending(pending.id), children: "Discard" })
+                    ] }),
+                    pending.saveError && /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-inline-error", role: "alert", children: pending.saveError })
+                  ] })
+                ] })
+              ] }, pending.id)) }),
+              isLoading ? /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-library-loading", "aria-hidden": "true", children: Array.from({ length: 12 }, (_, i) => /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-card-skeleton" }, i)) }) : /* @__PURE__ */ jsxs5(
+                "div",
+                {
+                  className: "jeeby-cms-media-library-grid",
+                  role: mode === "select-multi" ? "listbox" : "region",
+                  "aria-multiselectable": mode === "select-multi" ? "true" : void 0,
+                  "aria-label": "Media images",
+                  children: [
+                    items.map((item) => {
+                      const checked = selected.has(item.id);
+                      const isActive2 = item.id === editingId;
+                      const isMulti = mode === "select-multi";
+                      return /* @__PURE__ */ jsxs5(
+                        "div",
+                        {
+                          role: isMulti ? "option" : "button",
+                          "aria-selected": isMulti ? checked : void 0,
+                          "aria-expanded": !isMulti && mode === "browse" ? isActive2 : void 0,
+                          "aria-controls": !isMulti && mode === "browse" ? "media-detail-panel" : void 0,
+                          "aria-label": item.title || "Untitled image",
+                          tabIndex: 0,
+                          className: ["jeeby-cms-media-card", checked ? "jeeby-cms-media-card--selected" : "", isActive2 ? "jeeby-cms-media-card--active" : ""].filter(Boolean).join(" "),
+                          onClick: () => handleCardClick(item),
+                          onKeyDown: (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleCardClick(item);
+                            }
+                          },
+                          children: [
+                            /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-card-image", children: [
+                              /* @__PURE__ */ jsx11("img", { className: "jeeby-cms-media-card-thumb", src: item.thumbUrl || item.storageUrl, alt: item.alt || "", loading: "lazy", decoding: "async" }),
+                              isMulti && /* @__PURE__ */ jsx11(
+                                "input",
+                                {
+                                  className: "jeeby-cms-media-card-checkbox",
+                                  type: "checkbox",
+                                  checked,
+                                  "aria-hidden": "true",
+                                  tabIndex: -1,
+                                  onChange: () => {
+                                  }
+                                }
+                              ),
+                              mode === "browse" && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-card-edit-overlay", children: "Edit details" })
+                            ] }),
+                            /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-media-card-title", children: item.title || "" })
+                          ]
+                        },
+                        item.id
+                      );
+                    }),
+                    items.length === 0 && /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-empty", children: [
+                      /* @__PURE__ */ jsx11("p", { children: /* @__PURE__ */ jsx11("strong", { children: "No media yet" }) }),
+                      /* @__PURE__ */ jsx11("p", { children: "Upload your first image to get started." })
+                    ] }),
+                    hasMore && /* @__PURE__ */ jsx11("div", { ref: sentinelRef, className: "jeeby-cms-media-library-sentinel", "aria-hidden": "true" }),
+                    isLoadingMore && Array.from({ length: 4 }, (_, i) => /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-card-skeleton", "aria-hidden": "true" }, "more-" + i))
+                  ]
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx11(
+              "aside",
+              {
+                id: "media-detail-panel",
+                className: `jeeby-cms-media-detail-panel${editingItem && mode === "browse" ? " jeeby-cms-media-detail-panel--open" : ""}`,
+                "aria-label": "Media details",
+                children: editingItem && mode === "browse" && /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-inner", children: [
+                  /* @__PURE__ */ jsx11(
+                    "button",
                     {
-                      className: "jeeby-cms-media-card-checkbox",
-                      type: "checkbox",
-                      checked,
-                      "aria-label": item.title || "Untitled image",
-                      onChange: () => handleCardClick(item),
-                      onClick: (e) => e.stopPropagation()
+                      type: "button",
+                      className: "jeeby-cms-media-thumb-btn",
+                      onClick: () => setLightboxOpen(true),
+                      "aria-label": "View full image",
+                      children: /* @__PURE__ */ jsx11(
+                        "img",
+                        {
+                          className: "jeeby-cms-media-detail-thumb",
+                          src: editingItem.storageUrl,
+                          alt: editDraft.alt || editingItem.alt || ""
+                        }
+                      )
                     }
                   ),
-                  mode === "browse" && /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-card-edit-overlay", children: "Edit details" })
+                  /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-body", children: [
+                    /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-stats", children: [
+                      /* @__PURE__ */ jsxs5("div", { children: [
+                        /* @__PURE__ */ jsx11("strong", { children: "Uploaded" }),
+                        /* @__PURE__ */ jsx11("span", { children: formatUploadedAt(editingItem.uploadedAt) })
+                      ] }),
+                      /* @__PURE__ */ jsxs5("div", { children: [
+                        /* @__PURE__ */ jsx11("strong", { children: "File size" }),
+                        /* @__PURE__ */ jsx11("span", { children: formatBytes(editingItem.size) })
+                      ] }),
+                      /* @__PURE__ */ jsxs5("div", { children: [
+                        /* @__PURE__ */ jsx11("strong", { children: "Dimensions" }),
+                        /* @__PURE__ */ jsx11("span", { children: editingDimensions ? `${editingDimensions.width} x ${editingDimensions.height}` : "Loading..." })
+                      ] })
+                    ] }),
+                    /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-library-meta-form", role: "group", "aria-label": "Edit media metadata", children: [
+                      /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "edit-title-" + editingItem.id, children: "Title" }),
+                      /* @__PURE__ */ jsx11(
+                        "input",
+                        {
+                          id: "edit-title-" + editingItem.id,
+                          type: "text",
+                          value: editDraft.title,
+                          onChange: (e) => setEditDraft((d) => ({ ...d, title: e.target.value }))
+                        }
+                      ),
+                      /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label jeeby-cms-image-alt-label", htmlFor: "edit-alt-" + editingItem.id, children: "Alt text" }),
+                      /* @__PURE__ */ jsx11(
+                        "input",
+                        {
+                          id: "edit-alt-" + editingItem.id,
+                          type: "text",
+                          value: editDraft.alt,
+                          "aria-describedby": "edit-alt-hint-" + editingItem.id,
+                          placeholder: "Describe the image for screen readers",
+                          onChange: (e) => setEditDraft((d) => ({ ...d, alt: e.target.value }))
+                        }
+                      ),
+                      /* @__PURE__ */ jsx11("p", { id: "edit-alt-hint-" + editingItem.id, className: "jeeby-cms-field-hint", children: "Leave blank only if the image adds no meaning (e.g., a background pattern)." }),
+                      /* @__PURE__ */ jsx11("label", { className: "jeeby-cms-field-label", htmlFor: "edit-url-" + editingItem.id, children: "File URL" }),
+                      /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-detail-url-row", children: [
+                        /* @__PURE__ */ jsx11("input", { id: "edit-url-" + editingItem.id, type: "text", value: editingItem.storageUrl, readOnly: true }),
+                        /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => handleCopy(editingItem.storageUrl), children: copiedValue === editingItem.storageUrl ? "Copied" : "Copy" })
+                      ] }),
+                      /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-image-done-row", children: [
+                        /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-primary", onClick: handleSaveEdit, children: "Save" }),
+                        /* @__PURE__ */ jsx11("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: () => setEditingId(null), children: "Close" })
+                      ] }),
+                      editSaveError && /* @__PURE__ */ jsx11("p", { className: "jeeby-cms-inline-error", role: "alert", children: editSaveError })
+                    ] })
+                  ] })
                 ] })
-              },
-              item.id
-            );
-          }),
-          items.length === 0 && /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-empty", children: [
-            /* @__PURE__ */ jsx11("p", { children: /* @__PURE__ */ jsx11("strong", { children: "No media yet" }) }),
-            /* @__PURE__ */ jsx11("p", { children: "Upload your first image to get started." })
+              }
+            )
           ] }),
-          hasMore && /* @__PURE__ */ jsx11("div", { ref: sentinelRef, className: "jeeby-cms-media-library-sentinel", "aria-hidden": "true" }),
-          isLoadingMore && Array.from({ length: 4 }, (_, i) => /* @__PURE__ */ jsx11("div", { className: "jeeby-cms-media-card-skeleton", "aria-hidden": "true" }, "more-" + i))
-        ] }),
-        mode === "select-multi" && selected.size > 0 && /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-footer", role: "region", "aria-label": "Selection summary", children: [
-          /* @__PURE__ */ jsxs5("span", { children: [
-            selected.size,
-            " selected"
-          ] }),
-          /* @__PURE__ */ jsxs5("button", { type: "button", className: "jeeby-cms-btn-primary", onClick: handleConfirmSelection, children: [
-            "Add ",
-            selected.size,
-            " ",
-            selected.size === 1 ? "image" : "images"
+          mode === "select-multi" && selected.size > 0 && /* @__PURE__ */ jsxs5("div", { className: "jeeby-cms-media-library-footer", role: "region", "aria-label": "Selection summary", children: [
+            /* @__PURE__ */ jsxs5("span", { children: [
+              selected.size,
+              " selected"
+            ] }),
+            /* @__PURE__ */ jsxs5("button", { type: "button", className: "jeeby-cms-btn-primary", onClick: handleConfirmSelection, children: [
+              "Add ",
+              selected.size,
+              " ",
+              selected.size === 1 ? "image" : "images"
+            ] })
           ] })
-        ] })
-      ] })
+        ] }),
+        lightboxOpen && editingItem && /* @__PURE__ */ jsxs5(
+          "div",
+          {
+            ref: lightboxRef,
+            className: "jeeby-cms-media-lightbox",
+            role: "dialog",
+            "aria-modal": "true",
+            "aria-label": "Full image preview",
+            onClick: () => setLightboxOpen(false),
+            children: [
+              /* @__PURE__ */ jsx11(
+                "button",
+                {
+                  ref: lightboxCloseRef,
+                  type: "button",
+                  className: "jeeby-cms-media-lightbox-close",
+                  onClick: () => setLightboxOpen(false),
+                  "aria-label": "Close preview",
+                  children: "\u2715"
+                }
+              ),
+              /* @__PURE__ */ jsx11(
+                "img",
+                {
+                  src: editingItem.storageUrl,
+                  alt: editDraft.alt || editingItem.alt || "",
+                  onClick: (e) => e.stopPropagation()
+                }
+              )
+            ]
+          }
+        )
+      ]
     }
   );
 }
@@ -27048,13 +27334,162 @@ function PublishToast() {
   );
 }
 
+// src/admin/PageMetaModal.js
+import { useState as useState14, useEffect as useEffect12, useRef as useRef15 } from "react";
+import { Fragment as Fragment7, jsx as jsx26, jsxs as jsxs18 } from "react/jsx-runtime";
+var DESCRIPTION_MAX = 160;
+function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving }) {
+  const [description, setDescription] = useState14("");
+  const [shareImageUrl, setShareImageUrl] = useState14("");
+  const [libraryOpen, setLibraryOpen] = useState14(false);
+  const libraryTriggerRef = useRef15(null);
+  useEffect12(() => {
+    if (open) {
+      setDescription((meta == null ? void 0 : meta.description) ?? "");
+      setShareImageUrl((meta == null ? void 0 : meta.shareImageUrl) ?? "");
+    }
+  }, [open]);
+  function handleSubmit(e) {
+    e.preventDefault();
+    onSave({ description: description.trim(), shareImageUrl: shareImageUrl.trim() });
+  }
+  function handleLibrarySelect(item) {
+    setShareImageUrl(item.storageUrl);
+    setLibraryOpen(false);
+  }
+  const descLength = description.length;
+  const descOver = descLength > DESCRIPTION_MAX;
+  return /* @__PURE__ */ jsxs18(Fragment7, { children: [
+    /* @__PURE__ */ jsxs18(
+      ModalShell,
+      {
+        open,
+        labelId: "meta-modal-heading",
+        triggerRef,
+        onClose,
+        cardClassName: "jeeby-cms-modal-card--meta",
+        children: [
+          /* @__PURE__ */ jsx26("h2", { id: "meta-modal-heading", children: "Page settings" }),
+          /* @__PURE__ */ jsxs18("form", { onSubmit: handleSubmit, noValidate: true, children: [
+            /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-field", children: [
+              /* @__PURE__ */ jsx26("label", { htmlFor: "cms-meta-description", children: "Description" }),
+              /* @__PURE__ */ jsx26(
+                "textarea",
+                {
+                  id: "cms-meta-description",
+                  "data-autofocus": true,
+                  rows: 3,
+                  maxLength: DESCRIPTION_MAX + 20,
+                  value: description,
+                  onChange: (e) => setDescription(e.target.value),
+                  "aria-describedby": "cms-meta-description-hint cms-meta-description-count"
+                }
+              ),
+              /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-meta-description-footer", children: [
+                /* @__PURE__ */ jsx26("span", { id: "cms-meta-description-hint", className: "jeeby-cms-field-hint", children: "Shown in search results and social share previews." }),
+                /* @__PURE__ */ jsxs18(
+                  "span",
+                  {
+                    id: "cms-meta-description-count",
+                    className: `jeeby-cms-field-hint jeeby-cms-meta-char-count${descOver ? " jeeby-cms-meta-char-count--over" : ""}`,
+                    "aria-live": "polite",
+                    "aria-atomic": "true",
+                    children: [
+                      descLength,
+                      "/",
+                      DESCRIPTION_MAX
+                    ]
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-field", children: [
+              /* @__PURE__ */ jsx26("label", { htmlFor: "cms-meta-share-image", children: "Share image" }),
+              /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-meta-image-row", children: [
+                /* @__PURE__ */ jsx26(
+                  "input",
+                  {
+                    id: "cms-meta-share-image",
+                    type: "url",
+                    placeholder: "https://",
+                    value: shareImageUrl,
+                    onChange: (e) => setShareImageUrl(e.target.value),
+                    "aria-describedby": "cms-meta-share-image-hint"
+                  }
+                ),
+                /* @__PURE__ */ jsx26(
+                  "button",
+                  {
+                    ref: libraryTriggerRef,
+                    type: "button",
+                    className: "jeeby-cms-btn-ghost jeeby-cms-meta-library-btn",
+                    onClick: () => setLibraryOpen(true),
+                    children: "Library"
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsx26("span", { id: "cms-meta-share-image-hint", className: "jeeby-cms-field-hint", children: "Used as the Open Graph image for social sharing." }),
+              shareImageUrl && /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-meta-image-preview", children: [
+                /* @__PURE__ */ jsx26(
+                  "img",
+                  {
+                    src: shareImageUrl,
+                    alt: "Share image preview",
+                    onError: (e) => {
+                      e.currentTarget.style.display = "none";
+                    }
+                  }
+                ),
+                /* @__PURE__ */ jsx26(
+                  "button",
+                  {
+                    type: "button",
+                    className: "jeeby-cms-meta-image-remove",
+                    "aria-label": "Remove share image",
+                    onClick: () => setShareImageUrl(""),
+                    children: "\u2715"
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-modal-actions", children: [
+              /* @__PURE__ */ jsx26("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Cancel" }),
+              /* @__PURE__ */ jsx26(
+                "button",
+                {
+                  type: "submit",
+                  className: "jeeby-cms-btn-primary",
+                  disabled: saving || descOver,
+                  "aria-busy": saving ? "true" : void 0,
+                  style: { cursor: saving || descOver ? "not-allowed" : "pointer" },
+                  children: saving ? "Saving\u2026" : "Save"
+                }
+              )
+            ] })
+          ] })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsx26(
+      MediaLibraryModal,
+      {
+        open: libraryOpen,
+        mode: "select-single",
+        onSelect: handleLibrarySelect,
+        onClose: () => setLibraryOpen(false),
+        triggerRef: libraryTriggerRef
+      }
+    )
+  ] });
+}
+
 // src/admin/SignOutGuardContext.js
 import { createContext as createContext4, useContext as useContext4 } from "react";
 var SignOutGuardContext = createContext4(null);
 var useSignOutGuard = () => useContext4(SignOutGuardContext);
 
 // src/admin/PageEditor.js
-import { jsx as jsx26, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx27, jsxs as jsxs19 } from "react/jsx-runtime";
 var DEFAULT_BLOCK_DATA = {
   title: { level: "h2", text: "" },
   richtext: { html: "" },
@@ -27066,29 +27501,34 @@ var DEFAULT_BLOCK_DATA = {
 function PageEditor({ slug }) {
   const { db } = useCMSFirebase4();
   const signOutGuard = useSignOutGuard();
-  const [blocks, setBlocks] = useState14([]);
-  const [pageName, setPageName] = useState14("");
-  const [loading, setLoading] = useState14(true);
-  const [loadError, setLoadError] = useState14(false);
-  const [saveStatus, setSaveStatus] = useState14(null);
-  const [deletedBlock, setDeletedBlock] = useState14(null);
-  const [showUnsavedWarning, setShowUnsavedWarning] = useState14(false);
-  const [lastPublishedAt, setLastPublishedAt] = useState14(null);
-  const [hasDraftChanges, setHasDraftChanges] = useState14(false);
-  const [showPublishModal, setShowPublishModal] = useState14(false);
-  const [publishStatus, setPublishStatus] = useState14("idle");
-  const [publishError, setPublishError] = useState14(null);
-  const [showPublishToast, setShowPublishToast] = useState14(false);
-  const debounceRef = useRef15(null);
-  const deleteTimerRef = useRef15(null);
-  const blocksRef = useRef15(blocks);
-  const pendingSaveRef = useRef15(false);
-  const publishBtnRef = useRef15(null);
-  const containerRef = useRef15(null);
-  useEffect12(() => {
+  const [blocks, setBlocks] = useState15([]);
+  const [pageName, setPageName] = useState15("");
+  const [loading, setLoading] = useState15(true);
+  const [loadError, setLoadError] = useState15(false);
+  const [saveStatus, setSaveStatus] = useState15(null);
+  const [deletedBlock, setDeletedBlock] = useState15(null);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState15(false);
+  const [lastPublishedAt, setLastPublishedAt] = useState15(null);
+  const [hasDraftChanges, setHasDraftChanges] = useState15(false);
+  const [parentSlug, setParentSlug] = useState15(null);
+  const [meta, setMeta2] = useState15(null);
+  const [showMetaModal, setShowMetaModal] = useState15(false);
+  const [metaSaving, setMetaSaving] = useState15(false);
+  const metaBtnRef = useRef16(null);
+  const [showPublishModal, setShowPublishModal] = useState15(false);
+  const [publishStatus, setPublishStatus] = useState15("idle");
+  const [publishError, setPublishError] = useState15(null);
+  const [showPublishToast, setShowPublishToast] = useState15(false);
+  const debounceRef = useRef16(null);
+  const deleteTimerRef = useRef16(null);
+  const blocksRef = useRef16(blocks);
+  const pendingSaveRef = useRef16(false);
+  const publishBtnRef = useRef16(null);
+  const containerRef = useRef16(null);
+  useEffect13(() => {
     blocksRef.current = blocks;
   }, [blocks]);
-  useEffect12(() => {
+  useEffect13(() => {
     let cancelled = false;
     async function load() {
       var _a;
@@ -27099,6 +27539,8 @@ function PageEditor({ slug }) {
           setPageName((page == null ? void 0 : page.name) ?? slug);
           setLastPublishedAt((page == null ? void 0 : page.lastPublishedAt) ?? null);
           setHasDraftChanges((page == null ? void 0 : page.hasDraftChanges) ?? false);
+          setParentSlug((page == null ? void 0 : page.parentSlug) ?? null);
+          setMeta2((page == null ? void 0 : page.meta) ?? null);
           setLoading(false);
         }
       } catch {
@@ -27113,11 +27555,11 @@ function PageEditor({ slug }) {
       cancelled = true;
     };
   }, [db, slug]);
-  useEffect12(() => () => {
+  useEffect13(() => () => {
     clearTimeout(debounceRef.current);
     clearTimeout(deleteTimerRef.current);
   }, []);
-  useEffect12(() => {
+  useEffect13(() => {
     if (loading) return;
     const el = containerRef.current;
     if (!el) return;
@@ -27140,7 +27582,7 @@ function PageEditor({ slug }) {
       admin.classList.remove("jeeby-cms-nav-hidden");
     };
   }, [loading]);
-  useEffect12(() => {
+  useEffect13(() => {
     if (!signOutGuard) return;
     signOutGuard.setGuard({
       hasPending: () => hasDraftChanges || pendingSaveRef.current,
@@ -27151,7 +27593,7 @@ function PageEditor({ slug }) {
       signOutGuard.clearGuard();
     };
   }, [signOutGuard, hasDraftChanges, pageName, slug]);
-  useEffect12(() => {
+  useEffect13(() => {
     if (!showPublishToast) return;
     const t = setTimeout(() => setShowPublishToast(false), 3e3);
     return () => clearTimeout(t);
@@ -27263,6 +27705,18 @@ function PageEditor({ slug }) {
     setPublishStatus("idle");
     setShowPublishModal(true);
   }
+  async function handleSaveMeta(newMeta) {
+    setMetaSaving(true);
+    try {
+      await savePage(db, slug, { meta: newMeta });
+      setMeta2(newMeta);
+      setShowMetaModal(false);
+    } catch {
+      setSaveStatus("error");
+    } finally {
+      setMetaSaving(false);
+    }
+  }
   async function handleRenameName(newName) {
     try {
       await savePage(db, slug, { name: newName });
@@ -27288,21 +27742,22 @@ function PageEditor({ slug }) {
     }
   }
   if (loading) {
-    return /* @__PURE__ */ jsx26("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsx26("div", { role: "status", "aria-label": "Loading editor", className: "jeeby-cms-loading", children: /* @__PURE__ */ jsx26("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
+    return /* @__PURE__ */ jsx27("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsx27("div", { role: "status", "aria-label": "Loading editor", className: "jeeby-cms-loading", children: /* @__PURE__ */ jsx27("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) }) });
   }
   if (loadError) {
-    return /* @__PURE__ */ jsx26("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-editor-load-error", role: "alert", children: [
-      /* @__PURE__ */ jsx26("p", { className: "jeeby-cms-editor-load-error-title", children: "This page couldn\u2019t be loaded" }),
-      /* @__PURE__ */ jsx26("p", { className: "jeeby-cms-editor-load-error-body", children: "Check your connection and try again." }),
-      /* @__PURE__ */ jsx26("a", { href: "/admin/pages/" + encodeURIComponent(slug), className: "jeeby-cms-btn-primary", children: "Reload" })
+    return /* @__PURE__ */ jsx27("div", { className: "jeeby-cms-page-editor", children: /* @__PURE__ */ jsxs19("div", { className: "jeeby-cms-editor-load-error", role: "alert", children: [
+      /* @__PURE__ */ jsx27("p", { className: "jeeby-cms-editor-load-error-title", children: "This page couldn\u2019t be loaded" }),
+      /* @__PURE__ */ jsx27("p", { className: "jeeby-cms-editor-load-error-body", children: "Check your connection and try again." }),
+      /* @__PURE__ */ jsx27("a", { href: "/admin/pages/" + encodeURIComponent(slug), className: "jeeby-cms-btn-primary", children: "Reload" })
     ] }) });
   }
-  return /* @__PURE__ */ jsxs18("div", { className: "jeeby-cms-page-editor", ref: containerRef, children: [
-    /* @__PURE__ */ jsx26(
+  return /* @__PURE__ */ jsxs19("div", { className: "jeeby-cms-page-editor", ref: containerRef, children: [
+    /* @__PURE__ */ jsx27(
       EditorHeader,
       {
         pageName,
         slug,
+        pageUrl: parentSlug ? `/${parentSlug}/${slug}` : `/${slug}`,
         saveStatus,
         onRetry: handleRetry,
         onBackClick: handleBackClick,
@@ -27312,10 +27767,12 @@ function PageEditor({ slug }) {
         hasDraftChanges,
         onPublish: openPublishModal,
         publishStatus,
-        publishBtnRef
+        publishBtnRef,
+        onOpenMeta: () => setShowMetaModal(true),
+        metaBtnRef
       }
     ),
-    /* @__PURE__ */ jsx26("div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ jsx26(
+    /* @__PURE__ */ jsx27("div", { className: "jeeby-cms-editor-main", children: /* @__PURE__ */ jsx27(
       BlockCanvas,
       {
         blocks,
@@ -27325,14 +27782,14 @@ function PageEditor({ slug }) {
         onAddBlock: handleAddBlock
       }
     ) }),
-    deletedBlock && /* @__PURE__ */ jsx26(
+    deletedBlock && /* @__PURE__ */ jsx27(
       UndoToast,
       {
         blockType: deletedBlock.block.type,
         onUndo: handleUndo
       }
     ),
-    showUnsavedWarning && /* @__PURE__ */ jsx26(
+    showUnsavedWarning && /* @__PURE__ */ jsx27(
       UnsavedChangesWarning,
       {
         onLeave: () => {
@@ -27343,7 +27800,7 @@ function PageEditor({ slug }) {
         }
       }
     ),
-    showPublishModal && /* @__PURE__ */ jsx26(
+    showPublishModal && /* @__PURE__ */ jsx27(
       PublishConfirmModal,
       {
         open: showPublishModal,
@@ -27355,25 +27812,36 @@ function PageEditor({ slug }) {
         publishError
       }
     ),
-    showPublishToast && /* @__PURE__ */ jsx26(PublishToast, {})
+    showPublishToast && /* @__PURE__ */ jsx27(PublishToast, {}),
+    /* @__PURE__ */ jsx27(
+      PageMetaModal,
+      {
+        open: showMetaModal,
+        onClose: () => setShowMetaModal(false),
+        triggerRef: metaBtnRef,
+        meta,
+        onSave: handleSaveMeta,
+        saving: metaSaving
+      }
+    )
   ] });
 }
 
 // src/admin/index.js
-import { useState as useState19, useRef as useRef18, useMemo as useMemo5 } from "react";
+import { useState as useState20, useRef as useRef19, useMemo as useMemo5 } from "react";
 import { useAuth as useAuth2 } from "jeeby-cms";
 
 // src/admin/LoginPage.js
-import { useState as useState15 } from "react";
+import { useState as useState16 } from "react";
 import { useAuth } from "jeeby-cms";
-import { jsx as jsx27, jsxs as jsxs19 } from "react/jsx-runtime";
+import { jsx as jsx28, jsxs as jsxs20 } from "react/jsx-runtime";
 function LoginPage({ siteName }) {
   const { signIn } = useAuth();
-  const [email, setEmail] = useState15("");
-  const [password, setPassword] = useState15("");
-  const [error, setError] = useState15(null);
-  const [submitting, setSubmitting] = useState15(false);
-  const [showPassword, setShowPassword] = useState15(false);
+  const [email, setEmail] = useState16("");
+  const [password, setPassword] = useState16("");
+  const [error, setError] = useState16(null);
+  const [submitting, setSubmitting] = useState16(false);
+  const [showPassword, setShowPassword] = useState16(false);
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
@@ -27386,12 +27854,12 @@ function LoginPage({ siteName }) {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsx27("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs19("div", { className: "jeeby-cms-login-card", children: [
-    /* @__PURE__ */ jsx27("div", { className: "jeeby-cms-login-brand", children: /* @__PURE__ */ jsx27("h1", { className: "jeeby-cms-login-heading", children: siteName ?? "Admin" }) }),
-    /* @__PURE__ */ jsx27("div", { className: "jeeby-cms-login-form-pane", children: /* @__PURE__ */ jsxs19("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
-      /* @__PURE__ */ jsxs19("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx27("label", { htmlFor: "cms-email", children: "Email address" }),
-        /* @__PURE__ */ jsx27(
+  return /* @__PURE__ */ jsx28("main", { className: "jeeby-cms-login-page", role: "main", children: /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-login-card", children: [
+    /* @__PURE__ */ jsx28("div", { className: "jeeby-cms-login-brand", children: /* @__PURE__ */ jsx28("h1", { className: "jeeby-cms-login-heading", children: siteName ?? "Admin" }) }),
+    /* @__PURE__ */ jsx28("div", { className: "jeeby-cms-login-form-pane", children: /* @__PURE__ */ jsxs20("form", { className: "jeeby-cms-login-form", onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx28("label", { htmlFor: "cms-email", children: "Email address" }),
+        /* @__PURE__ */ jsx28(
           "input",
           {
             id: "cms-email",
@@ -27403,10 +27871,10 @@ function LoginPage({ siteName }) {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs19("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx27("label", { htmlFor: "cms-password", children: "Password" }),
-        /* @__PURE__ */ jsxs19("div", { className: "jeeby-cms-password-wrapper", children: [
-          /* @__PURE__ */ jsx27(
+      /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx28("label", { htmlFor: "cms-password", children: "Password" }),
+        /* @__PURE__ */ jsxs20("div", { className: "jeeby-cms-password-wrapper", children: [
+          /* @__PURE__ */ jsx28(
             "input",
             {
               id: "cms-password",
@@ -27417,7 +27885,7 @@ function LoginPage({ siteName }) {
               onChange: (e) => setPassword(e.target.value)
             }
           ),
-          /* @__PURE__ */ jsx27(
+          /* @__PURE__ */ jsx28(
             "button",
             {
               type: "button",
@@ -27427,24 +27895,24 @@ function LoginPage({ siteName }) {
               onClick: () => setShowPassword((v) => !v),
               children: showPassword ? (
                 /* Eye-off icon — password visible, click to hide */
-                /* @__PURE__ */ jsxs19("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsx27("path", { d: "M2 2l12 12" }),
-                  /* @__PURE__ */ jsx27("path", { d: "M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 3-3 3 3 0 0 0-.4-1.5" }),
-                  /* @__PURE__ */ jsx27("path", { d: "M9.88 3.28A8.9 8.9 0 0 0 8 3C4.5 3 1.5 5.5 1 8c.3 1.3 1 2.5 2 3.4" }),
-                  /* @__PURE__ */ jsx27("path", { d: "M12.6 10.7C13.6 9.8 14.4 9 15 8c-.5-2.5-3.5-5-7-5" })
+                /* @__PURE__ */ jsxs20("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx28("path", { d: "M2 2l12 12" }),
+                  /* @__PURE__ */ jsx28("path", { d: "M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 3-3 3 3 0 0 0-.4-1.5" }),
+                  /* @__PURE__ */ jsx28("path", { d: "M9.88 3.28A8.9 8.9 0 0 0 8 3C4.5 3 1.5 5.5 1 8c.3 1.3 1 2.5 2 3.4" }),
+                  /* @__PURE__ */ jsx28("path", { d: "M12.6 10.7C13.6 9.8 14.4 9 15 8c-.5-2.5-3.5-5-7-5" })
                 ] })
               ) : (
                 /* Eye icon — password hidden, click to show */
-                /* @__PURE__ */ jsxs19("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsx27("path", { d: "M1 8C1.5 5.5 4.5 3 8 3s6.5 2.5 7 5c-.5 2.5-3.5 5-7 5S1.5 10.5 1 8z" }),
-                  /* @__PURE__ */ jsx27("circle", { cx: "8", cy: "8", r: "2.5" })
+                /* @__PURE__ */ jsxs20("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx28("path", { d: "M1 8C1.5 5.5 4.5 3 8 3s6.5 2.5 7 5c-.5 2.5-3.5 5-7 5S1.5 10.5 1 8z" }),
+                  /* @__PURE__ */ jsx28("circle", { cx: "8", cy: "8", r: "2.5" })
                 ] })
               )
             }
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsx27(
+      /* @__PURE__ */ jsx28(
         "button",
         {
           type: "submit",
@@ -27455,17 +27923,17 @@ function LoginPage({ siteName }) {
           children: submitting ? "Signing in\u2026" : "Sign in"
         }
       ),
-      error && /* @__PURE__ */ jsx27("p", { className: "jeeby-cms-auth-error", role: "alert", "aria-live": "assertive", children: error })
+      error && /* @__PURE__ */ jsx28("p", { className: "jeeby-cms-auth-error", role: "alert", "aria-live": "assertive", children: error })
     ] }) })
   ] }) });
 }
 
 // src/admin/AdminNav.js
-import { jsx as jsx28, jsxs as jsxs20 } from "react/jsx-runtime";
+import { jsx as jsx29, jsxs as jsxs21 } from "react/jsx-runtime";
 function AdminNav({ onSignOut, siteName }) {
-  return /* @__PURE__ */ jsxs20("header", { className: "jeeby-cms-nav", role: "banner", children: [
-    /* @__PURE__ */ jsx28("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
-    /* @__PURE__ */ jsx28("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsx28(
+  return /* @__PURE__ */ jsxs21("header", { className: "jeeby-cms-nav", role: "banner", children: [
+    /* @__PURE__ */ jsx29("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }),
+    /* @__PURE__ */ jsx29("nav", { "aria-label": "Admin navigation", children: /* @__PURE__ */ jsx29(
       "button",
       {
         type: "button",
@@ -27478,27 +27946,31 @@ function AdminNav({ onSignOut, siteName }) {
 }
 
 // src/admin/PageManager.js
-import { useState as useState18, useEffect as useEffect14, useRef as useRef17, useCallback as useCallback4, useMemo as useMemo4, Fragment as Fragment7 } from "react";
+import { useState as useState19, useEffect as useEffect15, useRef as useRef18, useCallback as useCallback4, useMemo as useMemo4, Fragment as Fragment8 } from "react";
 import { AnimatePresence as AnimatePresence2, motion as motion3, useReducedMotion as useReducedMotion3 } from "framer-motion";
 import { useCMSFirebase as useCMSFirebase7 } from "jeeby-cms";
 
 // src/admin/CreatePageModal.js
-import { useState as useState16, useEffect as useEffect13, useRef as useRef16 } from "react";
+import { useState as useState17, useEffect as useEffect14, useRef as useRef17 } from "react";
 import { useCMSFirebase as useCMSFirebase5 } from "jeeby-cms";
-import { jsx as jsx29, jsxs as jsxs21 } from "react/jsx-runtime";
+import { jsx as jsx30, jsxs as jsxs23 } from "react/jsx-runtime";
 function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
   const { db, templates } = useCMSFirebase5();
-  const [name, setName] = useState16("");
-  const [slug, setSlug] = useState16("");
-  const [slugTouched, setSlugTouched] = useState16(false);
-  const [template, setTemplate] = useState16("");
-  const [slugError, setSlugError] = useState16(null);
-  const [submitting, setSubmitting] = useState16(false);
-  const debounceRef = useRef16(null);
+  const [name, setName] = useState17("");
+  const [slug, setSlug] = useState17("");
+  const [slugTouched, setSlugTouched] = useState17(false);
+  const [template, setTemplate] = useState17("");
+  const [slugError, setSlugError] = useState17(null);
+  const [submitting, setSubmitting] = useState17(false);
+  const [pageType, setPageType] = useState17("page");
+  const [parentSlug, setParentSlug] = useState17("");
+  const [existingPages, setExistingPages] = useState17([]);
+  const [pagesLoadError, setPagesLoadError] = useState17(null);
+  const debounceRef = useRef17(null);
   function toKebabSlug(str) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
-  useEffect13(() => {
+  useEffect14(() => {
     if (open) {
       setName("");
       setSlug("");
@@ -27506,6 +27978,19 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setTemplate("");
       setSlugError(null);
       setSubmitting(false);
+      setPageType("page");
+      setParentSlug("");
+      setExistingPages([]);
+      setPagesLoadError(null);
+      let cancelled = false;
+      listPages(db).then((pages) => {
+        if (!cancelled) setExistingPages(pages);
+      }).catch((err) => {
+        if (!cancelled) setPagesLoadError(err.message || "Failed to load pages");
+      });
+      return () => {
+        cancelled = true;
+      };
     }
   }, [open]);
   function handleSlugChange(val) {
@@ -27529,19 +28014,27 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     }
     setSubmitting(true);
     try {
-      const existing = await listPages(db);
-      if (existing.some((p) => p.slug === slug)) {
+      const existing = existingPages.length > 0 ? existingPages : await listPages(db);
+      const newFullPath = parentSlug ? `${parentSlug}/${slug}` : slug;
+      const clash = existing.some((p) => {
+        const existingPath = p.parentSlug ? `${p.parentSlug}/${p.slug}` : p.slug;
+        return existingPath === newFullPath;
+      });
+      if (clash) {
         setSlugError("That slug is already in use. Choose a different one.");
         setSubmitting(false);
         return;
       }
-      await savePage(db, slug, {
+      const payload = {
         name,
         slug,
+        pageType,
         template: (selectedTemplate == null ? void 0 : selectedTemplate.name) || null,
         draft: { blocks: [] },
-        published: { blocks: [] }
-      });
+        published: { blocks: [] },
+        ...pageType === "collection" ? { isCollectionIndex: true } : { parentSlug: parentSlug || null }
+      };
+      await savePage(db, slug, payload);
       onCreated();
       onClose();
     } catch (err) {
@@ -27550,12 +28043,14 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       setSubmitting(false);
     }
   }
-  return /* @__PURE__ */ jsxs21(ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsx29("h2", { id: "create-modal-heading", children: "Create New Page" }),
-    /* @__PURE__ */ jsxs21("form", { onSubmit: handleSubmit, noValidate: true, children: [
-      /* @__PURE__ */ jsxs21("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx29("label", { htmlFor: "cms-page-name", children: "Page name" }),
-        /* @__PURE__ */ jsx29(
+  const collections = existingPages.filter((p) => p.pageType === "collection");
+  const fullPath = parentSlug ? `${parentSlug}/${slug}` : slug;
+  return /* @__PURE__ */ jsxs23(ModalShell, { open, labelId: "create-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsx30("h2", { id: "create-modal-heading", children: "Create New Page" }),
+    /* @__PURE__ */ jsxs23("form", { onSubmit: handleSubmit, noValidate: true, children: [
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx30("label", { htmlFor: "cms-page-name", children: "Page name" }),
+        /* @__PURE__ */ jsx30(
           "input",
           {
             id: "cms-page-name",
@@ -27569,35 +28064,92 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs21("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx29("label", { htmlFor: "cms-page-slug", children: "Slug" }),
-        /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx30("label", { htmlFor: "cms-page-type", children: "Page type" }),
+        /* @__PURE__ */ jsxs23(
+          "select",
+          {
+            id: "cms-page-type",
+            value: pageType,
+            onChange: (e) => {
+              setPageType(e.target.value);
+              if (e.target.value === "collection") setParentSlug("");
+            },
+            children: [
+              /* @__PURE__ */ jsx30("option", { value: "page", children: "Page" }),
+              /* @__PURE__ */ jsx30("option", { value: "collection", children: "Collection" })
+            ]
+          }
+        )
+      ] }),
+      pageType === "page" && collections.length > 0 && /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx30("label", { htmlFor: "cms-parent-collection", children: "Parent collection" }),
+        /* @__PURE__ */ jsxs23(
+          "select",
+          {
+            id: "cms-parent-collection",
+            value: parentSlug,
+            onChange: (e) => setParentSlug(e.target.value),
+            children: [
+              /* @__PURE__ */ jsx30("option", { value: "", children: "None (top-level page)" }),
+              collections.map((c) => /* @__PURE__ */ jsxs23("option", { value: c.slug, children: [
+                "/",
+                c.slug
+              ] }, c.slug))
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx30("label", { htmlFor: "cms-page-slug", children: "Slug" }),
+        parentSlug ? /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-slug-prefixed", children: [
+          /* @__PURE__ */ jsxs23("span", { className: "jeeby-cms-slug-prefix", "aria-hidden": "true", children: [
+            "/",
+            parentSlug,
+            "/"
+          ] }),
+          /* @__PURE__ */ jsx30(
+            "input",
+            {
+              id: "cms-page-slug",
+              type: "text",
+              required: true,
+              value: slug,
+              "aria-label": `Slug leaf segment (full path will be /${parentSlug}/${slug || "my-slug"})`,
+              "aria-describedby": "cms-slug-hint cms-slug-error",
+              onChange: (e) => {
+                setSlugTouched(true);
+                handleSlugChange(e.target.value);
+              }
+            }
+          )
+        ] }) : /* @__PURE__ */ jsx30(
           "input",
           {
             id: "cms-page-slug",
             type: "text",
             required: true,
             value: slug,
+            "aria-describedby": "cms-slug-hint cms-slug-error",
             onChange: (e) => {
               setSlugTouched(true);
               handleSlugChange(e.target.value);
-            },
-            "aria-describedby": "cms-slug-hint cms-slug-error"
+            }
           }
         ),
-        /* @__PURE__ */ jsx29("p", { id: "cms-slug-hint", children: "e.g. /about or /blog/my-post" }),
-        slugError && /* @__PURE__ */ jsx29("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
+        /* @__PURE__ */ jsx30("p", { id: "cms-slug-hint", children: parentSlug ? `Full path: /${parentSlug}/${slug || "my-slug"}` : "e.g. /about or /blog/my-post" }),
+        slugError && /* @__PURE__ */ jsx30("p", { id: "cms-slug-error", role: "alert", className: "jeeby-cms-inline-error", children: slugError })
       ] }),
-      templates.length > 0 && /* @__PURE__ */ jsxs21("div", { className: "jeeby-cms-field", children: [
-        /* @__PURE__ */ jsx29("label", { htmlFor: "cms-page-template", children: "Template" }),
-        /* @__PURE__ */ jsxs21("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
-          /* @__PURE__ */ jsx29("option", { value: "", children: "Select a template" }),
-          templates.map((t) => /* @__PURE__ */ jsx29("option", { value: t.name, children: t.name }, t.name))
+      templates.length > 0 && /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-field", children: [
+        /* @__PURE__ */ jsx30("label", { htmlFor: "cms-page-template", children: "Template" }),
+        /* @__PURE__ */ jsxs23("select", { id: "cms-page-template", value: template, onChange: (e) => setTemplate(e.target.value), children: [
+          /* @__PURE__ */ jsx30("option", { value: "", children: "Select a template" }),
+          templates.map((t) => /* @__PURE__ */ jsx30("option", { value: t.name, children: t.name }, t.name))
         ] })
       ] }),
-      /* @__PURE__ */ jsxs21("div", { className: "jeeby-cms-modal-actions", children: [
-        /* @__PURE__ */ jsx29("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
-        /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-modal-actions", children: [
+        /* @__PURE__ */ jsx30("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Discard" }),
+        /* @__PURE__ */ jsx30(
           "button",
           {
             type: "submit",
@@ -27614,12 +28166,12 @@ function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
 }
 
 // src/admin/DeletePageModal.js
-import { useState as useState17 } from "react";
+import { useState as useState18 } from "react";
 import { useCMSFirebase as useCMSFirebase6 } from "jeeby-cms";
-import { jsx as jsx30, jsxs as jsxs23 } from "react/jsx-runtime";
+import { jsx as jsx31, jsxs as jsxs24 } from "react/jsx-runtime";
 function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
   const { db } = useCMSFirebase6();
-  const [deleting, setDeleting] = useState17(false);
+  const [deleting, setDeleting] = useState18(false);
   async function handleDelete2() {
     setDeleting(true);
     try {
@@ -27632,16 +28184,16 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
       setDeleting(false);
     }
   }
-  return /* @__PURE__ */ jsxs23(ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
-    /* @__PURE__ */ jsx30("h2", { id: "delete-modal-heading", children: "Delete page?" }),
-    /* @__PURE__ */ jsxs23("p", { children: [
+  return /* @__PURE__ */ jsxs24(ModalShell, { open: !!page, labelId: "delete-modal-heading", triggerRef, onClose, children: [
+    /* @__PURE__ */ jsx31("h2", { id: "delete-modal-heading", children: "Delete page?" }),
+    /* @__PURE__ */ jsxs24("p", { children: [
       "Delete ",
       page == null ? void 0 : page.slug,
       "? This cannot be undone."
     ] }),
-    /* @__PURE__ */ jsxs23("div", { className: "jeeby-cms-modal-actions", children: [
-      /* @__PURE__ */ jsx30("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
-      /* @__PURE__ */ jsx30(
+    /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-modal-actions", children: [
+      /* @__PURE__ */ jsx31("button", { type: "button", className: "jeeby-cms-btn-ghost", onClick: onClose, children: "Keep Page" }),
+      /* @__PURE__ */ jsx31(
         "button",
         {
           type: "button",
@@ -27658,7 +28210,7 @@ function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
 }
 
 // src/admin/PageManager.js
-import { jsx as jsx31, jsxs as jsxs24 } from "react/jsx-runtime";
+import { Fragment as Fragment9, jsx as jsx33, jsxs as jsxs25 } from "react/jsx-runtime";
 function formatDate(ts2) {
   if (!ts2) return "Not yet";
   const date = ts2.toDate ? ts2.toDate() : new Date(ts2);
@@ -27675,11 +28227,11 @@ var STATUS_PROPS = {
   changes: { label: "Changes", cls: "jeeby-cms-doc-status jeeby-cms-doc-status--changes" }
 };
 var SORT_OPTIONS = [
-  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ jsx31(IconRecent, {}) },
-  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ jsx31(IconAlpha, {}) },
-  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ jsx31(IconDraft, {}) },
-  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ jsx31(IconChanges, {}) },
-  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ jsx31(IconPublished, {}) }
+  { key: "recent", isFilter: false, colorKey: "time", label: "Recently edited", hint: "most recently changed first", icon: /* @__PURE__ */ jsx33(IconRecent, {}) },
+  { key: "alpha", isFilter: false, colorKey: "alpha", label: "Alphabetical", hint: "A\u2013Z by page name", icon: /* @__PURE__ */ jsx33(IconAlpha, {}) },
+  { key: "draft", isFilter: true, colorKey: "draft", label: "Drafts only", hint: "never been published", icon: /* @__PURE__ */ jsx33(IconDraft, {}) },
+  { key: "changes", isFilter: true, colorKey: "changes", label: "Unpublished changes", hint: "published but with edits", icon: /* @__PURE__ */ jsx33(IconChanges, {}) },
+  { key: "published", isFilter: true, colorKey: "published", label: "Published only", hint: "live, no pending changes", icon: /* @__PURE__ */ jsx33(IconPublished, {}) }
 ];
 function tsToMs(ts2) {
   if (!ts2) return 0;
@@ -27725,70 +28277,70 @@ function applySortFilter(pages, key) {
   }
 }
 function IconRecent() {
-  return /* @__PURE__ */ jsxs24("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx31("circle", { cx: "7", cy: "7", r: "5" }),
-    /* @__PURE__ */ jsx31("path", { d: "M7 4.5v2.7l1.8 1.8" })
+  return /* @__PURE__ */ jsxs25("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx33("circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ jsx33("path", { d: "M7 4.5v2.7l1.8 1.8" })
   ] });
 }
 function IconAlpha() {
-  return /* @__PURE__ */ jsxs24("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx31("rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
-    /* @__PURE__ */ jsx31("rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
-    /* @__PURE__ */ jsx31("rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
+  return /* @__PURE__ */ jsxs25("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx33("rect", { x: "1", y: "3", width: "5", height: "1.5", rx: "0.7", opacity: "0.55" }),
+    /* @__PURE__ */ jsx33("rect", { x: "1", y: "6.25", width: "7.5", height: "1.5", rx: "0.7", opacity: "0.75" }),
+    /* @__PURE__ */ jsx33("rect", { x: "1", y: "9.5", width: "10", height: "1.5", rx: "0.7" })
   ] });
 }
 function IconDraft() {
-  return /* @__PURE__ */ jsxs24("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx31("rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
-    /* @__PURE__ */ jsx31("line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
-    /* @__PURE__ */ jsx31("line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
+  return /* @__PURE__ */ jsxs25("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx33("rect", { x: "2.5", y: "1.5", width: "9", height: "11", rx: "1.2" }),
+    /* @__PURE__ */ jsx33("line", { x1: "4.5", y1: "4.5", x2: "9.5", y2: "4.5" }),
+    /* @__PURE__ */ jsx33("line", { x1: "4.5", y1: "7", x2: "7", y2: "7", strokeDasharray: "1.5 1.5" })
   ] });
 }
 function IconChanges() {
-  return /* @__PURE__ */ jsx31("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx31("path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
+  return /* @__PURE__ */ jsx33("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M9 2.5l2.5 2.5-6 6H3v-2.5l6-6z" }) });
 }
 function IconPublished() {
-  return /* @__PURE__ */ jsxs24("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx31("circle", { cx: "7", cy: "7", r: "5" }),
-    /* @__PURE__ */ jsx31("path", { d: "M4.5 7l2 2L9.5 5" })
+  return /* @__PURE__ */ jsxs25("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: "1.3", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx33("circle", { cx: "7", cy: "7", r: "5" }),
+    /* @__PURE__ */ jsx33("path", { d: "M4.5 7l2 2L9.5 5" })
   ] });
 }
 function IconSortLines() {
-  return /* @__PURE__ */ jsxs24("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx31("rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
-    /* @__PURE__ */ jsx31("rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
-    /* @__PURE__ */ jsx31("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
+  return /* @__PURE__ */ jsxs25("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx33("rect", { x: "0", y: "1.5", width: "12", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ jsx33("rect", { x: "1.5", y: "4.5", width: "9", height: "1.5", rx: "0.7" }),
+    /* @__PURE__ */ jsx33("rect", { x: "3", y: "7.5", width: "6", height: "1.5", rx: "0.7" })
   ] });
 }
 function IconSearch() {
-  return /* @__PURE__ */ jsxs24("svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
-    /* @__PURE__ */ jsx31("circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
-    /* @__PURE__ */ jsx31("path", { d: "M8.5 8.5l2.5 2.5" })
+  return /* @__PURE__ */ jsxs25("svg", { width: "13", height: "13", viewBox: "0 0 13 13", fill: "none", stroke: "currentColor", strokeWidth: "1.4", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: [
+    /* @__PURE__ */ jsx33("circle", { cx: "5.5", cy: "5.5", r: "3.5" }),
+    /* @__PURE__ */ jsx33("path", { d: "M8.5 8.5l2.5 2.5" })
   ] });
 }
 function IconClear() {
-  return /* @__PURE__ */ jsx31("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx31("path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
+  return /* @__PURE__ */ jsx33("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M1.5 1.5l7 7M8.5 1.5l-7 7" }) });
 }
 function IconChevronDown() {
-  return /* @__PURE__ */ jsx31("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx31("path", { d: "M2 3.5l3 3 3-3" }) });
+  return /* @__PURE__ */ jsx33("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M2 3.5l3 3 3-3" }) });
 }
 function IconChevronLeft() {
-  return /* @__PURE__ */ jsx31("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx31("path", { d: "M6.5 2l-3 3 3 3" }) });
+  return /* @__PURE__ */ jsx33("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M6.5 2l-3 3 3 3" }) });
 }
 function IconChevronRight() {
-  return /* @__PURE__ */ jsx31("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx31("path", { d: "M3.5 2l3 3-3 3" }) });
+  return /* @__PURE__ */ jsx33("svg", { width: "10", height: "10", viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M3.5 2l3 3-3 3" }) });
 }
 function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
-  const [activeIndex, setActiveIndex] = useState18(() => {
+  const [activeIndex, setActiveIndex] = useState19(() => {
     const idx = SORT_OPTIONS.findIndex((o) => o.key === sortMode);
     return idx >= 0 ? idx : 0;
   });
-  const listRef = useRef17(null);
-  useEffect14(() => {
+  const listRef = useRef18(null);
+  useEffect15(() => {
     var _a, _b;
     (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[activeIndex]) == null ? void 0 : _b.focus();
   }, []);
-  useEffect14(() => {
+  useEffect15(() => {
     function handleClickOutside(e) {
       if (listRef.current && !listRef.current.contains(e.target) && (!triggerRef.current || !triggerRef.current.contains(e.target))) {
         onClose();
@@ -27822,7 +28374,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       (_e = triggerRef.current) == null ? void 0 : _e.focus();
     }
   }
-  return /* @__PURE__ */ jsx31(
+  return /* @__PURE__ */ jsx33(
     "ul",
     {
       ref: listRef,
@@ -27830,7 +28382,7 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
       "aria-label": "Sort and filter pages",
       onKeyDown: handleKeyDown2,
       className: "jeeby-cms-sort-picker",
-      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ jsxs24(
+      children: SORT_OPTIONS.map((opt, index) => /* @__PURE__ */ jsxs25(
         "li",
         {
           role: "menuitemradio",
@@ -27844,12 +28396,12 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
             (_b = (_a = listRef.current) == null ? void 0 : _a.querySelectorAll('[role="menuitemradio"]')[index]) == null ? void 0 : _b.focus();
           },
           children: [
-            /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
-            /* @__PURE__ */ jsxs24("span", { className: "jeeby-cms-block-type-info", children: [
-              /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-block-type-label", children: opt.label }),
-              /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
+            /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-block-icon", "aria-hidden": "true", children: opt.icon }),
+            /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-block-type-info", children: [
+              /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-block-type-label", children: opt.label }),
+              /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-block-type-hint", children: opt.hint })
             ] }),
-            opt.key === sortMode && /* @__PURE__ */ jsx31("svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx31("path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
+            opt.key === sortMode && /* @__PURE__ */ jsx33("svg", { className: "jeeby-cms-sort-check", width: "11", height: "11", viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M1.5 5.5l2.5 2.5L9.5 2" }) })
           ]
         },
         opt.key
@@ -27861,36 +28413,36 @@ var PAGE_SIZE2 = 20;
 var ALL_PAGES_TTL = 6e4;
 function PageManager() {
   const { db, templates } = useCMSFirebase7();
-  const [pages, setPages] = useState18([]);
-  const [loading, setLoading] = useState18(true);
-  const [error, setError] = useState18(null);
-  const [announcement, setAnnouncement] = useState18("");
-  const [editingSlug, setEditingSlug] = useState18(null);
-  const [editField, setEditField] = useState18(null);
-  const [editValue, setEditValue] = useState18("");
-  const [editError, setEditError] = useState18(null);
-  const debounceRef = useRef17(null);
-  const isSavingRef = useRef17(false);
-  const fetchGenRef = useRef17(0);
-  const newPageBtnRef = useRef17(null);
-  const editTriggerRefs = useRef17({});
-  const [showCreateModal, setShowCreateModal] = useState18(false);
-  const [deleteTarget, setDeleteTarget] = useState18(null);
-  const deleteBtnRef = useRef17(null);
-  const [mediaLibraryOpen, setMediaLibraryOpen] = useState18(false);
-  const mediaLibraryTriggerRef = useRef17(null);
-  const [sortMode, setSortMode] = useState18("recent");
-  const [sortPickerOpen, setSortPickerOpen] = useState18(false);
-  const sortTriggerRef = useRef17(null);
+  const [pages, setPages] = useState19([]);
+  const [loading, setLoading] = useState19(true);
+  const [error, setError] = useState19(null);
+  const [announcement, setAnnouncement] = useState19("");
+  const [editingSlug, setEditingSlug] = useState19(null);
+  const [editField, setEditField] = useState19(null);
+  const [editValue, setEditValue] = useState19("");
+  const [editError, setEditError] = useState19(null);
+  const debounceRef = useRef18(null);
+  const isSavingRef = useRef18(false);
+  const fetchGenRef = useRef18(0);
+  const newPageBtnRef = useRef18(null);
+  const editTriggerRefs = useRef18({});
+  const [showCreateModal, setShowCreateModal] = useState19(false);
+  const [deleteTarget, setDeleteTarget] = useState19(null);
+  const deleteBtnRef = useRef18(null);
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState19(false);
+  const mediaLibraryTriggerRef = useRef18(null);
+  const [sortMode, setSortMode] = useState19("recent");
+  const [sortPickerOpen, setSortPickerOpen] = useState19(false);
+  const sortTriggerRef = useRef18(null);
   const prefersReducedMotion = useReducedMotion3();
-  const [searchQuery, setSearchQuery] = useState18("");
-  const [debouncedQuery, setDebouncedQuery] = useState18("");
+  const [searchQuery, setSearchQuery] = useState19("");
+  const [debouncedQuery, setDebouncedQuery] = useState19("");
   const isPaginated = sortMode === "recent" && !debouncedQuery.trim();
-  const [pageNum, setPageNum] = useState18(1);
-  const [hasNextPage, setHasNextPage] = useState18(false);
-  const cursorsRef = useRef17([null]);
-  const allPagesCacheRef = useRef17(null);
-  const prefetchRef = useRef17(null);
+  const [pageNum, setPageNum] = useState19(1);
+  const [hasNextPage, setHasNextPage] = useState19(false);
+  const cursorsRef = useRef18([null]);
+  const allPagesCacheRef = useRef18(null);
+  const prefetchRef = useRef18(null);
   const showSearch = isPaginated ? hasNextPage || pages.length >= 8 : pages.length >= 8;
   const processedPages = useMemo4(
     () => applySearch(applySortFilter(pages, sortMode), debouncedQuery),
@@ -27900,6 +28452,32 @@ function PageManager() {
     () => isPaginated ? processedPages : processedPages.slice((pageNum - 1) * PAGE_SIZE2, pageNum * PAGE_SIZE2),
     [isPaginated, processedPages, pageNum]
   );
+  const collectionPages = useMemo4(
+    () => pages.filter((p) => p.pageType === "collection"),
+    [pages]
+  );
+  const entryPages = useMemo4(
+    () => pages.filter((p) => !!p.parentSlug),
+    [pages]
+  );
+  const standalonePages = useMemo4(
+    () => pages.filter((p) => p.pageType !== "collection" && !p.parentSlug),
+    [pages]
+  );
+  const topLevelItems = useMemo4(() => [...collectionPages, ...standalonePages], [collectionPages, standalonePages]);
+  const displayedTopLevel = useMemo4(
+    () => applySearch(applySortFilter(topLevelItems, sortMode), debouncedQuery),
+    [topLevelItems, sortMode, debouncedQuery]
+  );
+  const entriesByParent = useMemo4(() => {
+    const byParent = /* @__PURE__ */ new Map();
+    const sortedEntries = [...entryPages].sort((a, b) => tsToMs(b.updatedAt) - tsToMs(a.updatedAt));
+    for (const e of sortedEntries) {
+      if (!byParent.has(e.parentSlug)) byParent.set(e.parentSlug, []);
+      byParent.get(e.parentSlug).push(e);
+    }
+    return byParent;
+  }, [entryPages]);
   const totalPages = isPaginated ? null : Math.max(1, Math.ceil(processedPages.length / PAGE_SIZE2));
   const canGoPrev = pageNum > 1;
   const canGoNext = isPaginated ? hasNextPage : pageNum < (totalPages ?? 1);
@@ -27965,40 +28543,58 @@ function PageManager() {
       if (gen === fetchGenRef.current) setLoading(false);
     }
   }, [db, isPaginated, pageNum]);
-  useEffect14(() => {
+  useEffect15(() => {
     loadPages();
   }, [loadPages]);
-  useEffect14(() => {
+  useEffect15(() => {
     setPageNum(1);
     cursorsRef.current = [null];
     setHasNextPage(false);
     prefetchRef.current = null;
   }, [sortMode, debouncedQuery]);
-  useEffect14(() => {
+  useEffect15(() => {
     if (displayedPages.length === 0 && pageNum > 1 && !loading) {
       setPageNum((p) => p - 1);
     }
   }, [displayedPages.length, pageNum, loading]);
-  useEffect14(() => {
+  useEffect15(() => {
     if (announcement) {
       const t = setTimeout(() => setAnnouncement(""), 3e3);
       return () => clearTimeout(t);
     }
   }, [announcement]);
-  useEffect14(() => {
+  useEffect15(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 200);
     return () => clearTimeout(t);
   }, [searchQuery]);
-  useEffect14(() => {
+  useEffect15(() => {
     if (debouncedQuery.trim()) {
       setAnnouncement(
         processedPages.length === 0 ? "No pages match." : `${processedPages.length} page${processedPages.length !== 1 ? "s" : ""} found.`
       );
     }
   }, [debouncedQuery, processedPages.length]);
-  useEffect14(() => {
+  useEffect15(() => {
     if (!showSearch) setSearchQuery("");
   }, [showSearch]);
+  const [expandedCollections, setExpandedCollections] = useState19(() => /* @__PURE__ */ new Set());
+  useEffect15(() => {
+    setExpandedCollections((prev) => {
+      const next = new Set(prev);
+      for (const c of collectionPages) {
+        if (!prev.has(c.slug)) next.add(c.slug);
+      }
+      return next;
+    });
+  }, [collectionPages]);
+  function toggleCollection(slug) {
+    setExpandedCollections((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }
   function startEdit(slug, field, currentValue) {
     setEditingSlug(slug);
     setEditField(field);
@@ -28067,7 +28663,11 @@ function PageManager() {
           setEditError(`Slug does not match the ${templateName} pattern.`);
           return;
         }
-        await renamePage(db, currentSlug, trimmed);
+        if ((page == null ? void 0 : page.pageType) === "collection") {
+          await renameCollection(db, currentSlug, trimmed);
+        } else {
+          await renamePage(db, currentSlug, trimmed);
+        }
         allPagesCacheRef.current = null;
         prefetchRef.current = null;
         await loadPages();
@@ -28117,9 +28717,26 @@ function PageManager() {
   function goToPrevPage() {
     setPageNum((p) => Math.max(1, p - 1));
   }
+  const [deleteBlockedError, setDeleteBlockedError] = useState19(null);
+  async function handleDeleteClick(page) {
+    setDeleteBlockedError(null);
+    if ((page == null ? void 0 : page.pageType) === "collection") {
+      try {
+        const kids = await getCollectionPages(db, page.slug);
+        if (kids.length > 0) {
+          setDeleteBlockedError({ slug: page.slug, count: kids.length });
+          setAnnouncement(`Cannot delete ${page.slug}: ${kids.length} entries remain.`);
+          setTimeout(() => setAnnouncement(""), 1500);
+          return;
+        }
+      } catch {
+      }
+    }
+    setDeleteTarget(page);
+  }
   if (loading && pages.length === 0) {
-    return /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -28127,28 +28744,28 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx31("h2", { children: "Pages" }) }),
-      /* @__PURE__ */ jsx31("div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ jsxs24("table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
-        /* @__PURE__ */ jsx31("thead", { children: /* @__PURE__ */ jsxs24("tr", { children: [
-          /* @__PURE__ */ jsx31("th", { scope: "col", children: "Name" }),
-          /* @__PURE__ */ jsx31("th", { scope: "col", children: "Slug" }),
-          /* @__PURE__ */ jsx31("th", { scope: "col", children: "Status" }),
-          /* @__PURE__ */ jsx31("th", { scope: "col", children: "Last Published" }),
-          /* @__PURE__ */ jsx31("th", { scope: "col", children: "Actions" })
+      /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx33("h2", { children: "Pages" }) }),
+      /* @__PURE__ */ jsx33("div", { role: "status", "aria-label": "Loading pages", children: /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-pages-table-wrap", children: /* @__PURE__ */ jsxs25("table", { className: "jeeby-cms-pages-table", "aria-hidden": "true", children: [
+        /* @__PURE__ */ jsx33("thead", { children: /* @__PURE__ */ jsxs25("tr", { children: [
+          /* @__PURE__ */ jsx33("th", { scope: "col", children: "Name" }),
+          /* @__PURE__ */ jsx33("th", { scope: "col", children: "Slug" }),
+          /* @__PURE__ */ jsx33("th", { scope: "col", children: "Status" }),
+          /* @__PURE__ */ jsx33("th", { scope: "col", children: "Last Published" }),
+          /* @__PURE__ */ jsx33("th", { scope: "col", children: "Actions" })
         ] }) }),
-        /* @__PURE__ */ jsx31("tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs24("tr", { children: [
-          /* @__PURE__ */ jsx31("td", { children: /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
-          /* @__PURE__ */ jsx31("td", { children: /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
-          /* @__PURE__ */ jsx31("td", { children: /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-skeleton", style: { width: "72px", height: "22px", borderRadius: "999px" } }) }),
-          /* @__PURE__ */ jsx31("td", { children: /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
-          /* @__PURE__ */ jsx31("td", { children: /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
+        /* @__PURE__ */ jsx33("tbody", { children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs25("tr", { children: [
+          /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-skeleton", style: { width: "120px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-skeleton", style: { width: "80px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-skeleton", style: { width: "72px", height: "22px", borderRadius: "999px" } }) }),
+          /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-skeleton", style: { width: "90px", height: "14px" } }) }),
+          /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-skeleton", style: { width: "60px", height: "14px" } }) })
         ] }, i)) })
       ] }) }) })
     ] });
   }
   if (error && pages.length === 0) {
-    return /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -28156,10 +28773,10 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx31("h2", { children: "Pages" }) }),
-      /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
-        /* @__PURE__ */ jsx31("p", { children: error }),
-        /* @__PURE__ */ jsx31(
+      /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-page-list-header", children: /* @__PURE__ */ jsx33("h2", { children: "Pages" }) }),
+      /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-pages-empty", role: "alert", children: [
+        /* @__PURE__ */ jsx33("p", { children: error }),
+        /* @__PURE__ */ jsx33(
           "button",
           {
             type: "button",
@@ -28172,8 +28789,8 @@ function PageManager() {
     ] });
   }
   if (pages.length === 0 && !loading) {
-    return /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-manager", children: [
-      /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+    return /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-manager", children: [
+      /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
         position: "absolute",
         width: "1px",
         height: "1px",
@@ -28181,11 +28798,11 @@ function PageManager() {
         clip: "rect(0,0,0,0)",
         whiteSpace: "nowrap"
       }, children: announcement }),
-      /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-pages-empty", children: [
-        /* @__PURE__ */ jsx31("h2", { children: "No pages yet." }),
-        /* @__PURE__ */ jsx31("p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
-        /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-list-controls", children: [
-          /* @__PURE__ */ jsx31(
+      /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-pages-empty", children: [
+        /* @__PURE__ */ jsx33("h2", { children: "No pages yet." }),
+        /* @__PURE__ */ jsx33("p", { children: "Each page is a section of your website \u2014 like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready." }),
+        /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-list-controls", children: [
+          /* @__PURE__ */ jsx33(
             "button",
             {
               ref: newPageBtnRef,
@@ -28195,7 +28812,7 @@ function PageManager() {
               children: "Create your first page"
             }
           ),
-          /* @__PURE__ */ jsx31(
+          /* @__PURE__ */ jsx33(
             "button",
             {
               ref: mediaLibraryTriggerRef,
@@ -28207,11 +28824,11 @@ function PageManager() {
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsx31(CreatePageModal, { open: showCreateModal, onClose: () => setShowCreateModal(false), onCreated: () => {
+      /* @__PURE__ */ jsx33(CreatePageModal, { open: showCreateModal, onClose: () => setShowCreateModal(false), onCreated: () => {
         loadPages();
         setAnnouncement("Page created successfully.");
       }, triggerRef: newPageBtnRef }),
-      /* @__PURE__ */ jsx31(
+      /* @__PURE__ */ jsx33(
         MediaLibraryModal,
         {
           open: mediaLibraryOpen,
@@ -28223,8 +28840,8 @@ function PageManager() {
       )
     ] });
   }
-  return /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-manager", children: [
-    /* @__PURE__ */ jsx31("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
+  return /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-manager", children: [
+    /* @__PURE__ */ jsx33("div", { className: "jeeby-cms-live-region", "aria-live": "polite", "aria-atomic": "true", style: {
       position: "absolute",
       width: "1px",
       height: "1px",
@@ -28232,13 +28849,13 @@ function PageManager() {
       clip: "rect(0,0,0,0)",
       whiteSpace: "nowrap"
     }, children: announcement }),
-    /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-list-header", children: [
-      /* @__PURE__ */ jsx31("h2", { children: "Pages" }),
-      /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-page-list-controls", children: [
+    /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-list-header", children: [
+      /* @__PURE__ */ jsx33("h2", { children: "Pages" }),
+      /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-page-list-controls", children: [
         pages.length > 0 && (() => {
           const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode) || SORT_OPTIONS[0];
-          return /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-sort-anchor", children: [
-            /* @__PURE__ */ jsxs24(
+          return /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-sort-anchor", children: [
+            /* @__PURE__ */ jsxs25(
               "button",
               {
                 ref: sortTriggerRef,
@@ -28250,13 +28867,13 @@ function PageManager() {
                 "data-filter-active": currentOpt.isFilter ? "true" : void 0,
                 onClick: () => setSortPickerOpen((v) => !v),
                 children: [
-                  /* @__PURE__ */ jsx31(IconSortLines, {}),
+                  /* @__PURE__ */ jsx33(IconSortLines, {}),
                   currentOpt.label,
-                  /* @__PURE__ */ jsx31(IconChevronDown, {})
+                  /* @__PURE__ */ jsx33(IconChevronDown, {})
                 ]
               }
             ),
-            sortPickerOpen && /* @__PURE__ */ jsx31(
+            sortPickerOpen && /* @__PURE__ */ jsx33(
               SortPicker,
               {
                 sortMode,
@@ -28271,7 +28888,7 @@ function PageManager() {
             )
           ] });
         })(),
-        /* @__PURE__ */ jsx31(
+        /* @__PURE__ */ jsx33(
           "button",
           {
             ref: newPageBtnRef,
@@ -28281,7 +28898,7 @@ function PageManager() {
             children: "New Page"
           }
         ),
-        /* @__PURE__ */ jsx31(
+        /* @__PURE__ */ jsx33(
           "button",
           {
             ref: mediaLibraryTriggerRef,
@@ -28293,7 +28910,7 @@ function PageManager() {
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsx31(AnimatePresence2, { initial: false, children: showSearch && /* @__PURE__ */ jsx31(
+    /* @__PURE__ */ jsx33(AnimatePresence2, { initial: false, children: showSearch && /* @__PURE__ */ jsx33(
       motion3.div,
       {
         className: "jeeby-cms-search-bar",
@@ -28302,9 +28919,9 @@ function PageManager() {
         exit: { opacity: 0, height: 0 },
         transition: { duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.16, 1, 0.3, 1] },
         style: { overflow: "hidden" },
-        children: /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-search-inner", role: "search", children: [
-          /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsx31(IconSearch, {}) }),
-          /* @__PURE__ */ jsx31(
+        children: /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-search-inner", role: "search", children: [
+          /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-search-icon", "aria-hidden": "true", children: /* @__PURE__ */ jsx33(IconSearch, {}) }),
+          /* @__PURE__ */ jsx33(
             "input",
             {
               type: "search",
@@ -28316,20 +28933,34 @@ function PageManager() {
               maxLength: 200
             }
           ),
-          searchQuery && /* @__PURE__ */ jsx31(
+          searchQuery && /* @__PURE__ */ jsx33(
             "button",
             {
               type: "button",
               className: "jeeby-cms-search-clear",
               "aria-label": "Clear search",
               onClick: () => setSearchQuery(""),
-              children: /* @__PURE__ */ jsx31(IconClear, {})
+              children: /* @__PURE__ */ jsx33(IconClear, {})
             }
           )
         ] })
       }
     ) }),
-    /* @__PURE__ */ jsx31(AnimatePresence2, { mode: "wait", initial: false, children: /* @__PURE__ */ jsx31(
+    deleteBlockedError && /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-inline-error", role: "alert", style: { marginBottom: "0.75rem" }, children: [
+      deleteBlockedError.count === 1 ? "This collection has 1 entry. Delete or reassign them first." : `This collection has ${deleteBlockedError.count} entries. Delete or reassign them first.`,
+      " ",
+      /* @__PURE__ */ jsx33(
+        "button",
+        {
+          type: "button",
+          className: "jeeby-cms-btn-ghost",
+          onClick: () => setDeleteBlockedError(null),
+          "aria-label": "Dismiss error",
+          children: "Dismiss"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx33(AnimatePresence2, { mode: "wait", initial: false, children: /* @__PURE__ */ jsx33(
       motion3.div,
       {
         className: "jeeby-cms-pages-table-wrap",
@@ -28337,25 +28968,28 @@ function PageManager() {
         animate: { opacity: 1, y: 0 },
         exit: { opacity: 0, transition: { duration: prefersReducedMotion ? 0 : 0.16 } },
         transition: { duration: prefersReducedMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] },
-        children: /* @__PURE__ */ jsxs24("table", { className: "jeeby-cms-pages-table", children: [
-          /* @__PURE__ */ jsx31("thead", { children: /* @__PURE__ */ jsxs24("tr", { children: [
-            /* @__PURE__ */ jsx31("th", { scope: "col", children: "Name" }),
-            /* @__PURE__ */ jsx31("th", { scope: "col", children: "Slug" }),
-            /* @__PURE__ */ jsx31("th", { scope: "col", children: "Status" }),
-            /* @__PURE__ */ jsx31("th", { scope: "col", children: "Last Published" }),
-            /* @__PURE__ */ jsx31("th", { scope: "col", children: "Actions" })
+        children: /* @__PURE__ */ jsxs25("table", { className: "jeeby-cms-pages-table", children: [
+          /* @__PURE__ */ jsx33("thead", { children: /* @__PURE__ */ jsxs25("tr", { children: [
+            /* @__PURE__ */ jsx33("th", { scope: "col", children: "Name" }),
+            /* @__PURE__ */ jsx33("th", { scope: "col", children: "Slug" }),
+            /* @__PURE__ */ jsx33("th", { scope: "col", children: "Status" }),
+            /* @__PURE__ */ jsx33("th", { scope: "col", children: "Last Published" }),
+            /* @__PURE__ */ jsx33("th", { scope: "col", children: "Actions" })
           ] }) }),
-          /* @__PURE__ */ jsx31("tbody", { children: (() => {
-            if (displayedPages.length === 0) {
+          (() => {
+            const displayedCollections = displayedTopLevel.filter((p) => p.pageType === "collection");
+            const displayedStandalone = displayedTopLevel.filter((p) => p.pageType !== "collection" && !p.parentSlug);
+            const nothingToShow = displayedCollections.length === 0 && displayedStandalone.length === 0;
+            if (nothingToShow) {
               const currentOpt = SORT_OPTIONS.find((o) => o.key === sortMode);
               const hasFilter = currentOpt == null ? void 0 : currentOpt.isFilter;
               const hasSearch = !!debouncedQuery;
               const queryChars = [...debouncedQuery];
               const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join("") + "\u2026" : debouncedQuery;
               const emptyMsg = hasSearch && hasFilter ? "No pages match this search and filter." : hasSearch ? `No pages match "${shortQuery}".` : "No pages match this filter.";
-              return /* @__PURE__ */ jsx31("tr", { children: /* @__PURE__ */ jsxs24("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
-                /* @__PURE__ */ jsx31("span", { children: emptyMsg }),
-                hasSearch && /* @__PURE__ */ jsx31(
+              return /* @__PURE__ */ jsx33("tbody", { children: /* @__PURE__ */ jsx33("tr", { children: /* @__PURE__ */ jsxs25("td", { colSpan: 5, className: "jeeby-cms-filter-empty", children: [
+                /* @__PURE__ */ jsx33("span", { children: emptyMsg }),
+                hasSearch && /* @__PURE__ */ jsx33(
                   "button",
                   {
                     type: "button",
@@ -28367,7 +29001,7 @@ function PageManager() {
                     children: "Clear search"
                   }
                 ),
-                hasFilter && /* @__PURE__ */ jsx31(
+                hasFilter && /* @__PURE__ */ jsx33(
                   "button",
                   {
                     type: "button",
@@ -28379,121 +29013,330 @@ function PageManager() {
                     children: "Clear filter"
                   }
                 )
-              ] }) });
+              ] }) }) });
             }
-            return /* @__PURE__ */ jsx31(AnimatePresence2, { children: displayedPages.map((page) => /* @__PURE__ */ jsxs24(Fragment7, { children: [
-              /* @__PURE__ */ jsxs24(
-                motion3.tr,
-                {
-                  exit: { opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } },
-                  children: [
-                    /* @__PURE__ */ jsx31("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx31(
-                      "input",
-                      {
-                        type: "text",
-                        className: "jeeby-cms-inline-edit-input",
-                        value: editValue,
-                        "aria-label": `Rename: ${page.name || page.slug}`,
-                        "aria-describedby": `cms-rename-error-${page.slug}`,
-                        onChange: (e) => handleEditChange(e.target.value),
-                        onKeyDown: handleEditKeyDown,
-                        onBlur: commitEdit,
-                        autoFocus: true
-                      }
-                    ) : /* @__PURE__ */ jsxs24("span", { className: "jeeby-cms-cell-read", children: [
-                      /* @__PURE__ */ jsx31("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
-                      /* @__PURE__ */ jsx31(
-                        "button",
+            return /* @__PURE__ */ jsxs25(Fragment9, { children: [
+              displayedCollections.length > 0 && /* @__PURE__ */ jsx33("tbody", { children: /* @__PURE__ */ jsx33("tr", { className: "jeeby-cms-table-section-header", children: /* @__PURE__ */ jsx33("td", { colSpan: 5, children: "Collections" }) }) }),
+              displayedCollections.map((coll) => {
+                const isExpanded = expandedCollections.has(coll.slug);
+                const kids = entriesByParent.get(coll.slug) || [];
+                const { label: collLabel, cls: collCls } = STATUS_PROPS[pageStatus(coll)];
+                return /* @__PURE__ */ jsxs25(
+                  "tbody",
+                  {
+                    id: `cms-collection-entries-${coll.slug}`,
+                    className: "jeeby-cms-collection-group",
+                    children: [
+                      /* @__PURE__ */ jsxs25("tr", { className: "jeeby-cms-collection-row", children: [
+                        /* @__PURE__ */ jsx33("td", { children: editingSlug === coll.slug && editField === "name" ? /* @__PURE__ */ jsx33(
+                          "input",
+                          {
+                            type: "text",
+                            className: "jeeby-cms-inline-edit-input",
+                            value: editValue,
+                            "aria-label": `Rename: ${coll.name || coll.slug}`,
+                            "aria-describedby": `cms-rename-error-${coll.slug}`,
+                            onChange: (e) => handleEditChange(e.target.value),
+                            onKeyDown: handleEditKeyDown,
+                            onBlur: commitEdit,
+                            autoFocus: true
+                          }
+                        ) : /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-cell-read", children: [
+                          /* @__PURE__ */ jsxs25(
+                            "button",
+                            {
+                              type: "button",
+                              className: "jeeby-cms-collection-toggle",
+                              "aria-expanded": expandedCollections.has(coll.slug),
+                              "aria-controls": `cms-collection-entries-${coll.slug}`,
+                              "data-expanded": isExpanded ? "true" : void 0,
+                              onClick: () => toggleCollection(coll.slug),
+                              children: [
+                                /* @__PURE__ */ jsx33("svg", { width: "10", height: "10", viewBox: "0 0 10 10", "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ jsx33("path", { d: "M3 1.5l4 3.5-4 3.5", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) }),
+                                /* @__PURE__ */ jsx33("span", { children: coll.name || coll.slug })
+                              ]
+                            }
+                          ),
+                          /* @__PURE__ */ jsx33(
+                            "button",
+                            {
+                              ref: (el) => {
+                                editTriggerRefs.current[`${coll.slug}-name`] = el;
+                              },
+                              type: "button",
+                              className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                              "aria-label": `Rename ${coll.name || coll.slug}`,
+                              onClick: () => startEdit(coll.slug, "name", coll.name || ""),
+                              children: "Rename"
+                            }
+                          )
+                        ] }) }),
+                        /* @__PURE__ */ jsx33("td", { children: editingSlug === coll.slug && editField === "slug" ? /* @__PURE__ */ jsx33(
+                          "input",
+                          {
+                            type: "text",
+                            className: "jeeby-cms-inline-edit-input",
+                            value: editValue,
+                            "aria-label": `Rename slug: ${coll.name || coll.slug}`,
+                            "aria-describedby": `cms-rename-error-${coll.slug}`,
+                            onChange: (e) => handleEditChange(e.target.value),
+                            onKeyDown: handleEditKeyDown,
+                            onBlur: commitEdit,
+                            autoFocus: true
+                          }
+                        ) : /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-cell-read", children: [
+                          /* @__PURE__ */ jsx33("span", { children: coll.slug }),
+                          /* @__PURE__ */ jsx33(
+                            "button",
+                            {
+                              ref: (el) => {
+                                editTriggerRefs.current[`${coll.slug}-slug`] = el;
+                              },
+                              type: "button",
+                              className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                              "aria-label": `Rename slug for ${coll.name || coll.slug}`,
+                              onClick: () => startEdit(coll.slug, "slug", coll.slug),
+                              children: "Rename"
+                            }
+                          )
+                        ] }) }),
+                        /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: collCls, children: collLabel }) }),
+                        /* @__PURE__ */ jsx33("td", { children: formatDate(coll.lastPublishedAt) }),
+                        /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-table-actions", children: [
+                          /* @__PURE__ */ jsx33(
+                            "a",
+                            {
+                              href: "/admin/pages/" + encodeURIComponent(coll.slug),
+                              "aria-label": "Edit blocks for " + coll.slug,
+                              className: "jeeby-cms-btn-primary",
+                              children: "Edit"
+                            }
+                          ),
+                          /* @__PURE__ */ jsx33(
+                            "button",
+                            {
+                              type: "button",
+                              className: "jeeby-cms-btn-ghost",
+                              "aria-label": `Delete ${coll.slug}`,
+                              onClick: (e) => {
+                                deleteBtnRef.current = e.currentTarget;
+                                handleDeleteClick(coll);
+                              },
+                              children: "Delete"
+                            }
+                          )
+                        ] }) })
+                      ] }),
+                      editError && editingSlug === coll.slug && /* @__PURE__ */ jsx33("tr", { children: /* @__PURE__ */ jsx33("td", { colSpan: 5, children: /* @__PURE__ */ jsx33("p", { id: `cms-rename-error-${coll.slug}`, role: "alert", className: "jeeby-cms-inline-error", children: editError }) }) }),
+                      isExpanded && kids.map((entry) => {
+                        const { label, cls } = STATUS_PROPS[pageStatus(entry)];
+                        return /* @__PURE__ */ jsxs25(Fragment8, { children: [
+                          /* @__PURE__ */ jsxs25("tr", { className: "jeeby-cms-entry-row", children: [
+                            /* @__PURE__ */ jsx33("td", { children: editingSlug === entry.slug && editField === "name" ? /* @__PURE__ */ jsx33(
+                              "input",
+                              {
+                                type: "text",
+                                className: "jeeby-cms-inline-edit-input jeeby-cms-entry-indent",
+                                value: editValue,
+                                "aria-label": `Rename: ${entry.name || entry.slug}`,
+                                "aria-describedby": `cms-rename-error-${entry.slug}`,
+                                onChange: (e) => handleEditChange(e.target.value),
+                                onKeyDown: handleEditKeyDown,
+                                onBlur: commitEdit,
+                                autoFocus: true
+                              }
+                            ) : /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-entry-indent jeeby-cms-cell-read", children: [
+                              /* @__PURE__ */ jsx33("a", { href: "/admin/pages/" + encodeURIComponent(entry.slug), children: entry.name || entry.slug }),
+                              /* @__PURE__ */ jsx33(
+                                "button",
+                                {
+                                  ref: (el) => {
+                                    editTriggerRefs.current[`${entry.slug}-name`] = el;
+                                  },
+                                  type: "button",
+                                  className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                                  "aria-label": `Rename ${entry.name || entry.slug}`,
+                                  onClick: () => startEdit(entry.slug, "name", entry.name || ""),
+                                  children: "Rename"
+                                }
+                              )
+                            ] }) }),
+                            /* @__PURE__ */ jsx33("td", { children: editingSlug === entry.slug && editField === "slug" ? /* @__PURE__ */ jsx33(
+                              "input",
+                              {
+                                type: "text",
+                                className: "jeeby-cms-inline-edit-input",
+                                value: editValue,
+                                "aria-label": `Rename slug: ${entry.name || entry.slug}`,
+                                "aria-describedby": `cms-rename-error-${entry.slug}`,
+                                onChange: (e) => handleEditChange(e.target.value),
+                                onKeyDown: handleEditKeyDown,
+                                onBlur: commitEdit,
+                                autoFocus: true
+                              }
+                            ) : /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-cell-read", children: [
+                              /* @__PURE__ */ jsxs25("span", { children: [
+                                "/",
+                                entry.parentSlug,
+                                "/",
+                                entry.slug
+                              ] }),
+                              /* @__PURE__ */ jsx33(
+                                "button",
+                                {
+                                  ref: (el) => {
+                                    editTriggerRefs.current[`${entry.slug}-slug`] = el;
+                                  },
+                                  type: "button",
+                                  className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                                  "aria-label": `Rename slug for ${entry.name || entry.slug}`,
+                                  onClick: () => startEdit(entry.slug, "slug", entry.slug),
+                                  children: "Rename"
+                                }
+                              )
+                            ] }) }),
+                            /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsx33("span", { className: cls, children: label }) }),
+                            /* @__PURE__ */ jsx33("td", { children: formatDate(entry.lastPublishedAt) }),
+                            /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-table-actions", children: [
+                              /* @__PURE__ */ jsx33(
+                                "a",
+                                {
+                                  href: "/admin/pages/" + encodeURIComponent(entry.slug),
+                                  "aria-label": "Edit blocks for " + entry.slug,
+                                  className: "jeeby-cms-btn-primary",
+                                  children: "Edit"
+                                }
+                              ),
+                              /* @__PURE__ */ jsx33(
+                                "button",
+                                {
+                                  type: "button",
+                                  className: "jeeby-cms-btn-ghost",
+                                  "aria-label": `Delete ${entry.slug}`,
+                                  onClick: (e) => {
+                                    deleteBtnRef.current = e.currentTarget;
+                                    handleDeleteClick(entry);
+                                  },
+                                  children: "Delete"
+                                }
+                              )
+                            ] }) })
+                          ] }),
+                          editError && editingSlug === entry.slug && /* @__PURE__ */ jsx33("tr", { children: /* @__PURE__ */ jsx33("td", { colSpan: 5, children: /* @__PURE__ */ jsx33("p", { id: `cms-rename-error-${entry.slug}`, role: "alert", className: "jeeby-cms-inline-error", children: editError }) }) })
+                        ] }, entry.slug);
+                      })
+                    ]
+                  },
+                  `coll-${coll.slug}`
+                );
+              }),
+              displayedStandalone.length > 0 && /* @__PURE__ */ jsx33("tbody", { children: /* @__PURE__ */ jsx33("tr", { className: "jeeby-cms-table-section-header", children: /* @__PURE__ */ jsx33("td", { colSpan: 5, children: "Pages" }) }) }),
+              /* @__PURE__ */ jsx33("tbody", { children: /* @__PURE__ */ jsx33(AnimatePresence2, { children: displayedStandalone.map((page) => /* @__PURE__ */ jsxs25(Fragment8, { children: [
+                /* @__PURE__ */ jsxs25(
+                  motion3.tr,
+                  {
+                    exit: { opacity: 0, x: prefersReducedMotion ? 0 : -16, transition: { duration: prefersReducedMotion ? 0.01 : 0.18, ease: [0.4, 0, 1, 1] } },
+                    children: [
+                      /* @__PURE__ */ jsx33("td", { children: editingSlug === page.slug && editField === "name" ? /* @__PURE__ */ jsx33(
+                        "input",
                         {
-                          ref: (el) => {
-                            editTriggerRefs.current[`${page.slug}-name`] = el;
-                          },
-                          type: "button",
-                          className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
-                          "aria-label": `Rename ${page.name || page.slug}`,
-                          onClick: () => startEdit(page.slug, "name", page.name || ""),
-                          children: "Rename"
+                          type: "text",
+                          className: "jeeby-cms-inline-edit-input",
+                          value: editValue,
+                          "aria-label": `Rename: ${page.name || page.slug}`,
+                          "aria-describedby": `cms-rename-error-${page.slug}`,
+                          onChange: (e) => handleEditChange(e.target.value),
+                          onKeyDown: handleEditKeyDown,
+                          onBlur: commitEdit,
+                          autoFocus: true
                         }
-                      )
-                    ] }) }),
-                    /* @__PURE__ */ jsx31("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsx31(
-                      "input",
-                      {
-                        type: "text",
-                        className: "jeeby-cms-inline-edit-input",
-                        value: editValue,
-                        "aria-label": `Rename slug: ${page.name || page.slug}`,
-                        "aria-describedby": `cms-rename-error-${page.slug}`,
-                        onChange: (e) => handleEditChange(e.target.value),
-                        onKeyDown: handleEditKeyDown,
-                        onBlur: commitEdit,
-                        autoFocus: true
-                      }
-                    ) : /* @__PURE__ */ jsxs24("span", { className: "jeeby-cms-cell-read", children: [
-                      /* @__PURE__ */ jsx31("span", { children: page.slug }),
-                      /* @__PURE__ */ jsx31(
-                        "button",
+                      ) : /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-cell-read", children: [
+                        /* @__PURE__ */ jsx33("a", { href: "/admin/pages/" + encodeURIComponent(page.slug), children: page.name || page.slug }),
+                        /* @__PURE__ */ jsx33(
+                          "button",
+                          {
+                            ref: (el) => {
+                              editTriggerRefs.current[`${page.slug}-name`] = el;
+                            },
+                            type: "button",
+                            className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                            "aria-label": `Rename ${page.name || page.slug}`,
+                            onClick: () => startEdit(page.slug, "name", page.name || ""),
+                            children: "Rename"
+                          }
+                        )
+                      ] }) }),
+                      /* @__PURE__ */ jsx33("td", { children: editingSlug === page.slug && editField === "slug" ? /* @__PURE__ */ jsx33(
+                        "input",
                         {
-                          ref: (el) => {
-                            editTriggerRefs.current[`${page.slug}-slug`] = el;
-                          },
-                          type: "button",
-                          className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
-                          "aria-label": `Rename slug for ${page.name || page.slug}`,
-                          onClick: () => startEdit(page.slug, "slug", page.slug),
-                          children: "Rename"
+                          type: "text",
+                          className: "jeeby-cms-inline-edit-input",
+                          value: editValue,
+                          "aria-label": `Rename slug: ${page.name || page.slug}`,
+                          "aria-describedby": `cms-rename-error-${page.slug}`,
+                          onChange: (e) => handleEditChange(e.target.value),
+                          onKeyDown: handleEditKeyDown,
+                          onBlur: commitEdit,
+                          autoFocus: true
                         }
-                      )
-                    ] }) }),
-                    /* @__PURE__ */ jsx31("td", { children: (() => {
-                      const { label, cls } = STATUS_PROPS[pageStatus(page)];
-                      return /* @__PURE__ */ jsx31("span", { className: cls, children: label });
-                    })() }),
-                    /* @__PURE__ */ jsx31("td", { children: formatDate(page.lastPublishedAt) }),
-                    /* @__PURE__ */ jsx31("td", { children: /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-table-actions", children: [
-                      /* @__PURE__ */ jsx31(
-                        "a",
-                        {
-                          href: "/admin/pages/" + encodeURIComponent(page.slug),
-                          "aria-label": "Edit blocks for " + page.slug,
-                          className: "jeeby-cms-btn-primary",
-                          children: "Edit"
-                        }
-                      ),
-                      /* @__PURE__ */ jsx31(
-                        "button",
-                        {
-                          type: "button",
-                          className: "jeeby-cms-btn-ghost",
-                          "aria-label": `Delete ${page.slug}`,
-                          onClick: (e) => {
-                            deleteBtnRef.current = e.currentTarget;
-                            setDeleteTarget(page);
-                          },
-                          children: "Delete"
-                        }
-                      )
-                    ] }) })
-                  ]
-                }
-              ),
-              editError && editingSlug === page.slug && /* @__PURE__ */ jsx31("tr", { children: /* @__PURE__ */ jsx31("td", { colSpan: 5, children: /* @__PURE__ */ jsx31(
-                "p",
-                {
-                  id: `cms-rename-error-${page.slug}`,
-                  role: "alert",
-                  className: "jeeby-cms-inline-error",
-                  children: editError
-                }
-              ) }) })
-            ] }, page.slug)) });
-          })() })
+                      ) : /* @__PURE__ */ jsxs25("span", { className: "jeeby-cms-cell-read", children: [
+                        /* @__PURE__ */ jsx33("span", { children: page.slug }),
+                        /* @__PURE__ */ jsx33(
+                          "button",
+                          {
+                            ref: (el) => {
+                              editTriggerRefs.current[`${page.slug}-slug`] = el;
+                            },
+                            type: "button",
+                            className: "jeeby-cms-btn-ghost jeeby-cms-edit-affordance",
+                            "aria-label": `Rename slug for ${page.name || page.slug}`,
+                            onClick: () => startEdit(page.slug, "slug", page.slug),
+                            children: "Rename"
+                          }
+                        )
+                      ] }) }),
+                      /* @__PURE__ */ jsx33("td", { children: (() => {
+                        const { label, cls } = STATUS_PROPS[pageStatus(page)];
+                        return /* @__PURE__ */ jsx33("span", { className: cls, children: label });
+                      })() }),
+                      /* @__PURE__ */ jsx33("td", { children: formatDate(page.lastPublishedAt) }),
+                      /* @__PURE__ */ jsx33("td", { children: /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-table-actions", children: [
+                        /* @__PURE__ */ jsx33(
+                          "a",
+                          {
+                            href: "/admin/pages/" + encodeURIComponent(page.slug),
+                            "aria-label": "Edit blocks for " + page.slug,
+                            className: "jeeby-cms-btn-primary",
+                            children: "Edit"
+                          }
+                        ),
+                        /* @__PURE__ */ jsx33(
+                          "button",
+                          {
+                            type: "button",
+                            className: "jeeby-cms-btn-ghost",
+                            "aria-label": `Delete ${page.slug}`,
+                            onClick: (e) => {
+                              deleteBtnRef.current = e.currentTarget;
+                              handleDeleteClick(page);
+                            },
+                            children: "Delete"
+                          }
+                        )
+                      ] }) })
+                    ]
+                  }
+                ),
+                editError && editingSlug === page.slug && /* @__PURE__ */ jsx33("tr", { children: /* @__PURE__ */ jsx33("td", { colSpan: 5, children: /* @__PURE__ */ jsx33("p", { id: `cms-rename-error-${page.slug}`, role: "alert", className: "jeeby-cms-inline-error", children: editError }) }) })
+              ] }, page.slug)) }) })
+            ] });
+          })()
         ] })
       },
       `${sortMode}|${debouncedQuery}|${pageNum}`
     ) }),
-    (canGoPrev || canGoNext) && /* @__PURE__ */ jsxs24("div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
-      /* @__PURE__ */ jsxs24(
+    (canGoPrev || canGoNext) && /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-pagination", role: "navigation", "aria-label": "Page navigation", children: [
+      /* @__PURE__ */ jsxs25(
         "button",
         {
           type: "button",
@@ -28502,13 +29345,13 @@ function PageManager() {
           disabled: !canGoPrev || loading,
           "aria-label": "Previous page",
           children: [
-            /* @__PURE__ */ jsx31(IconChevronLeft, {}),
+            /* @__PURE__ */ jsx33(IconChevronLeft, {}),
             " Prev"
           ]
         }
       ),
-      /* @__PURE__ */ jsx31("span", { className: "jeeby-cms-pagination-label", "aria-live": "polite", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
-      /* @__PURE__ */ jsxs24(
+      /* @__PURE__ */ jsx33("span", { className: "jeeby-cms-pagination-label", "aria-live": "polite", children: totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}` }),
+      /* @__PURE__ */ jsxs25(
         "button",
         {
           type: "button",
@@ -28518,12 +29361,12 @@ function PageManager() {
           "aria-label": "Next page",
           children: [
             "Next ",
-            /* @__PURE__ */ jsx31(IconChevronRight, {})
+            /* @__PURE__ */ jsx33(IconChevronRight, {})
           ]
         }
       )
     ] }),
-    /* @__PURE__ */ jsx31(
+    /* @__PURE__ */ jsx33(
       CreatePageModal,
       {
         open: showCreateModal,
@@ -28537,7 +29380,7 @@ function PageManager() {
         triggerRef: newPageBtnRef
       }
     ),
-    /* @__PURE__ */ jsx31(
+    /* @__PURE__ */ jsx33(
       MediaLibraryModal,
       {
         open: mediaLibraryOpen,
@@ -28547,7 +29390,7 @@ function PageManager() {
         triggerRef: mediaLibraryTriggerRef
       }
     ),
-    /* @__PURE__ */ jsx31(
+    /* @__PURE__ */ jsx33(
       DeletePageModal,
       {
         page: deleteTarget,
@@ -28567,9 +29410,9 @@ function PageManager() {
 }
 
 // src/admin/SignOutModal.js
-import { jsx as jsx33, jsxs as jsxs25 } from "react/jsx-runtime";
+import { jsx as jsx34, jsxs as jsxs26 } from "react/jsx-runtime";
 function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishing, publishError }) {
-  return /* @__PURE__ */ jsxs25(
+  return /* @__PURE__ */ jsxs26(
     ModalShell,
     {
       role: "alertdialog",
@@ -28578,14 +29421,14 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
       onClose: onCancel,
       backdropStyle: { zIndex: 300 },
       children: [
-        /* @__PURE__ */ jsx33("h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
-        /* @__PURE__ */ jsxs25("p", { id: "signout-modal-body", children: [
-          /* @__PURE__ */ jsx33("strong", { children: pageName }),
+        /* @__PURE__ */ jsx34("h2", { id: "signout-modal-heading", children: "Unpublished changes" }),
+        /* @__PURE__ */ jsxs26("p", { id: "signout-modal-body", children: [
+          /* @__PURE__ */ jsx34("strong", { children: pageName }),
           " has changes saved as a draft but not yet published. Publish now to make them live, or sign out and publish later."
         ] }),
-        publishError && /* @__PURE__ */ jsx33("p", { role: "alert", className: "jeeby-cms-inline-error", style: { marginTop: 8 }, children: "Publish failed. Sign out anyway or try again." }),
-        /* @__PURE__ */ jsxs25("div", { className: "jeeby-cms-modal-actions", children: [
-          /* @__PURE__ */ jsx33(
+        publishError && /* @__PURE__ */ jsx34("p", { role: "alert", className: "jeeby-cms-inline-error", style: { marginTop: 8 }, children: "Publish failed. Sign out anyway or try again." }),
+        /* @__PURE__ */ jsxs26("div", { className: "jeeby-cms-modal-actions", children: [
+          /* @__PURE__ */ jsx34(
             "button",
             {
               type: "button",
@@ -28595,7 +29438,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
               children: "Sign out anyway"
             }
           ),
-          /* @__PURE__ */ jsx33(
+          /* @__PURE__ */ jsx34(
             "button",
             {
               type: "button",
@@ -28606,7 +29449,7 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
               children: "Cancel"
             }
           ),
-          /* @__PURE__ */ jsx33(
+          /* @__PURE__ */ jsx34(
             "button",
             {
               type: "button",
@@ -28624,13 +29467,13 @@ function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishi
 }
 
 // src/admin/index.js
-import { jsx as jsx34, jsxs as jsxs26 } from "react/jsx-runtime";
+import { jsx as jsx35, jsxs as jsxs27 } from "react/jsx-runtime";
 function AdminPanel({ children, siteName }) {
   const { user, loading, signOut } = useAuth2();
-  const guardRef = useRef18(null);
-  const [signOutModal, setSignOutModal] = useState19(null);
-  const [publishing, setPublishing] = useState19(false);
-  const [publishError, setPublishError] = useState19(false);
+  const guardRef = useRef19(null);
+  const [signOutModal, setSignOutModal] = useState20(null);
+  const [publishing, setPublishing] = useState20(false);
+  const [publishError, setPublishError] = useState20(false);
   const guardContext = useMemo5(() => ({
     setGuard: (guard) => {
       guardRef.current = guard;
@@ -28669,19 +29512,19 @@ function AdminPanel({ children, siteName }) {
     window.location.replace("/admin");
   }
   if (loading) {
-    return /* @__PURE__ */ jsxs26("div", { className: "jeeby-cms-admin", children: [
-      /* @__PURE__ */ jsx34("header", { className: "jeeby-cms-nav", role: "banner", children: /* @__PURE__ */ jsx34("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }) }),
-      /* @__PURE__ */ jsx34("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx34("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
+    return /* @__PURE__ */ jsxs27("div", { className: "jeeby-cms-admin", children: [
+      /* @__PURE__ */ jsx35("header", { className: "jeeby-cms-nav", role: "banner", children: /* @__PURE__ */ jsx35("span", { className: "jeeby-cms-nav-brand", children: siteName ? `${siteName} Admin` : "Admin" }) }),
+      /* @__PURE__ */ jsx35("div", { className: "jeeby-cms-loading", role: "status", "aria-label": "Loading admin panel", children: /* @__PURE__ */ jsx35("div", { className: "jeeby-cms-spinner", "aria-hidden": "true" }) })
     ] });
   }
   if (!user) {
-    return /* @__PURE__ */ jsx34("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx34(LoginPage, { siteName }) });
+    return /* @__PURE__ */ jsx35("div", { className: "jeeby-cms-admin", children: /* @__PURE__ */ jsx35(LoginPage, { siteName }) });
   }
-  return /* @__PURE__ */ jsx34(SignOutGuardContext.Provider, { value: guardContext, children: /* @__PURE__ */ jsxs26("div", { className: "jeeby-cms-admin", children: [
-    /* @__PURE__ */ jsx34("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
-    /* @__PURE__ */ jsx34(AdminNav, { onSignOut: handleSignOutRequest, siteName }),
-    /* @__PURE__ */ jsx34("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsx34(PageManager, {}) }),
-    signOutModal && /* @__PURE__ */ jsx34(
+  return /* @__PURE__ */ jsx35(SignOutGuardContext.Provider, { value: guardContext, children: /* @__PURE__ */ jsxs27("div", { className: "jeeby-cms-admin", children: [
+    /* @__PURE__ */ jsx35("a", { href: "#main-content", className: "jeeby-cms-skip-link", children: "Skip to main content" }),
+    /* @__PURE__ */ jsx35(AdminNav, { onSignOut: handleSignOutRequest, siteName }),
+    /* @__PURE__ */ jsx35("main", { className: "jeeby-cms-shell-content", id: "main-content", role: "main", tabIndex: -1, children: children ?? /* @__PURE__ */ jsx35(PageManager, {}) }),
+    signOutModal && /* @__PURE__ */ jsx35(
       SignOutModal,
       {
         pageName: signOutModal.pageName,

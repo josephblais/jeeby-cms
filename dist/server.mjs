@@ -49,5 +49,22 @@ async function getCMSContent(slug) {
   const pageData = snap.data();
   return (pageData == null ? void 0 : pageData.published) ?? null;
 }
+async function getCollectionContent(slug) {
+  const db = getAdminFirestore();
+  const [contentSnap, entriesSnap] = await Promise.all([
+    db.doc("pages/" + slug).get(),
+    db.collection("pages").where("parentSlug", "==", slug).orderBy("updatedAt", "desc").get()
+  ]);
+  const pageData = contentSnap.exists ? contentSnap.data() : null;
+  return {
+    content: (pageData == null ? void 0 : pageData.published) ?? null,
+    entries: entriesSnap.docs.map((d) => ({ slug: d.id, ...d.data() }))
+  };
+}
+async function getCollectionPages(parentSlug) {
+  const db = getAdminFirestore();
+  const snap = await db.collection("pages").where("parentSlug", "==", parentSlug).orderBy("updatedAt", "desc").get();
+  return snap.docs.map((d) => ({ slug: d.id, ...d.data() }));
+}
 
-export { getCMSContent, withCMSAuth };
+export { getCMSContent, getCollectionContent, getCollectionPages, withCMSAuth };

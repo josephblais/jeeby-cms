@@ -71,6 +71,35 @@ export function uploadFile(storage, file, path, onProgress, cancelRef) {
   })
 }
 
+// Generate a WebP thumbnail File from an image File using Canvas.
+// maxPx: maximum width or height in pixels (aspect ratio preserved).
+// Returns a File of type image/webp, or null if canvas is unavailable.
+export function generateThumbnail(file, maxPx = 400) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight))
+      const w = Math.round(img.naturalWidth * scale)
+      const h = Math.round(img.naturalHeight * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { resolve(null); return }
+      ctx.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(
+        (blob) => resolve(blob ? new File([blob], 'thumb.webp', { type: 'image/webp' }) : null),
+        'image/webp',
+        0.82
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
+    img.src = url
+  })
+}
+
 // Delete a file from Firebase Storage.
 // - storage: Firebase Storage instance (from useCMSFirebase())
 // - path: full storage path used when the file was uploaded
