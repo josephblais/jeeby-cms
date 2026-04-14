@@ -61,28 +61,48 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    // Immediate validation (not debounced)
     const selectedTemplate = templates.find(t => t.name === template)
+    // Validate leaf slug against template pattern (unchanged — applies to leaf only)
     if (selectedTemplate && !validateSlug(selectedTemplate.pattern, slug)) {
       setSlugError(`Slug does not match the ${selectedTemplate.name} pattern.`)
       return
     }
-    // Check slug uniqueness
+
     setSubmitting(true)
     try {
-      const existing = await listPages(db)
-      if (existing.some(p => p.slug === slug)) {
+      // Reuse the cached existingPages from the eager [open] fetch — no extra network call.
+      // Fall back to a live listPages() if for some reason the cache is empty.
+      const existing = existingPages.length > 0 ? existingPages : await listPages(db)
+
+      // D-13: compare FULL DERIVED PATH, not bare slug.
+      // Full path for a new page: parentSlug ? `${parentSlug}/${slug}` : slug
+      // Full path for an existing page: p.parentSlug ? `${p.parentSlug}/${p.slug}` : p.slug
+      const newFullPath = parentSlug ? `${parentSlug}/${slug}` : slug
+      const clash = existing.some(p => {
+        const existingPath = p.parentSlug ? `${p.parentSlug}/${p.slug}` : p.slug
+        return existingPath === newFullPath
+      })
+      if (clash) {
         setSlugError('That slug is already in use. Choose a different one.')
         setSubmitting(false)
         return
       }
-      await savePage(db, slug, {
+
+      // D-01: Firestore doc ID is the LEAF slug only — never includes slashes.
+      // D-03/D-04: pageType + isCollectionIndex on collection, parentSlug on entries
+      const payload = {
         name,
         slug,
+        pageType,
         template: selectedTemplate?.name || null,
         draft: { blocks: [] },
-        published: { blocks: [] }
-      })
+        published: { blocks: [] },
+        ...(pageType === 'collection'
+          ? { isCollectionIndex: true }
+          : { parentSlug: parentSlug || null }
+        ),
+      }
+      await savePage(db, slug, payload)
       onCreated()
       onClose()
     } catch (err) {
