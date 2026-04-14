@@ -61,7 +61,11 @@ export function useAuth() {
   }
 }
 
-export function useCMSContent(slug) {
+export function useCMSContent(slug, { locale = 'en' } = {}) {
+  // locale is accepted for API symmetry with getCMSContent and forward-compat
+  // with future hook-level resolution. Current implementation returns raw
+  // published data — block components apply resolveLocale at render time.
+  void locale
   const { db } = useCMSFirebase()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)

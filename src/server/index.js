@@ -34,7 +34,11 @@ export function withCMSAuth() {
   }
 }
 
-export async function getCMSContent(slug) {
+export async function getCMSContent(slug, { locale = 'en' } = {}) {
+  // locale is accepted for API symmetry with useCMSContent and forward-compat
+  // with future server-side resolution. Current implementation returns raw
+  // published data — block components apply resolveLocale at render time.
+  void locale
   const db = getAdminFirestore()
   const snap = await db.doc('pages/' + slug).get()
   // CRITICAL: Admin SDK snap.exists is a boolean PROPERTY, not a method.
