@@ -1,9 +1,9 @@
 "use client"
-
-const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery', list: 'List' }
-function displayName(type) { return DISPLAY_NAMES[type] || type }
+import { useT, tf, BLOCK_DISPLAY_KEYS } from './useT.js'
 
 export function BlockGutter({ block, onDelete, dragControls }) {
+  const t = useT()
+  const name = t(BLOCK_DISPLAY_KEYS[block.type]) || block.type
   return (
     <div className="jeeby-cms-block-gutter">
       {/*
@@ -12,7 +12,7 @@ export function BlockGutter({ block, onDelete, dragControls }) {
       */}
       <button
         className="jeeby-cms-drag-handle"
-        aria-label={'Drag to reorder ' + displayName(block.type) + ' block'}
+        aria-label={tf(t('dragToReorder'), { blockType: name })}
         aria-hidden="true"
         onPointerDown={(e) => { e.preventDefault(); dragControls.start(e) }}
       >
@@ -29,7 +29,7 @@ export function BlockGutter({ block, onDelete, dragControls }) {
       <button
         type="button"
         className="jeeby-cms-block-delete-btn"
-        aria-label={'Delete ' + displayName(block.type) + ' block'}
+        aria-label={tf(t('deleteBlockAriaLabel'), { blockType: name })}
         onClick={() => onDelete(block)}
       >
         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false">

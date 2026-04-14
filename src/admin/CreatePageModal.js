@@ -3,9 +3,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useCMSFirebase } from '../index.js'
 import { savePage, validateSlug, listPages } from '../firebase/firestore.js'
 import { ModalShell } from './ModalShell.js'
+import { useT, tf } from './useT.js'
 
 export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
   const { db, templates } = useCMSFirebase()
+  const t = useT()
 
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -54,7 +56,7 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       if (!val) return
       const selectedTemplate = templates.find(t => t.name === template)
       if (selectedTemplate && !validateSlug(selectedTemplate.pattern, val)) {
-        setSlugError(`Slug does not match the ${selectedTemplate.name} pattern.`)
+        setSlugError(tf(t('slugPatternError'), { template: selectedTemplate.name }))
       }
     }, 300)
   }
@@ -64,7 +66,7 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
     const selectedTemplate = templates.find(t => t.name === template)
     // Validate leaf slug against template pattern (unchanged — applies to leaf only)
     if (selectedTemplate && !validateSlug(selectedTemplate.pattern, slug)) {
-      setSlugError(`Slug does not match the ${selectedTemplate.name} pattern.`)
+      setSlugError(tf(t('slugPatternError'), { template: selectedTemplate.name }))
       return
     }
 
@@ -83,7 +85,7 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
         return existingPath === newFullPath
       })
       if (clash) {
-        setSlugError('That slug is already in use. Choose a different one.')
+        setSlugError(t('slugInUse'))
         setSubmitting(false)
         return
       }
@@ -106,7 +108,7 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
       onCreated()
       onClose()
     } catch (err) {
-      setSlugError(err.message || 'Failed to create page.')
+      setSlugError(err.message || t('failedToLoadPages'))
     } finally {
       setSubmitting(false)
     }
@@ -118,11 +120,11 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
 
   return (
     <ModalShell open={open} labelId="create-modal-heading" triggerRef={triggerRef} onClose={onClose}>
-      <h2 id="create-modal-heading">Create New Page</h2>
+      <h2 id="create-modal-heading">{t('createNewPage')}</h2>
       <form onSubmit={handleSubmit} noValidate>
         {/* Name field */}
         <div className="jeeby-cms-field">
-          <label htmlFor="cms-page-name">Page name</label>
+          <label htmlFor="cms-page-name">{t('pageNameLabel')}</label>
           <input id="cms-page-name" type="text" required value={name}
             onChange={e => {
               setName(e.target.value)
@@ -131,7 +133,7 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
         </div>
         {/* Page type selector — D-07, D-08 */}
         <div className="jeeby-cms-field">
-          <label htmlFor="cms-page-type">Page type</label>
+          <label htmlFor="cms-page-type">{t('pageTypeLabel')}</label>
           <select
             id="cms-page-type"
             value={pageType}
@@ -141,20 +143,20 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
               if (e.target.value === 'collection') setParentSlug('')
             }}
           >
-            <option value="page">Page</option>
-            <option value="collection">Collection</option>
+            <option value="page">{t('pageOption')}</option>
+            <option value="collection">{t('collectionOption')}</option>
           </select>
         </div>
         {/* Parent collection picker — only for Page type (D-09, D-12) */}
         {pageType === 'page' && collections.length > 0 && (
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-parent-collection">Parent collection</label>
+            <label htmlFor="cms-parent-collection">{t('parentCollection')}</label>
             <select
               id="cms-parent-collection"
               value={parentSlug}
               onChange={e => setParentSlug(e.target.value)}
             >
-              <option value="">None (top-level page)</option>
+              <option value="">{t('noneTopLevel')}</option>
               {collections.map(c => (
                 <option key={c.slug} value={c.slug}>/{c.slug}</option>
               ))}
@@ -163,7 +165,7 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
         )}
         {/* Slug field — D-10: split prefix+leaf when parent is selected */}
         <div className="jeeby-cms-field">
-          <label htmlFor="cms-page-slug">Slug</label>
+          <label htmlFor="cms-page-slug">{t('slugLabel')}</label>
           {parentSlug ? (
             <div className="jeeby-cms-slug-prefixed">
               <span className="jeeby-cms-slug-prefix" aria-hidden="true">/{parentSlug}/</span>
@@ -189,26 +191,26 @@ export function CreatePageModal({ open, onClose, onCreated, triggerRef }) {
           )}
           <p id="cms-slug-hint">
             {parentSlug
-              ? `Full path: /${parentSlug}/${slug || 'my-slug'}`
-              : 'e.g. /about or /blog/my-post'}
+              ? tf(t('fullPathHint'), { path: `${parentSlug}/${slug || 'my-slug'}` })
+              : t('slugHint')}
           </p>
           {slugError && <p id="cms-slug-error" role="alert" className="jeeby-cms-inline-error">{slugError}</p>}
         </div>
         {/* Template dropdown — hidden when no templates */}
         {templates.length > 0 && (
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-page-template">Template</label>
+            <label htmlFor="cms-page-template">{t('templateLabel')}</label>
             <select id="cms-page-template" value={template} onChange={e => setTemplate(e.target.value)}>
-              <option value="">Select a template</option>
+              <option value="">{t('selectTemplate')}</option>
               {templates.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
             </select>
           </div>
         )}
         {/* Buttons */}
         <div className="jeeby-cms-modal-actions">
-          <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Discard</button>
+          <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>{t('discard')}</button>
           <button type="submit" className="jeeby-cms-btn-primary" disabled={submitting} aria-busy={submitting ? 'true' : undefined}
-            style={{ cursor: submitting ? 'not-allowed' : 'pointer' }}>Create Page</button>
+            style={{ cursor: submitting ? 'not-allowed' : 'pointer' }}>{t('createPage')}</button>
         </div>
       </form>
     </ModalShell>

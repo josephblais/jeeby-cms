@@ -1,7 +1,9 @@
 "use client"
 import { ModalShell } from './ModalShell.js'
+import { useT } from './useT.js'
 
 export function UnsavedChangesWarning({ onLeave, onStay }) {
+  const t = useT()
   return (
     <ModalShell
       role="alertdialog"
@@ -10,22 +12,20 @@ export function UnsavedChangesWarning({ onLeave, onStay }) {
       onClose={onStay}
       backdropStyle={{ zIndex: 300 }}
     >
-      <h2 id="unsaved-heading">You have unsaved changes</h2>
-      <p id="unsaved-body">
-        Your recent edits have not been saved yet. Do you want to leave without saving?
-      </p>
+      <h2 id="unsaved-heading">{t('unsavedTitle')}</h2>
+      <p id="unsaved-body">{t('unsavedBody')}</p>
       <div className="jeeby-cms-modal-actions">
         <button
           type="button"
           onClick={onLeave}
           className="jeeby-cms-btn-ghost"
-        >Leave without saving</button>
+        >{t('leaveWithoutSaving')}</button>
         <button
           type="button"
           data-autofocus
           onClick={onStay}
           className="jeeby-cms-btn-ghost"
-        >Stay and save</button>
+        >{t('stayAndSave')}</button>
       </div>
     </ModalShell>
   )

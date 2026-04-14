@@ -2,10 +2,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { ModalShell } from './ModalShell.js'
 import { MediaLibraryModal } from './MediaLibraryModal.js'
+import { useT } from './useT.js'
 
 const DESCRIPTION_MAX = 160
 
 export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving }) {
+  const t = useT()
   const [description, setDescription] = useState('')
   const [shareImageUrl, setShareImageUrl] = useState('')
   const [libraryOpen, setLibraryOpen] = useState(false)
@@ -41,13 +43,13 @@ export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving 
         onClose={onClose}
         cardClassName="jeeby-cms-modal-card--meta"
       >
-        <h2 id="meta-modal-heading">Page settings</h2>
+        <h2 id="meta-modal-heading">{t('pageSettings')}</h2>
         <form onSubmit={handleSubmit} noValidate>
 
           {/* Description */}
           <div className="jeeby-cms-field">
             <label htmlFor="cms-meta-description">
-              Description
+              {t('metaDescription')}
             </label>
             <textarea
               id="cms-meta-description"
@@ -60,7 +62,7 @@ export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving 
             />
             <div className="jeeby-cms-meta-description-footer">
               <span id="cms-meta-description-hint" className="jeeby-cms-field-hint">
-                Shown in search results and social share previews.
+                {t('descriptionHint')}
               </span>
               <span
                 id="cms-meta-description-count"
@@ -75,7 +77,7 @@ export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving 
 
           {/* Share image */}
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-meta-share-image">Share image</label>
+            <label htmlFor="cms-meta-share-image">{t('shareImage')}</label>
             <div className="jeeby-cms-meta-image-row">
               <input
                 id="cms-meta-share-image"
@@ -91,23 +93,23 @@ export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving 
                 className="jeeby-cms-btn-ghost jeeby-cms-meta-library-btn"
                 onClick={() => setLibraryOpen(true)}
               >
-                Library
+                {t('libraryBtn')}
               </button>
             </div>
             <span id="cms-meta-share-image-hint" className="jeeby-cms-field-hint">
-              Used as the Open Graph image for social sharing.
+              {t('shareImageHint')}
             </span>
             {shareImageUrl && (
               <div className="jeeby-cms-meta-image-preview">
                 <img
                   src={shareImageUrl}
-                  alt="Share image preview"
+                  alt={t('shareImageAlt')}
                   onError={e => { e.currentTarget.style.display = 'none' }}
                 />
                 <button
                   type="button"
                   className="jeeby-cms-meta-image-remove"
-                  aria-label="Remove share image"
+                  aria-label={t('removeShareImage')}
                   onClick={() => setShareImageUrl('')}
                 >
                   ✕
@@ -118,7 +120,7 @@ export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving 
 
           <div className="jeeby-cms-modal-actions">
             <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -127,7 +129,7 @@ export function PageMetaModal({ open, onClose, triggerRef, meta, onSave, saving 
               aria-busy={saving ? 'true' : undefined}
               style={{ cursor: saving || descOver ? 'not-allowed' : 'pointer' }}
             >
-              {saving ? 'Saving\u2026' : 'Save'}
+              {saving ? t('saving') : t('save')}
             </button>
           </div>
         </form>

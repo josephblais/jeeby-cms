@@ -1,6 +1,8 @@
 "use client"
+import { useT } from './useT.js'
 
 export function PublishToast() {
+  const t = useT()
   return (
     <div
       role="status"
@@ -8,7 +10,7 @@ export function PublishToast() {
       aria-atomic="true"
       className="jeeby-cms-publish-toast"
     >
-      <span>Page published successfully.</span>
+      <span>{t('pagePublished')}</span>
     </div>
   )
 }

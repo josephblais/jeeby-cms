@@ -2,8 +2,10 @@
 import { useState, useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { BlockTypePicker } from './BlockTypePicker.js'
+import { useT } from './useT.js'
 
 export function AddBlockButton({ onAdd, insertIndex }) {
+  const t = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const buttonRef = useRef(null)
@@ -32,7 +34,7 @@ export function AddBlockButton({ onAdd, insertIndex }) {
         <button
           ref={buttonRef}
           type="button"
-          aria-label="Add block"
+          aria-label={t('addBlock')}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           onClick={() => setIsOpen(v => !v)}

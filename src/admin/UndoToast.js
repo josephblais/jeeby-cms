@@ -1,8 +1,9 @@
 "use client"
-
-const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery' }
+import { useT, tf, BLOCK_DISPLAY_KEYS } from './useT.js'
 
 export function UndoToast({ blockType, onUndo }) {
+  const t = useT()
+  const name = t(BLOCK_DISPLAY_KEYS[blockType]) || blockType
   return (
     <div
       role="status"
@@ -10,13 +11,13 @@ export function UndoToast({ blockType, onUndo }) {
       aria-atomic="true"
       className="jeeby-cms-undo-toast"
     >
-      <span>{(DISPLAY_NAMES[blockType] || blockType) + ' block deleted.'}</span>
+      <span>{tf(t('blockDeleted'), { blockType: name })}</span>
       <button
         type="button"
-        aria-label={'Undo delete ' + (DISPLAY_NAMES[blockType] || blockType) + ' block'}
+        aria-label={tf(t('undoDeleteAriaLabel'), { blockType: name })}
         onClick={onUndo}
         className="jeeby-cms-btn-ghost"
-      >Undo delete</button>
+      >{t('undoDelete')}</button>
     </div>
   )
 }

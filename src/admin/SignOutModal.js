@@ -1,5 +1,6 @@
 "use client"
 import { ModalShell } from './ModalShell.js'
+import { useT, tf } from './useT.js'
 
 // Modal shown when the user tries to sign out with unpublished changes.
 // Props:
@@ -11,6 +12,7 @@ import { ModalShell } from './ModalShell.js'
 //   publishError    — bool: last publish attempt failed
 // ACCESSIBILITY: WCAG 2.1.1 (keyboard), 2.4.3 (focus order), 4.1.3 (status messages)
 export function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, publishing, publishError }) {
+  const t = useT()
   return (
     <ModalShell
       role="alertdialog"
@@ -19,14 +21,11 @@ export function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, p
       onClose={onCancel}
       backdropStyle={{ zIndex: 300 }}
     >
-      <h2 id="signout-modal-heading">Unpublished changes</h2>
-      <p id="signout-modal-body">
-        <strong>{pageName}</strong> has changes saved as a draft but not yet published.
-        Publish now to make them live, or sign out and publish later.
-      </p>
+      <h2 id="signout-modal-heading">{t('unpublishedChanges')}</h2>
+      <p id="signout-modal-body">{tf(t('signOutBody'), { pageName })}</p>
       {publishError && (
         <p role="alert" className="jeeby-cms-inline-error" style={{ marginTop: 8 }}>
-          Publish failed. Sign out anyway or try again.
+          {t('publishFailedSignOut')}
         </p>
       )}
       <div className="jeeby-cms-modal-actions">
@@ -36,7 +35,7 @@ export function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, p
           onClick={onSignOutAnyway}
           disabled={publishing}
         >
-          Sign out anyway
+          {t('signOutAnyway')}
         </button>
         <button
           type="button"
@@ -45,7 +44,7 @@ export function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, p
           onClick={onCancel}
           disabled={publishing}
         >
-          Cancel
+          {t('cancel')}
         </button>
         <button
           type="button"
@@ -54,7 +53,7 @@ export function SignOutModal({ pageName, onPublish, onSignOutAnyway, onCancel, p
           aria-busy={publishing ? 'true' : undefined}
           disabled={publishing}
         >
-          {publishing ? 'Publishing\u2026' : 'Publish and sign out'}
+          {publishing ? t('publishing') : t('publishAndSignOut')}
         </button>
       </div>
     </ModalShell>

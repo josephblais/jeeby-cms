@@ -1,55 +1,59 @@
 "use client"
 import { useState, useEffect } from 'react'
-
-function formatPublishedDate(ts) {
-  if (!ts) return null
-  const date = ts.toDate ? ts.toDate() : new Date(ts)
-  const isToday = date.toDateString() === new Date().toDateString()
-  if (isToday) {
-    const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-    return `today at ${time}`
-  }
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-function formatLastPublished(ts) {
-  if (!ts) return null
-  const date = ts.toDate ? ts.toDate() : new Date(ts)
-  const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-  if (date.toDateString() === new Date().toDateString()) {
-    return `Last published today at ${time}`
-  }
-  const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  return `Last published ${dateStr} at ${time}`
-}
+import { useT, tf } from './useT.js'
 
 // Derives a single compound status from all document signals.
 // Priority: error > saving > unpublished changes > published > idle.
-function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt }) {
+// Takes t() so labels are localized.
+function getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt, t }) {
   if (saveStatus === 'error') {
-    return { label: 'Save failed', tone: 'error', retry: true, sublabel: null }
+    return { label: t('saveFailed'), tone: 'error', retry: true, sublabel: null }
   }
   if (saveStatus === 'saving') {
-    return { label: 'Saving\u2026', tone: 'muted', retry: false, sublabel: null }
+    return { label: t('saving'), tone: 'muted', retry: false, sublabel: null }
   }
   if (hasDraftChanges) {
     const wasPublished = !!lastPublishedAt
     return {
-      label: wasPublished && saveStatus === 'saved' ? 'Unpublished changes' :
-             saveStatus === 'saved' ? 'Unpublished, saved' : 'Unsaved changes',
+      label: wasPublished && saveStatus === 'saved' ? t('unpublishedChanges') :
+             saveStatus === 'saved' ? t('unpublishedSaved') : t('unsavedChanges'),
       tone: 'draft',
       retry: false,
-      sublabel: wasPublished ? formatLastPublished(lastPublishedAt) : null,
+      sublabel: wasPublished ? formatLastPublished(lastPublishedAt, t) : null,
     }
   }
   if (lastPublishedAt) {
-    const date = formatPublishedDate(lastPublishedAt)
-    return { label: date ? `Published ${date}` : 'Published', tone: 'published', retry: false, sublabel: null }
+    const label = formatPublishedDate(lastPublishedAt, t)
+    return { label, tone: 'published', retry: false, sublabel: null }
   }
-  return { label: 'Not yet live', tone: 'muted', retry: false, sublabel: null }
+  return { label: t('notYetLive'), tone: 'muted', retry: false, sublabel: null }
+}
+
+function formatPublishedDate(ts, t) {
+  if (!ts) return t('published')
+  const date = ts.toDate ? ts.toDate() : new Date(ts)
+  const isToday = date.toDateString() === new Date().toDateString()
+  if (isToday) {
+    const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    return tf(t('publishedTodayAt'), { time })
+  }
+  const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return tf(t('publishedOn'), { date: dateStr })
+}
+
+function formatLastPublished(ts, t) {
+  if (!ts) return null
+  const date = ts.toDate ? ts.toDate() : new Date(ts)
+  const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  if (date.toDateString() === new Date().toDateString()) {
+    return tf(t('lastPublishedTodayAt'), { time })
+  }
+  const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return tf(t('lastPublishedOn'), { date: dateStr, time })
 }
 
 export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onBackClick, onRenameName, onRenameSlug, lastPublishedAt, hasDraftChanges, onPublish, publishStatus, publishBtnRef, onOpenMeta, metaBtnRef }) {
+  const t = useT()
   const displayName = pageName || slug
 
   // Title inline edit
@@ -61,7 +65,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
   const [slugValue, setSlugValue] = useState(slug)
   const [slugDirty, setSlugDirty] = useState(false)
 
-  const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt })
+  const status = getDocumentStatus({ saveStatus, hasDraftChanges, lastPublishedAt, t })
 
   // Copy URL feedback
   const [copied, setCopied] = useState(false)
@@ -125,9 +129,9 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
           href="/admin"
           onClick={onBackClick}
           className="jeeby-cms-editor-back"
-          aria-label="Back to Pages"
+          aria-label={t('backToPages')}
         >
-          ← Pages
+          ← {t('pages')}
         </a>
       </div>
 
@@ -138,7 +142,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
             type="text"
             className="jeeby-cms-editor-title-input"
             value={titleValue}
-            aria-label="Page name"
+            aria-label={t('pageNameLabel')}
             onChange={e => setTitleValue(e.target.value)}
             onBlur={commitTitle}
             onKeyDown={handleTitleKeyDown}
@@ -155,7 +159,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
               className="jeeby-cms-editor-title-btn"
               onClick={() => setEditingTitle(true)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditingTitle(true) } }}
-              aria-label={`Page name: ${displayName}. Click to edit`}
+              aria-label={tf(t('pageNameEdit'), { name: displayName })}
             >
               {displayName}
             </button>
@@ -170,7 +174,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
                 type="text"
                 className="jeeby-cms-slug-input"
                 value={slugValue}
-                aria-label="Page slug"
+                aria-label={t('pageSlugLabel')}
                 onChange={handleSlugChange}
                 onBlur={commitSlug}
                 onKeyDown={handleSlugKeyDown}
@@ -178,7 +182,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
               />
               {slugDirty && (
                 <span className="jeeby-cms-slug-hint" aria-live="polite">
-                  Enter to save
+                  {t('enterToSave')}
                 </span>
               )}
             </>
@@ -187,7 +191,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
               className="jeeby-cms-slug-read-btn"
               onClick={() => setEditingSlug(true)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditingSlug(true) } }}
-              aria-label={`Page slug: ${slug}. Click to edit`}
+              aria-label={tf(t('pageSlugEdit'), { slug })}
             >
               {slug}
             </button>
@@ -211,7 +215,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
                 className="jeeby-cms-status-retry"
                 onClick={onRetry}
               >
-                Try again
+                {t('tryAgain')}
               </button>
             )}
           </div>
@@ -224,8 +228,8 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
           type="button"
           className="jeeby-cms-btn-ghost"
           onClick={onOpenMeta}
-          aria-label="Page settings"
-        >Settings</button>
+          aria-label={t('pageSettings')}
+        >{t('settings')}</button>
         {lastPublishedAt && (
           <div className="jeeby-cms-editor-page-links">
             <a
@@ -233,15 +237,15 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
               target="_blank"
               rel="noopener noreferrer"
               className="jeeby-cms-btn-ghost"
-              aria-label={`View published page: ${pageUrl}`}
-            >View page</a>
+              aria-label={tf(t('viewPageAriaLabel'), { url: pageUrl })}
+            >{t('viewPage')}</a>
             <button
               type="button"
               className="jeeby-cms-btn-ghost"
               onClick={handleCopyUrl}
-              aria-label={copied ? 'URL copied' : `Copy page URL: ${pageUrl}`}
+              aria-label={copied ? t('urlCopied') : tf(t('copyUrlAriaLabel'), { url: pageUrl })}
               aria-live="polite"
-            >{copied ? 'Copied!' : 'Copy URL'}</button>
+            >{copied ? t('copied') : t('copyUrl')}</button>
           </div>
         )}
         <button
@@ -256,7 +260,7 @@ export function EditorHeader({ pageName, slug, pageUrl, saveStatus, onRetry, onB
             pointerEvents: publishStatus === 'publishing' || saveStatus === 'saving' ? 'none' : undefined,
           }}
         >
-          {publishStatus === 'publishing' ? 'Publishing\u2026' : 'Publish'}
+          {publishStatus === 'publishing' ? t('publishing') : t('publish')}
         </button>
       </div>
 

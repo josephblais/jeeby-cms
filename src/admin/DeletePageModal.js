@@ -3,9 +3,11 @@ import { useState } from 'react'
 import { useCMSFirebase } from '../index.js'
 import { deletePage } from '../firebase/firestore.js'
 import { ModalShell } from './ModalShell.js'
+import { useT, tf } from './useT.js'
 
 export function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
   const { db } = useCMSFirebase()
+  const t = useT()
   const [deleting, setDeleting] = useState(false)
 
   async function handleDelete() {
@@ -24,12 +26,12 @@ export function DeletePageModal({ page, onClose, onDeleted, triggerRef }) {
 
   return (
     <ModalShell open={!!page} labelId="delete-modal-heading" triggerRef={triggerRef} onClose={onClose}>
-      <h2 id="delete-modal-heading">Delete page?</h2>
-      <p>Delete {page?.slug}? This cannot be undone.</p>
+      <h2 id="delete-modal-heading">{t('deletePageTitle')}</h2>
+      <p>{tf(t('deletePageBody'), { slug: page?.slug ?? '' })}</p>
       <div className="jeeby-cms-modal-actions">
-        <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>Keep Page</button>
+        <button type="button" className="jeeby-cms-btn-ghost" onClick={onClose}>{t('keepPage')}</button>
         <button type="button" className="jeeby-cms-btn-destructive" onClick={handleDelete} disabled={deleting} aria-busy={deleting ? 'true' : undefined}
-          style={{ cursor: deleting ? 'not-allowed' : 'pointer' }}>Delete Page</button>
+          style={{ cursor: deleting ? 'not-allowed' : 'pointer' }}>{t('deletePageAction')}</button>
       </div>
     </ModalShell>
   )

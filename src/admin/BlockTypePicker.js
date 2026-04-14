@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
+import { useT } from './useT.js'
 
 function IconText() {
   return (
@@ -112,18 +113,19 @@ function IconOrderedList() {
   )
 }
 
-const BLOCK_TYPES = [
-  { type: 'title',    colorKey: 'heading', label: 'Heading',       hint: 'title or subtitle',          icon: <IconHeading />,     initialData: undefined },
-  { type: 'richtext', colorKey: 'text',    label: 'Text',          hint: 'paragraphs with formatting', icon: <IconText />,        initialData: undefined },
-  { type: 'list',     colorKey: 'list',    label: 'Bullet List',   hint: 'points without ranking',     icon: <IconBulletList />,  initialData: { ordered: false, items: [''] } },
-  { type: 'list',     colorKey: 'list',    label: 'Numbered List', hint: 'steps or ranked items',      icon: <IconOrderedList />, initialData: { ordered: true,  items: [''] } },
-  { type: 'pullquote', colorKey: 'text',    label: 'Pull Quote',  hint: 'highlighted quote or callout',  icon: <IconPullQuote />,  initialData: { quote: '', attribution: '' } },
-  { type: 'image',    colorKey: 'media',   label: 'Image',         hint: 'photo or graphic',           icon: <IconImage />,       initialData: undefined },
-  { type: 'video',    colorKey: 'media',   label: 'Video',         hint: 'YouTube or Vimeo link',      icon: <IconVideo />,       initialData: undefined },
-  { type: 'gallery',  colorKey: 'media',   label: 'Gallery',       hint: 'photo grid',                 icon: <IconGallery />,     initialData: undefined },
+const BLOCK_DEFS = [
+  { type: 'title',     colorKey: 'heading', labelKey: 'blockTypeHeading',      hintKey: 'blockHintHeading',      icon: <IconHeading />,     initialData: undefined },
+  { type: 'richtext',  colorKey: 'text',    labelKey: 'blockTypeText',         hintKey: 'blockHintText',         icon: <IconText />,        initialData: undefined },
+  { type: 'list',      colorKey: 'list',    labelKey: 'blockTypeBulletList',   hintKey: 'blockHintBulletList',   icon: <IconBulletList />,  initialData: { ordered: false, items: [''] } },
+  { type: 'list',      colorKey: 'list',    labelKey: 'blockTypeNumberedList', hintKey: 'blockHintNumberedList', icon: <IconOrderedList />, initialData: { ordered: true,  items: [''] } },
+  { type: 'pullquote', colorKey: 'text',    labelKey: 'blockTypePullQuote',    hintKey: 'blockHintPullQuote',    icon: <IconPullQuote />,   initialData: { quote: '', attribution: '' } },
+  { type: 'image',     colorKey: 'media',   labelKey: 'blockTypeImage',        hintKey: 'blockHintImage',        icon: <IconImage />,       initialData: undefined },
+  { type: 'video',     colorKey: 'media',   labelKey: 'blockTypeVideo',        hintKey: 'blockHintVideo',        icon: <IconVideo />,       initialData: undefined },
+  { type: 'gallery',   colorKey: 'media',   labelKey: 'blockTypeGallery',      hintKey: 'blockHintGallery',      icon: <IconGallery />,     initialData: undefined },
 ]
 
 export function BlockTypePicker({ onSelect, onClose }) {
+  const t = useT()
   const [activeIndex, setActiveIndex] = useState(0)
   const listRef = useRef(null)
 
@@ -147,17 +149,17 @@ export function BlockTypePicker({ onSelect, onClose }) {
   function handleKeyDown(e) {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      const next = (activeIndex + 1) % BLOCK_TYPES.length
+      const next = (activeIndex + 1) % BLOCK_DEFS.length
       setActiveIndex(next)
       listRef.current?.querySelectorAll('[role="option"]')[next]?.focus()
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      const prev = (activeIndex - 1 + BLOCK_TYPES.length) % BLOCK_TYPES.length
+      const prev = (activeIndex - 1 + BLOCK_DEFS.length) % BLOCK_DEFS.length
       setActiveIndex(prev)
       listRef.current?.querySelectorAll('[role="option"]')[prev]?.focus()
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      const bt = BLOCK_TYPES[activeIndex]
+      const bt = BLOCK_DEFS[activeIndex]
       onSelect(bt.type, bt.initialData)
     } else if (e.key === 'Escape') {
       e.preventDefault()
@@ -169,13 +171,13 @@ export function BlockTypePicker({ onSelect, onClose }) {
     <ul
       ref={listRef}
       role="listbox"
-      aria-label="Choose block type"
+      aria-label={t('chooseBlockType')}
       onKeyDown={handleKeyDown}
       className="jeeby-cms-block-type-picker"
     >
-      {BLOCK_TYPES.map((bt, index) => (
+      {BLOCK_DEFS.map((bt, index) => (
         <li
-          key={bt.label}
+          key={bt.labelKey}
           role="option"
           tabIndex={0}
           aria-selected={index === activeIndex}
@@ -185,8 +187,8 @@ export function BlockTypePicker({ onSelect, onClose }) {
         >
           {bt.icon}
           <span className="jeeby-cms-block-type-info">
-            <span className="jeeby-cms-block-type-label">{bt.label}</span>
-            <span className="jeeby-cms-block-type-hint">{bt.hint}</span>
+            <span className="jeeby-cms-block-type-label">{t(bt.labelKey)}</span>
+            <span className="jeeby-cms-block-type-hint">{t(bt.hintKey)}</span>
           </span>
         </li>
       ))}

@@ -15,11 +15,18 @@ export function CMSProvider({ firebaseConfig, templates = [], isLocalized = fals
   // the overhead of calling getFirestore/getAuth/getStorage on every render.
   const firebase = useMemo(() => initFirebase(firebaseConfig), [firebaseConfig])
   const [locale, setLocale] = useState('en')
+  // uiLocale: browser language for admin panel UI strings (not content locale).
+  // Detected once on mount — SSR-safe via lazy initializer.
+  const [uiLocale] = useState(() => {
+    if (typeof navigator === 'undefined') return 'en'
+    const lang = navigator.language?.slice(0, 2).toLowerCase()
+    return ['en', 'fr'].includes(lang) ? lang : 'en'
+  })
   // Memoize combined value to avoid new object reference on every render (Pitfall 2).
   // setLocale identity is stable from useState — excluded from deps array intentionally.
   const value = useMemo(
-    () => ({ ...firebase, templates, isLocalized, locale, setLocale }),
-    [firebase, templates, isLocalized, locale]
+    () => ({ ...firebase, templates, isLocalized, locale, setLocale, uiLocale }),
+    [firebase, templates, isLocalized, locale, uiLocale]
   )
   return <CMSContext.Provider value={value}>{children}</CMSContext.Provider>
 }

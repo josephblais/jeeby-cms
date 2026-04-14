@@ -1,9 +1,11 @@
 "use client"
 import { useState } from 'react'
 import { useAuth } from '../index.js'
+import { useT } from './useT.js'
 
 export function LoginPage({ siteName }) {
   const { signIn } = useAuth()
+  const t = useT()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -20,7 +22,7 @@ export function LoginPage({ siteName }) {
     } catch (err) {
       // Firebase error codes: auth/invalid-credential, auth/user-not-found, etc.
       // Map all to generic message per CONTEXT.md
-      setError('Invalid email or password.')
+      setError(t('invalidCredentials'))
     } finally {
       setSubmitting(false)
     }
@@ -35,7 +37,7 @@ export function LoginPage({ siteName }) {
         <div className="jeeby-cms-login-form-pane">
           <form className="jeeby-cms-login-form" onSubmit={handleSubmit} noValidate>
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-email">Email address</label>
+            <label htmlFor="cms-email">{t('emailAddress')}</label>
             <input
               id="cms-email"
               type="email"
@@ -46,7 +48,7 @@ export function LoginPage({ siteName }) {
             />
           </div>
           <div className="jeeby-cms-field">
-            <label htmlFor="cms-password">Password</label>
+            <label htmlFor="cms-password">{t('password')}</label>
             <div className="jeeby-cms-password-wrapper">
               <input
                 id="cms-password"
@@ -59,7 +61,7 @@ export function LoginPage({ siteName }) {
               <button
                 type="button"
                 className="jeeby-cms-password-toggle"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword(v => !v)}
               >
@@ -88,7 +90,7 @@ export function LoginPage({ siteName }) {
             aria-busy={submitting ? 'true' : undefined}
             style={{ cursor: submitting ? 'not-allowed' : 'pointer', display: 'block', width: '100%' }}
           >
-            {submitting ? 'Signing in\u2026' : 'Sign in'}
+            {submitting ? t('signingIn') : t('signIn')}
           </button>
           {error && (
             <p className="jeeby-cms-auth-error" role="alert" aria-live="assertive">{error}</p>
