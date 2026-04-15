@@ -17,7 +17,7 @@ test('UndoToast has aria-atomic="true"', () => {
 })
 
 test('UndoToast has "Undo delete" button text', () => {
-  assert.ok(src.includes('Undo delete'), 'UndoToast must have "Undo delete" button text')
+  assert.ok(src.includes("t('undoDeleteAriaLabel')"), 'UndoToast must have "Undo delete" via t("undoDeleteAriaLabel")')
 })
 
 test('UndoToast uses CSS class for fixed positioning', () => {

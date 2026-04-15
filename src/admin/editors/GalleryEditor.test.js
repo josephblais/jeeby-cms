@@ -11,20 +11,20 @@ test('GalleryEditor writes item.src (not item.url)', () => {
   )
 })
 
-test('GalleryEditor has aria-label="Gallery images" on items list', () => {
-  assert.ok(src.includes('aria-label="Gallery images"'), 'Gallery items list must have aria-label="Gallery images"')
+test('GalleryEditor has aria-label on items list', () => {
+  assert.ok(src.includes('galleryImagesLabel'), 'Gallery items list must use galleryImagesLabel i18n key')
 })
 
 test('GalleryEditor has Add image button', () => {
-  assert.ok(src.includes('Add image'), 'GalleryEditor must have an "Add image" button')
+  assert.ok(src.includes('galleryAddImage'), 'GalleryEditor must use galleryAddImage i18n key for Add image button')
 })
 
 test('GalleryEditor has Remove button with aria-label', () => {
-  assert.ok(src.includes('Remove gallery image'), 'GalleryEditor must have "Remove gallery image" aria-label on remove button')
+  assert.ok(src.includes('galleryRemoveLabel'), 'GalleryEditor must use galleryRemoveLabel i18n key on remove button')
 })
 
 test('GalleryEditor has alt text per item', () => {
-  assert.ok(src.includes('Alt text for item'), 'GalleryEditor must have "Alt text for item" label per gallery item')
+  assert.ok(src.includes('galleryAltLabel'), 'GalleryEditor must use galleryAltLabel i18n key per gallery item')
 })
 
 test('GalleryEditor has "use client" directive', () => {
@@ -44,8 +44,8 @@ test('GalleryEditor imports uploadFile from storage', () => {
 
 test('GalleryEditor supports saving uploaded gallery images to media library', () => {
   assert.ok(src.includes('addMediaItem'), 'GalleryEditor should import/use addMediaItem')
-  assert.ok(src.includes('Add upload to Media Library'), 'GalleryEditor should show media-library metadata prompt for uploads')
-  assert.ok(src.includes('Save to Library'), 'GalleryEditor should include Save to Library action')
+  assert.ok(src.includes('galleryAddToMediaLibrary'), 'GalleryEditor should use galleryAddToMediaLibrary i18n key')
+  assert.ok(src.includes('saveToLibrary'), 'GalleryEditor should use saveToLibrary i18n key')
 })
 
 test('GalleryEditor syncs metadata alt from gallery alt during upload until metadata alt is manually edited', () => {
@@ -69,21 +69,21 @@ test('GalleryEditor imports useCMSFirebase', () => {
 
 test('GalleryEditor has per-item upload button', () => {
   assert.ok(
-    src.includes('Upload image') || src.includes('jeeby-cms-gallery-upload-btn'),
+    src.includes('galleryUploadAriaLabel') || src.includes('jeeby-cms-gallery-upload-btn'),
     'GalleryItem must have per-item upload button'
   )
 })
 
 test('GalleryEditor has batch upload button', () => {
   assert.ok(
-    src.includes('Upload multiple') || src.includes('jeeby-cms-gallery-batch-btn'),
-    'GalleryEditor must have batch "Upload multiple" button'
+    src.includes('galleryUploadMultiple') || src.includes('jeeby-cms-gallery-batch-btn'),
+    'GalleryEditor must have batch upload button'
   )
 })
 
 test('GalleryEditor shows per-image batch upload queue with thumbnail, progress, and metadata fields', () => {
   assert.ok(src.includes('jeeby-cms-gallery-batch-queue'), 'GalleryEditor should render a batch upload queue')
-  assert.ok(src.includes('Uploading — ${Math.round(upload.progress)}%'), 'GalleryEditor should show per-image upload progress text')
+  assert.ok(src.includes('uploadingProgress') || src.includes('batchUploadProgressLabel'), 'GalleryEditor should show per-image upload progress text')
   assert.ok(src.includes('jeeby-cms-upload-progress'), 'GalleryEditor should show per-image upload progress bar')
   assert.ok(src.includes('gallery-batch-title-'), 'GalleryEditor should provide title input per uploading image')
   assert.ok(src.includes('gallery-batch-alt-'), 'GalleryEditor should provide alt input per uploading image')
@@ -96,5 +96,5 @@ test('GalleryEditor has hidden file input for upload', () => {
 test('GalleryEditor integrates media library in multi-select mode', () => {
   assert.ok(src.includes('MediaLibraryModal'), 'GalleryEditor should import/use MediaLibraryModal')
   assert.ok(src.includes('mode="select-multi"'), 'GalleryEditor should open media library in multi-select mode')
-  assert.ok(src.includes('Add from library'), 'GalleryEditor should expose Add from library action')
+  assert.ok(src.includes('galleryAddFromLibrary'), 'GalleryEditor should use galleryAddFromLibrary i18n key')
 })

@@ -1,5 +1,6 @@
 "use client"
 import { useState, useRef } from 'react'
+import { useT } from '../useT.js'
 
 // PullQuoteEditor — edits data.quote (string) and data.attribution (string).
 // View mode renders a styled blockquote preview; clicking enters edit mode.
@@ -11,6 +12,7 @@ import { useState, useRef } from 'react'
 //   WCAG 1.1.1 — decorative opening quote mark is a CSS ::before pseudo-element
 //                (invisible to the accessibility tree — no aria-hidden needed).
 export function PullQuoteEditor({ data, onChange, blockId }) {
+  const t = useT()
   const [isEditing, setIsEditing] = useState(false)
   const quote = data?.quote ?? ''
   const attribution = data?.attribution ?? ''
@@ -62,7 +64,7 @@ export function PullQuoteEditor({ data, onChange, blockId }) {
         role="button"
         tabIndex={0}
         id={'block-input-' + blockId}
-        aria-label="Pull quote — click to edit"
+        aria-label={t('pullquoteClickToEdit')}
         className="jeeby-cms-pullquote-view"
         onClick={enterEditMode}
         onKeyDown={e => {
@@ -82,7 +84,7 @@ export function PullQuoteEditor({ data, onChange, blockId }) {
             )}
           </figure>
         ) : (
-          <p className="jeeby-cms-pullquote-empty-hint">Pull quote — click to add text</p>
+          <p className="jeeby-cms-pullquote-empty-hint">{t('pullquoteEmptyHint')}</p>
         )}
       </div>
     )
@@ -91,25 +93,25 @@ export function PullQuoteEditor({ data, onChange, blockId }) {
   // Edit mode — two labelled fields, blur outside container exits
   return (
     <div ref={containerRef} className="jeeby-cms-pullquote-editor" onBlur={handleContainerBlur}>
-      <label htmlFor={'block-input-' + blockId} className="jeeby-cms-field-label">Quote</label>
+      <label htmlFor={'block-input-' + blockId} className="jeeby-cms-field-label">{t('pullquoteLabel')}</label>
       <textarea
         ref={textareaRef}
         id={'block-input-' + blockId}
         value={quote}
         onChange={e => update({ quote: e.target.value })}
         onKeyDown={handleTextareaKeyDown}
-        placeholder="Enter pull quote text…"
+        placeholder={t('pullquotePlaceholder')}
         className="jeeby-cms-pullquote-textarea"
         rows={3}
       />
-      <label htmlFor={'pullquote-attr-' + blockId} className="jeeby-cms-field-label jeeby-cms-pullquote-attr-label">Attribution</label>
+      <label htmlFor={'pullquote-attr-' + blockId} className="jeeby-cms-field-label jeeby-cms-pullquote-attr-label">{t('pullquoteAttrLabel')}</label>
       <input
         type="text"
         id={'pullquote-attr-' + blockId}
         value={attribution}
         onChange={e => update({ attribution: e.target.value })}
         onKeyDown={handleAttributionKeyDown}
-        placeholder="Author or source (optional)"
+        placeholder={t('pullquoteAttrPlaceholder')}
         className="jeeby-cms-pullquote-attr-input"
       />
     </div>

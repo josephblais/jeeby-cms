@@ -1,5 +1,6 @@
 "use client"
 import { useRef, useState } from 'react'
+import { useT, tf } from '../useT.js'
 
 // SVG icons — match the ones used in TextEditor.
 function IconBulletList() {
@@ -38,6 +39,7 @@ function IconOrderedList() {
 // ACCESSIBILITY: WCAG 4.1.2 (Name, Role, Value) — each input and button has an aria-label.
 // The type toggle uses aria-pressed to communicate the active state.
 export function ListEditor({ data, onChange, blockId }) {
+  const t = useT()
   const items = data?.items?.length ? data.items : ['']
   const [isEditing, setIsEditing] = useState(false)
   const ordered = data?.ordered ?? false
@@ -102,7 +104,7 @@ export function ListEditor({ data, onChange, blockId }) {
         role="button"
         tabIndex={0}
         id={'block-input-' + blockId}
-        aria-label="List block — click to edit"
+        aria-label={t('listClickToEdit')}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditing(true); requestAnimationFrame(() => inputRefs.current[0]?.focus()) } }}
       >
         {visibleItems.length > 0 ? (
@@ -110,7 +112,7 @@ export function ListEditor({ data, onChange, blockId }) {
             {visibleItems.map((item, i) => <li key={i}>{item}</li>)}
           </Tag>
         ) : (
-          <p className="jeeby-cms-list-empty-hint">Empty list — click to add items</p>
+          <p className="jeeby-cms-list-empty-hint">{t('listEmptyHint')}</p>
         )}
       </div>
     )
@@ -131,15 +133,15 @@ export function ListEditor({ data, onChange, blockId }) {
               id={index === 0 ? 'block-input-' + blockId : undefined}
               type="text"
               value={item}
-              aria-label={`Item ${index + 1}`}
+              aria-label={tf(t('listItemLabel'), { n: index + 1 })}
               onChange={e => updateItem(index, e.target.value)}
               onKeyDown={e => handleKeyDown(e, index)}
               className="jeeby-cms-list-item-input"
-              placeholder="List item"
+              placeholder={t('listItemPlaceholder')}
             />
             <button
               type="button"
-              aria-label={`Remove item ${index + 1}`}
+              aria-label={tf(t('listRemoveItem'), { n: index + 1 })}
               onClick={() => removeItem(index)}
               disabled={items.length === 1 && items[0] === ''}
               className="jeeby-cms-btn-ghost jeeby-cms-list-item-remove"
@@ -157,23 +159,23 @@ export function ListEditor({ data, onChange, blockId }) {
         type="button"
         className="jeeby-cms-btn-ghost jeeby-cms-list-add-btn"
         onClick={() => addItem(items.length - 1)}
-      >+ Add item</button>
+      >{t('listAddItem')}</button>
 
       {/* List type toggle — aux control, revealed on block hover/focus */}
       <div className="jeeby-cms-block-aux">
-        <div role="group" aria-label="List type" className="jeeby-cms-toolbar">
+        <div role="group" aria-label={t('listTypeGroup')} className="jeeby-cms-toolbar">
           <button
             type="button"
-            aria-label="Bulleted list"
-            title="Bulleted list"
+            aria-label={t('listBulleted')}
+            title={t('listBulleted')}
             aria-pressed={!ordered}
             className="jeeby-cms-toolbar-btn"
             onClick={() => update({ ordered: false })}
           ><IconBulletList /></button>
           <button
             type="button"
-            aria-label="Numbered list"
-            title="Numbered list"
+            aria-label={t('listNumbered')}
+            title={t('listNumbered')}
             aria-pressed={ordered}
             className="jeeby-cms-toolbar-btn"
             onClick={() => update({ ordered: true })}

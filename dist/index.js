@@ -76,17 +76,26 @@ var import_react9 = require("react");
 
 // src/blocks/Title.js
 var import_react = require("react");
+
+// src/utils/resolveLocale.js
+function resolveLocale(value, locale = "en") {
+  if (value === null || value === void 0) return "";
+  if (typeof value !== "object") return value;
+  return value[locale] || value["en"] || "";
+}
+
+// src/blocks/Title.js
 var VALID_LEVELS = ["h2", "h3", "h4", "h5", "h6"];
 var normalizeLevel = (l) => l === "h1" ? "h2" : VALID_LEVELS.includes(l) ? l : "h3";
-function Title({ data, className }) {
+function Title({ data, className, locale = "en" }) {
   const tag = normalizeLevel(data == null ? void 0 : data.level);
-  return (0, import_react.createElement)(tag, { className }, data == null ? void 0 : data.text);
+  return (0, import_react.createElement)(tag, { className }, resolveLocale(data == null ? void 0 : data.text, locale));
 }
 
 // src/blocks/Paragraph.js
 var import_react2 = require("react");
-function Paragraph({ data, className }) {
-  return (0, import_react2.createElement)("p", { className }, data == null ? void 0 : data.text);
+function Paragraph({ data, className, locale = "en" }) {
+  return (0, import_react2.createElement)("p", { className }, resolveLocale(data == null ? void 0 : data.text, locale));
 }
 
 // src/blocks/RichText.js
@@ -102,8 +111,8 @@ function stripDangerous(html) {
   if (!html) return "";
   return html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, "").replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href=""');
 }
-function RichText({ data, className }) {
-  const raw = (data == null ? void 0 : data.html) ?? "";
+function RichText({ data, className, locale = "en" }) {
+  const raw = resolveLocale(data == null ? void 0 : data.html, locale) ?? "";
   const [clean, setClean] = (0, import_react3.useState)(() => stripDangerous(raw));
   (0, import_react3.useEffect)(() => {
     if (typeof (DOMPurify == null ? void 0 : DOMPurify.sanitize) === "function") {
@@ -115,21 +124,23 @@ function RichText({ data, className }) {
 
 // src/blocks/Image.js
 var import_react4 = require("react");
-function Image({ data, className }) {
+function Image({ data, className, locale = "en" }) {
   if (!(data == null ? void 0 : data.src)) return null;
+  const alt = resolveLocale(data == null ? void 0 : data.alt, locale);
+  const caption = resolveLocale(data == null ? void 0 : data.caption, locale);
   const imgProps = {
     src: data.src,
-    alt: (data == null ? void 0 : data.alt) ?? "",
+    alt,
     // empty string = decorative; never undefined/missing
     width: data == null ? void 0 : data.width,
     height: data == null ? void 0 : data.height
   };
-  if (data == null ? void 0 : data.caption) {
+  if (caption) {
     return (0, import_react4.createElement)(
       "figure",
       { className },
       (0, import_react4.createElement)("img", imgProps),
-      (0, import_react4.createElement)("figcaption", null, data.caption)
+      (0, import_react4.createElement)("figcaption", null, caption)
     );
   }
   return (0, import_react4.createElement)("img", { ...imgProps, className });
@@ -187,9 +198,9 @@ function VideoJSPlayer({ url, title }) {
     (0, import_react5.createElement)("div", { ref: containerRef })
   );
 }
-function Video({ data, className }) {
+function Video({ data, className, locale = "en" }) {
   const src = (data == null ? void 0 : data.url) ?? (data == null ? void 0 : data.src);
-  const titleText = (data == null ? void 0 : data.title) || "Embedded video";
+  const titleText = resolveLocale(data == null ? void 0 : data.title, locale) || "Embedded video";
   if (!src) return null;
   if (isStorageUrl(src)) {
     let videojsAvailable = false;
@@ -229,7 +240,7 @@ function Video({ data, className }) {
 
 // src/blocks/Gallery.js
 var import_react6 = require("react");
-function Gallery({ data, className }) {
+function Gallery({ data, className, locale = "en" }) {
   const items = (data == null ? void 0 : data.items) ?? [];
   return (0, import_react6.createElement)(
     "ul",
@@ -238,18 +249,20 @@ function Gallery({ data, className }) {
       "aria-label": "Gallery",
       style: { listStyle: "none", padding: 0, margin: 0 }
     },
-    ...items.map(
-      (item, i) => (0, import_react6.createElement)(
+    ...items.map((item, i) => {
+      const alt = resolveLocale(item.alt, locale);
+      const caption = resolveLocale(item.caption, locale);
+      return (0, import_react6.createElement)(
         "li",
         { key: item.id ?? i },
-        item.caption ? (0, import_react6.createElement)(
+        caption ? (0, import_react6.createElement)(
           "figure",
           null,
-          (0, import_react6.createElement)("img", { src: item.src, alt: item.alt ?? "", loading: "lazy" }),
-          (0, import_react6.createElement)("figcaption", null, item.caption)
-        ) : (0, import_react6.createElement)("img", { src: item.src, alt: item.alt ?? "", loading: "lazy" })
-      )
-    )
+          (0, import_react6.createElement)("img", { src: item.src, alt, loading: "lazy" }),
+          (0, import_react6.createElement)("figcaption", null, caption)
+        ) : (0, import_react6.createElement)("img", { src: item.src, alt, loading: "lazy" })
+      );
+    })
   );
 }
 
@@ -301,7 +314,7 @@ function Block({ id, className, children }) {
     children
   );
 }
-function Blocks({ data, components, className, blockClassName }) {
+function Blocks({ data, components, className, blockClassName, locale = "en" }) {
   var _a;
   if (!((_a = data == null ? void 0 : data.blocks) == null ? void 0 : _a.length)) return null;
   const registry = components ? { ...BLOCK_REGISTRY, ...components } : BLOCK_REGISTRY;
@@ -314,7 +327,7 @@ function Blocks({ data, components, className, blockClassName }) {
       return (0, import_react9.createElement)(
         Block,
         { key: block.id ?? i, id: block.id, className: blockClassName },
-        (0, import_react9.createElement)(Component, { data: block.data })
+        (0, import_react9.createElement)(Component, { data: block.data, locale })
       );
     })
   );
@@ -323,9 +336,19 @@ function Blocks({ data, components, className, blockClassName }) {
 // src/index.js
 var import_jsx_runtime = require("react/jsx-runtime");
 var CMSContext = (0, import_react10.createContext)(null);
-function CMSProvider({ firebaseConfig, templates = [], children }) {
+function CMSProvider({ firebaseConfig, templates = [], isLocalized = false, children }) {
   const firebase = (0, import_react10.useMemo)(() => initFirebase(firebaseConfig), [firebaseConfig]);
-  const value = (0, import_react10.useMemo)(() => ({ ...firebase, templates }), [firebase, templates]);
+  const [locale, setLocale] = (0, import_react10.useState)("en");
+  const [uiLocale] = (0, import_react10.useState)(() => {
+    var _a;
+    if (typeof navigator === "undefined") return "en";
+    const lang = (_a = navigator.language) == null ? void 0 : _a.slice(0, 2).toLowerCase();
+    return ["en", "fr"].includes(lang) ? lang : "en";
+  });
+  const value = (0, import_react10.useMemo)(
+    () => ({ ...firebase, templates, isLocalized, locale, setLocale, uiLocale }),
+    [firebase, templates, isLocalized, locale, uiLocale]
+  );
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CMSContext.Provider, { value, children });
 }
 function useCMSFirebase() {
@@ -358,7 +381,8 @@ function useAuth() {
     signOut: () => signOut(auth)
   };
 }
-function useCMSContent(slug) {
+function useCMSContent(slug, { locale = "en" } = {}) {
+  void locale;
   const { db } = useCMSFirebase();
   const [data, setData] = (0, import_react10.useState)(null);
   const [loading, setLoading] = (0, import_react10.useState)(true);

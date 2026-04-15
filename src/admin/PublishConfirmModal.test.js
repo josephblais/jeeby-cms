@@ -18,15 +18,15 @@ test('PublishConfirmModal has "use client" directive', { skip: !src }, () => {
 })
 
 test('PublishConfirmModal has role="dialog"', { skip: !src }, () => {
-  assert.ok(src.includes('role="dialog"'), 'Modal must have role="dialog"')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides role="dialog"')
 })
 
 test('PublishConfirmModal has aria-modal="true"', { skip: !src }, () => {
-  assert.ok(src.includes('aria-modal="true"'), 'Modal must have aria-modal="true"')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides aria-modal="true"')
 })
 
 test('PublishConfirmModal has aria-labelledby pointing to heading', { skip: !src }, () => {
-  assert.ok(src.includes('aria-labelledby="publish-modal-heading"'), 'Modal must reference heading id')
+  assert.ok(src.includes('labelId="publish-modal-heading"'), 'Must pass labelId to ModalShell')
 })
 
 test('PublishConfirmModal has h2 with publish-modal-heading id', { skip: !src }, () => {
@@ -34,19 +34,19 @@ test('PublishConfirmModal has h2 with publish-modal-heading id', { skip: !src },
 })
 
 test('PublishConfirmModal has Escape key handler', { skip: !src }, () => {
-  assert.ok(src.includes("'Escape'") || src.includes('"Escape"'), 'Modal must handle Escape key')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which handles Escape key')
 })
 
 test('PublishConfirmModal has Tab key focus trap', { skip: !src }, () => {
-  assert.ok(src.includes("'Tab'") || src.includes('"Tab"'), 'Modal must trap Tab key')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides Tab focus trap')
 })
 
 test('PublishConfirmModal has "Cancel" button text', { skip: !src }, () => {
-  assert.ok(src.includes('Cancel'), 'Modal must have Cancel button')
+  assert.ok(src.includes("t('cancel')"), 'Modal must have Cancel button via t("cancel")')
 })
 
 test('PublishConfirmModal has "Publish now" button text', { skip: !src }, () => {
-  assert.ok(src.includes('Publish now'), 'Modal must have "Publish now" confirm button')
+  assert.ok(src.includes("t('publishNow')"), 'Modal must have Publish button via t("publishNow")')
 })
 
 test('PublishConfirmModal has error state with role="alert"', { skip: !src }, () => {
@@ -59,7 +59,7 @@ test('PublishConfirmModal has triggerRef for focus return', { skip: !src }, () =
 
 test('PublishConfirmModal displays confirmation body copy', { skip: !src }, () => {
   assert.ok(
-    src.includes('This will replace the current live version'),
-    'Modal must include the locked confirmation body copy'
+    src.includes("t('publishConfirmBody')"),
+    'Modal must include confirmation body via t("publishConfirmBody")'
   )
 })

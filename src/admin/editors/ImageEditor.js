@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, memo } from 'react'
 import { uploadFile, validateImageFile, MIME_TO_EXT } from '../../firebase/storage.js'
 import { addMediaItem } from '../../firebase/firestore.js'
 import { useCMSFirebase } from '../../index.js'
+import { useT, tf } from '../useT.js'
 import { MediaLibraryModal } from '../MediaLibraryModal.js'
 
 // ImageEditor — URL + alt text inputs with image preview.
@@ -57,6 +58,7 @@ export function ImageEditor({ data, onChange, blockId }) {
   const urlInputRef = useRef(null)
   const viewButtonRef = useRef(null)
   const { storage, db, locale, isLocalized } = useCMSFirebase()
+  const t = useT()
 
   // Locale-aware read helpers — resolved to current locale's string value.
   // When isLocalized is false, reads the plain string field (D-06 compatibility).
@@ -283,21 +285,21 @@ export function ImageEditor({ data, onChange, blockId }) {
         <button
           type="button"
           className="jeeby-cms-btn-ghost jeeby-cms-upload-btn"
-          aria-label={isUploading ? 'Uploading image…' : 'Upload image from device'}
+          aria-label={isUploading ? t('imageUploadingAriaLabel') : t('imageUploadAriaLabel')}
           disabled={isUploading}
           onClick={() => { isPickingFile.current = true; fileInputRef.current?.click() }}
         >
-          {isUploading ? 'Uploading…' : 'Upload'}
+          {isUploading ? t('uploading') : t('upload')}
         </button>
         <button
           ref={libraryTriggerRef}
           type="button"
           className="jeeby-cms-btn-ghost jeeby-cms-upload-btn"
-          aria-label="Select image from media library"
+          aria-label={t('imageSelectLibraryAriaLabel')}
           disabled={isUploading}
           onClick={() => { isPickingFile.current = true; setLibraryOpen(true) }}
         >
-          Library
+          {t('libraryBtn')}
         </button>
       </div>
       <input
@@ -315,7 +317,7 @@ export function ImageEditor({ data, onChange, blockId }) {
         onCancel={() => { isPickingFile.current = false }}
       />
       {isUploading && (
-        <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(uploadProgress)} aria-valuemin={0} aria-valuemax={100} aria-label="Upload progress">
+        <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(uploadProgress)} aria-valuemin={0} aria-valuemax={100} aria-label={t('uploadProgressAriaLabel')}>
           <div className="jeeby-cms-upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
         </div>
       )}
@@ -323,24 +325,24 @@ export function ImageEditor({ data, onChange, blockId }) {
         <div className="jeeby-cms-upload-error-row">
           <p role="alert" className="jeeby-cms-inline-error">{uploadError.message}</p>
           {uploadError.retryable && (
-            <button type="button" className="jeeby-cms-btn-ghost" onClick={handleRetry}>Retry</button>
+            <button type="button" className="jeeby-cms-btn-ghost" onClick={handleRetry}>{t('retry')}</button>
           )}
         </div>
       )}
       <div className="jeeby-cms-upload-status" aria-live="polite">
-        {isUploading ? `Uploading — ${Math.round(uploadProgress)}%` : null}
+        {isUploading ? tf(t('uploadingProgress'), { pct: Math.round(uploadProgress) }) : null}
       </div>
       {pendingLibraryItem && (
-        <div className="jeeby-cms-library-meta-form" role="region" aria-label="Save uploaded image to media library">
-          <p className="jeeby-cms-field-label">Save uploaded image to Media Library</p>
-          <label className="jeeby-cms-field-label" htmlFor={'image-library-title-' + blockId}>Title</label>
+        <div className="jeeby-cms-library-meta-form" role="region" aria-label={t('saveUploadedImageRegion')}>
+          <p className="jeeby-cms-field-label">{t('saveUploadedImageLabel')}</p>
+          <label className="jeeby-cms-field-label" htmlFor={'image-library-title-' + blockId}>{t('titleLabel')}</label>
           <input
             id={'image-library-title-' + blockId}
             type="text"
             value={pendingLibraryItem.title}
             onChange={(e) => handlePendingTitleChange(e.target.value)}
           />
-          <label className="jeeby-cms-field-label" htmlFor={'image-library-alt-' + blockId}>Alt text</label>
+          <label className="jeeby-cms-field-label" htmlFor={'image-library-alt-' + blockId}>{t('altTextLabel')}</label>
           <input
             id={'image-library-alt-' + blockId}
             type="text"
@@ -354,16 +356,16 @@ export function ImageEditor({ data, onChange, blockId }) {
               disabled={isUploading || !pendingLibraryItem.storageUrl}
               onClick={savePendingLibraryItem}
             >
-              {isUploading ? 'Finishing upload…' : 'Save to Library'}
+              {isUploading ? t('finishingUpload') : t('saveToLibrary')}
             </button>
-            <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setPendingLibraryItem(null)}>Skip</button>
+            <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setPendingLibraryItem(null)}>{t('skip')}</button>
           </div>
         </div>
       )}
       {altConflict && (
-        <div className="jeeby-cms-alt-conflict" role="alertdialog" aria-label="Resolve alt text conflict">
+        <div className="jeeby-cms-alt-conflict" role="alertdialog" aria-label={t('altConflictAriaLabel')}>
           <p>
-            This image already has alt text in your block. Choose which alt text to keep.
+            {t('altConflictText')}
           </p>
           <div className="jeeby-cms-alt-conflict-actions">
             <button
@@ -371,14 +373,14 @@ export function ImageEditor({ data, onChange, blockId }) {
               className="jeeby-cms-btn-ghost"
               onClick={() => applySelectedMedia(altConflict.item, { replaceAlt: false })}
             >
-              Keep current alt text
+              {t('keepCurrentAlt')}
             </button>
             <button
               type="button"
               className="jeeby-cms-btn-primary"
               onClick={() => applySelectedMedia(altConflict.item, { replaceAlt: true })}
             >
-              Use library alt text
+              {t('useLibraryAlt')}
             </button>
           </div>
         </div>
@@ -394,7 +396,7 @@ export function ImageEditor({ data, onChange, blockId }) {
           role="button"
           tabIndex={0}
           id={urlInputId}
-          aria-label="Image — click to add image by URL or upload from device"
+          aria-label={t('imageEmptyAriaLabel')}
           className="jeeby-cms-image-empty"
           onClick={enterEditMode}
           onKeyDown={e => {
@@ -405,8 +407,8 @@ export function ImageEditor({ data, onChange, blockId }) {
             <IconImage />
           </div>
           <p className="jeeby-cms-image-empty-hint">
-            Add image
-            <span className="jeeby-cms-image-empty-sub">Paste a URL or upload from your device</span>
+            {t('imageAddHint')}
+            <span className="jeeby-cms-image-empty-sub">{t('imageAddSub')}</span>
           </p>
         </div>
         <MediaLibraryModal
@@ -429,24 +431,24 @@ export function ImageEditor({ data, onChange, blockId }) {
             <IconImage />
           </div>
           <div className="jeeby-cms-image-empty-inputs">
-            <label htmlFor={urlInputId} className="jeeby-cms-field-label">Image URL</label>
+            <label htmlFor={urlInputId} className="jeeby-cms-field-label">{t('imageUrlLabel')}</label>
             {uploadControls}
             {imgError && (
               <p role="alert" className="jeeby-cms-inline-error">
-                Image not found — check the URL is correct and publicly accessible.
+                {t('imageNotFound')}
               </p>
             )}
-            <label htmlFor={altInputId} className="jeeby-cms-field-label jeeby-cms-image-alt-label">Alt text</label>
+            <label htmlFor={altInputId} className="jeeby-cms-field-label jeeby-cms-image-alt-label">{t('altTextLabel')}</label>
             <input
               id={altInputId}
               type="text"
               value={alt}
               aria-describedby={altHintId}
-              placeholder="Describe the image for screen readers"
+              placeholder={t('altPlaceholder')}
               onChange={(e) => updateAlt(e.target.value)}
             />
             <p id={altHintId} className="jeeby-cms-field-hint">
-              Leave blank only if the image adds no meaning (e.g., a background pattern).
+              {t('altHint')}
             </p>
             <div className="jeeby-cms-image-done-row">
               <button
@@ -455,7 +457,7 @@ export function ImageEditor({ data, onChange, blockId }) {
                 disabled={isUploading}
                 onClick={exitEditMode}
               >
-                Done
+                {t('done')}
               </button>
             </div>
           </div>
@@ -479,7 +481,7 @@ export function ImageEditor({ data, onChange, blockId }) {
           ref={viewButtonRef}
           role="button"
           tabIndex={0}
-          aria-label={alt ? `Edit image: ${alt}` : 'Image block — click to edit'}
+          aria-label={alt ? tf(t('editImageAlt'), { alt }) : t('imageBlockClickToEdit')}
           aria-expanded={false}
           className="jeeby-cms-image-editor jeeby-cms-image-editor--view"
           onClick={enterEditMode}
@@ -496,7 +498,7 @@ export function ImageEditor({ data, onChange, blockId }) {
             />
             <div className="jeeby-cms-image-edit-overlay" aria-hidden="true">
               <IconPencil />
-              <span>Edit image</span>
+              <span>{t('editImageOverlay')}</span>
             </div>
           </figure>
         </div>
@@ -525,24 +527,24 @@ export function ImageEditor({ data, onChange, blockId }) {
         </figure>
 
         <div className="jeeby-cms-image-fields">
-          <label htmlFor={urlInputId} className="jeeby-cms-field-label">Image URL</label>
+          <label htmlFor={urlInputId} className="jeeby-cms-field-label">{t('imageUrlLabel')}</label>
           {uploadControls}
           {imgError && (
             <p role="alert" className="jeeby-cms-inline-error">
-              Image not found — check the URL is correct and publicly accessible.
+              {t('imageNotFound')}
             </p>
           )}
-          <label htmlFor={altInputId} className="jeeby-cms-field-label jeeby-cms-image-alt-label">Alt text</label>
+          <label htmlFor={altInputId} className="jeeby-cms-field-label jeeby-cms-image-alt-label">{t('altTextLabel')}</label>
           <input
             id={altInputId}
             type="text"
             value={alt}
             aria-describedby={altHintId}
-            placeholder="Describe the image for screen readers"
+            placeholder={t('altPlaceholder')}
             onChange={(e) => updateAlt(e.target.value)}
           />
           <p id={altHintId} className="jeeby-cms-field-hint">
-            Leave blank only if the image adds no meaning (e.g., a background pattern).
+            {t('altHint')}
           </p>
           <div className="jeeby-cms-image-done-row">
             <button
@@ -551,7 +553,7 @@ export function ImageEditor({ data, onChange, blockId }) {
               disabled={isUploading}
               onClick={exitEditMode}
             >
-              Done
+              {t('done')}
             </button>
           </div>
         </div>

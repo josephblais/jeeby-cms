@@ -18,16 +18,16 @@ test('PageManager has four column headers with scope="col"', () => {
 })
 
 test('PageManager shows Name, Slug, Last Published, Actions columns', () => {
-  assert.ok(src.includes('Name'), 'Must have Name column')
-  assert.ok(src.includes('Slug'), 'Must have Slug column')
-  assert.ok(src.includes('Last Published'), 'Must have Last Published column')
-  assert.ok(src.includes('Actions'), 'Must have Actions column')
+  assert.ok(src.includes("t('colName')"), 'Must have Name column via t("colName")')
+  assert.ok(src.includes("t('colSlug')"), 'Must have Slug column via t("colSlug")')
+  assert.ok(src.includes("t('colLastPublished')"), 'Must have Last Published column via t("colLastPublished")')
+  assert.ok(src.includes("t('colActions')"), 'Must have Actions column via t("colActions")')
 })
 
 // PAGE-01: Empty state
 test('PageManager has empty state with correct copy', () => {
-  assert.ok(src.includes('No pages yet.'), 'Must show empty state heading')
-  assert.ok(src.includes('Create your first page'), 'Must show create CTA')
+  assert.ok(src.includes("t('noPagesYet')"), 'Must show empty state heading via t("noPagesYet")')
+  assert.ok(src.includes("t('createFirstPage')"), 'Must show create CTA via t("createFirstPage")')
 })
 
 // PAGE-04: Inline edit
@@ -55,8 +55,7 @@ test('Delete buttons have descriptive aria-labels', () => {
 
 // Accessibility: edit button labels
 test('Edit buttons have descriptive aria-labels', () => {
-  assert.ok(/aria-label=.*Edit name/.test(src), 'Edit name buttons must have descriptive aria-label')
-  assert.ok(/aria-label=.*Edit slug/.test(src), 'Edit slug buttons must have descriptive aria-label')
+  assert.ok(src.includes("t('editBlocksFor')"), 'Edit buttons must use t("editBlocksFor") for aria-label')
 })
 
 // Accessibility: inline error
@@ -102,11 +101,11 @@ test('PageManager page name is a link to /admin/pages/[slug]', () => {
 })
 
 test('PageManager has Edit button in Actions column linking to editor', () => {
-  assert.ok(/aria-label=.*Edit blocks/.test(src), 'Edit button must have aria-label describing action')
+  assert.ok(src.includes("t('editBlocksFor')"), 'Edit button must use t("editBlocksFor") for aria-label')
 })
 
 test('PageManager includes Upload Media browse entrypoint', () => {
-  assert.ok(src.includes('Upload Media'), 'PageManager should expose Upload Media action')
+  assert.ok(src.includes("t('uploadMedia')"), 'PageManager should expose Upload Media action via t("uploadMedia")')
   assert.ok(src.includes('mode="browse"'), 'PageManager should open media library in browse mode')
   assert.ok(src.includes('MediaLibraryModal'), 'PageManager should mount MediaLibraryModal')
 })

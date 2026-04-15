@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 09.1
+current_phase: 11
 current_plan: 4
-status: executing
-last_updated: "2026-04-14T22:23:23.350Z"
+status: complete
+last_updated: "2026-04-14T23:00:00.000Z"
 progress:
   total_phases: 13
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 46
-  completed_plans: 45
+  completed_plans: 46
 ---
 
 # Session State
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 09.1
+**Current phase:** 11
 **Current plan:** 4
-**Status:** Executing Phase 09.1
+**Status:** Phase 11 complete — verified
 
 ## Decisions
 
@@ -60,6 +60,11 @@ See: .planning/PROJECT.md
 - [Phase 11]: isLocalized defaults to false in CMSProvider for zero backward-compat impact (D-06)
 - [Phase 11]: Locale resolution deferred to block render layer: getCMSContent and useCMSContent return raw published data — block components apply resolveLocale at render time for stable data shape
 - [Phase 11]: void locale used in read functions to accept the param without unused-variable lint while keeping signature pattern for I18N-06 source-scan test
+- [Phase 11]: LocaleSwitcher returns null when isLocalized=false — zero render cost for monolingual consumers (D-04/D-06)
+- [Phase 11]: Spread-before-[locale] pattern enforced in all 5 editor forms — prevents cross-locale data loss on save
+- [Phase 11]: locale/setLocale/isLocalized read from useCMSFirebase() context — no prop drilling through PageEditor
+- [Phase 11]: useRef + imperative .focus() for keyboard nav in LocaleSwitcher — simpler than roving tabindex for a fixed two-tab widget
+- [Phase 11]: isLocalized guard in PageEditor renders LocaleSwitcher conditionally above BlockCanvas ({isLocalized && <LocaleSwitcher />})
 
 ## Roadmap Evolution
 
@@ -77,3 +82,7 @@ See: .planning/PROJECT.md
 - 2026-03-23: Completed 09-media-handling/09-02-PLAN.md — ImageEditor Firebase Storage upload wired; all 13 tests pass; MEDIA-04 complete
 - 2026-03-23: Completed 09-media-handling/09-03-PLAN.md — GalleryEditor Firebase Storage upload wired; all 11 tests pass; MEDIA-03 complete
 - 2026-04-14: Completed 09.1-page-collections-and-index-pattern/09.1-03-PLAN.md — Admin SDK getCollectionPages(parentSlug) exported from server/index.js; source-scan test green; PAGE-COLL-02 complete
+- 2026-04-14: Completed 11-i18n/11-01-PLAN.md — Wave 0: 13 failing test stubs for all I18N requirements; src/utils/ directory created
+- 2026-04-14: Completed 11-i18n/11-02-PLAN.md — resolveLocale utility, CMSProvider locale context (isLocalized/locale/setLocale), ADMIN_STRINGS 21-key EN/FR map
+- 2026-04-14: Completed 11-i18n/11-03-PLAN.md — getCMSContent/useCMSContent locale option, Blocks locale forwarding, 6 block components resolve locale at render time
+- 2026-04-14: Completed 11-i18n/11-04-PLAN.md — LocaleSwitcher WCAG tablist, PageEditor wiring, all 5 editor forms bilingual read/write; all 13 I18N tests green; 317 pass / 18 fail (18 pre-existing)

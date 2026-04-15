@@ -10,8 +10,8 @@ test('EditorHeader has h1 element', () => {
 
 test('EditorHeader has back link', () => {
   assert.ok(
-    src.includes('Back to Pages') || src.includes('aria-label="Back to Pages"'),
-    'EditorHeader must have a back link to Pages'
+    src.includes("t('backToPages')"),
+    'EditorHeader must have a back link using t("backToPages")'
   )
 })
 
@@ -31,7 +31,7 @@ test('Save status has aria-atomic="true"', () => {
 })
 
 test('EditorHeader contains saving state text', () => {
-  assert.ok(src.includes('Saving'), 'EditorHeader must include save status text for saving state')
+  assert.ok(src.includes("t('saving')"), 'EditorHeader must include save status via t("saving")')
 })
 
 test('EditorHeader contains saved state text', () => {
@@ -39,7 +39,7 @@ test('EditorHeader contains saved state text', () => {
 })
 
 test('EditorHeader contains error state text', () => {
-  assert.ok(src.includes('Save failed'), 'EditorHeader must include "Save failed" error state text')
+  assert.ok(src.includes("t('saveFailed')"), 'EditorHeader must include error state via t("saveFailed")')
 })
 
 test('EditorHeader has "use client" directive', () => {
@@ -64,7 +64,7 @@ test('EditorHeader shows Published status for published pages', () => {
 })
 
 test('EditorHeader shows unpublished changes status', () => {
-  assert.ok(src.includes('Unpublished') || src.includes('Unsaved'), 'EditorHeader must display unpublished/unsaved status when hasDraftChanges is true')
+  assert.ok(src.includes("t('unpublishedChanges')") || src.includes("t('unsavedChanges')"), 'EditorHeader must display unpublished/unsaved status via t() key')
 })
 
 test('EditorHeader has Publish button', () => {

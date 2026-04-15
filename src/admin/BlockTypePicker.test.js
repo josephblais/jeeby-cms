@@ -9,17 +9,17 @@ test('BlockTypePicker has role="listbox"', () => {
 })
 
 test('BlockTypePicker has aria-label="Choose block type"', () => {
-  assert.ok(src.includes('aria-label="Choose block type"'), 'BlockTypePicker must have aria-label="Choose block type"')
+  assert.ok(src.includes("t('chooseBlockType')"), 'BlockTypePicker must set aria-label via t("chooseBlockType")')
 })
 
 test('BlockTypePicker lists all block type labels', () => {
-  assert.ok(src.includes('Heading'), 'Must list Heading block type')
-  assert.ok(src.includes('Text'), 'Must list Text block type')
-  assert.ok(src.includes('Bullet List'), 'Must list Bullet List block type')
-  assert.ok(src.includes('Numbered List'), 'Must list Numbered List block type')
-  assert.ok(src.includes('Image'), 'Must list Image block type')
-  assert.ok(src.includes('Video'), 'Must list Video block type')
-  assert.ok(src.includes('Gallery'), 'Must list Gallery block type')
+  assert.ok(src.includes('blockTypeHeading'), 'Must reference Heading block labelKey')
+  assert.ok(src.includes('blockTypeText'), 'Must reference Text block labelKey')
+  assert.ok(src.includes('blockTypeBulletList'), 'Must reference Bullet List block labelKey')
+  assert.ok(src.includes('blockTypeNumberedList'), 'Must reference Numbered List block labelKey')
+  assert.ok(src.includes('blockTypeImage'), 'Must reference Image block labelKey')
+  assert.ok(src.includes('blockTypeVideo'), 'Must reference Video block labelKey')
+  assert.ok(src.includes('blockTypeGallery'), 'Must reference Gallery block labelKey')
 })
 
 test('BlockTypePicker has role="option"', () => {

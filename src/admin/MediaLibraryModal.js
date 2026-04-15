@@ -5,6 +5,7 @@ import { ModalShell } from './ModalShell.js'
 import { addMediaItem, listMediaPaginated, updateMediaItem } from '../firebase/firestore.js'
 import { uploadFile, validateImageFile, MIME_TO_EXT, generateThumbnail } from '../firebase/storage.js'
 import { useCMSFirebase } from '../index.js'
+import { useT, tf } from './useT.js'
 
 const PAGE_SIZE = 24
 
@@ -12,8 +13,8 @@ function makeTempId() {
   return 'tmp-' + crypto.randomUUID()
 }
 
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return 'Unknown size'
+function formatBytes(bytes, unknownLabel = 'Unknown size') {
+  if (!Number.isFinite(bytes) || bytes <= 0) return unknownLabel
   const units = ['B', 'KB', 'MB', 'GB']
   let size = bytes
   let idx = 0
@@ -24,21 +25,21 @@ function formatBytes(bytes) {
   return `${size.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`
 }
 
-function truncateName(name, max = 24) {
-  if (!name) return 'Untitled'
+function truncateName(name, max = 24, fallback = 'Untitled') {
+  if (!name) return fallback
   return name.length > max ? name.slice(0, max) + '\u2026' : name
 }
 
-function formatUploadedAt(uploadedAt) {
-  if (!uploadedAt) return 'Unknown upload date'
+function formatUploadedAt(uploadedAt, unknownLabel = 'Unknown upload date') {
+  if (!uploadedAt) return unknownLabel
   try {
     const date = typeof uploadedAt?.toDate === 'function'
       ? uploadedAt.toDate()
       : new Date(uploadedAt)
-    if (Number.isNaN(date.getTime())) return 'Unknown upload date'
+    if (Number.isNaN(date.getTime())) return unknownLabel
     return date.toLocaleString()
   } catch {
-    return 'Unknown upload date'
+    return unknownLabel
   }
 }
 
@@ -53,6 +54,7 @@ async function readImageDimensions(src) {
 
 export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef, onClose }) {
   const { storage, db } = useCMSFirebase()
+  const t = useT()
 
   const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -92,15 +94,15 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
   const editingDimensions = editingItem ? dimensionsByKey[editingItem.id] : null
 
   const headingText = mode === 'select-single'
-    ? 'Select an image'
+    ? t('selectImage')
     : mode === 'select-multi'
-      ? 'Select images'
-      : 'Media Library'
+      ? t('selectImages')
+      : t('mediaLibrary')
 
   const subtitleText = mode === 'select-single'
-    ? 'Click an image to use it.'
+    ? t('clickToUse')
     : mode === 'select-multi' && selected.size === 0
-      ? 'Click images to select them.'
+      ? t('clickToSelect')
       : null
 
   const updatePending = useCallback((id, patch) => {
@@ -125,7 +127,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
       setHasMore(result.hasMore)
     } catch (err) {
       console.error('[jeeby-cms] Failed to load media library:', err)
-      setError('Could not load your media library. Check your connection and try again.')
+      setError(t('couldNotLoadMedia'))
       setItems([])
       cursorRef.current = null
       setHasMore(false)
@@ -243,9 +245,9 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
   // H2: announce detail panel open/close to screen readers
   useEffect(() => {
     setPanelAnnouncement(editingItem
-      ? `Details panel opened for ${editingItem.title || 'Untitled image'}`
+      ? tf(t('detailsPanelOpened'), { name: editingItem.title || t('untitled') })
       : '')
-  }, [editingItem])
+  }, [editingItem]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // M5: clean up copy feedback timeout on unmount
   useEffect(() => {
@@ -318,7 +320,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
       })
     } catch (err) {
       console.error('[jeeby-cms] Upload failed:', err)
-      updatePending(id, { state: 'failed', error: 'Upload failed — check your connection and try again.' })
+      updatePending(id, { state: 'failed', error: t('uploadFailed') })
     }
   }
 
@@ -358,7 +360,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
       removePending(pending.id)
     } catch (err) {
       console.error('[jeeby-cms] Failed to save media item:', err)
-      updatePending(pending.id, { saveError: 'Could not save — check your connection and try again.' })
+      updatePending(pending.id, { saveError: t('couldNotSave') })
     }
   }
 
@@ -397,7 +399,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
     } catch (err) {
       if (err.code === 'storage/canceled') return
       console.error('[jeeby-cms] Upload failed:', err)
-      updatePending(pending.id, { state: 'failed', error: 'Upload failed — check your connection and try again.' })
+      updatePending(pending.id, { state: 'failed', error: t('uploadFailed') })
     }
   }
 
@@ -437,7 +439,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
       setEditDraft({ title: '', alt: '' })
     } catch (err) {
       console.error('[jeeby-cms] Failed to update media item:', err)
-      setEditSaveError('Could not save — check your connection and try again.')
+      setEditSaveError(t('couldNotSave'))
     }
   }
 
@@ -478,10 +480,10 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
             type="button"
             className="jeeby-cms-btn-ghost"
             onClick={guardedOnClose}
-            aria-label="Close media library"
+            aria-label={t('closeMediaLibrary')}
             disabled={closeGuardActive}
           >
-            Close
+            {t('close')}
           </button>
         </header>
 
@@ -493,10 +495,10 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                   <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
                 </svg>
-                <span>You have unsaved uploads. Leave anyway?</span>
+                <span>{t('unsavedUploads')}</span>
                 <div className="jeeby-cms-close-guard-actions">
-                  <button type="button" className="jeeby-cms-btn-ghost" onClick={() => { setCloseConfirmActive(false); onClose?.() }}>Leave</button>
-                  <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setCloseConfirmActive(false)}>Stay</button>
+                  <button type="button" className="jeeby-cms-btn-ghost" onClick={() => { setCloseConfirmActive(false); onClose?.() }}>{t('leave')}</button>
+                  <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setCloseConfirmActive(false)}>{t('stay')}</button>
                 </div>
               </>
             ) : (
@@ -505,7 +507,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                   <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
                 </svg>
-                <span>Finish saving the upload details before closing.</span>
+                <span>{t('finishBeforeClosing')}</span>
               </>
             ))}
         </div>
@@ -515,7 +517,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
 
         <div className="jeeby-cms-media-library-toolbar">
           <button type="button" className="jeeby-cms-btn-primary" data-autofocus onClick={() => fileInputRef.current?.click()}>
-            Upload images
+            {t('uploadImages')}
           </button>
           <input
             ref={fileInputRef}
@@ -530,7 +532,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
         </div>
 
         <p className="jeeby-cms-visually-hidden" aria-live="polite" aria-atomic="true">
-          {isLoading ? 'Loading media library\u2026' : ''}
+          {isLoading ? t('loadingMediaLibrary') : ''}
         </p>
 
         {error && <div className="jeeby-cms-media-library-error" role="alert">{error}</div>}
@@ -538,48 +540,48 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
         <div className="jeeby-cms-media-library-body">
           <div className="jeeby-cms-media-library-main">
             {pendingUploads.length > 0 && (
-              <section className="jeeby-cms-media-upload-queue" aria-label="Pending uploads">
+              <section className="jeeby-cms-media-upload-queue" aria-label={t('pendingUploadsLabel')}>
                 {pendingUploads.map((pending) => (
                   <div key={pending.id} className="jeeby-cms-media-upload-item">
                     <img className="jeeby-cms-media-detail-thumb" src={pending.storageUrl || pending.previewUrl} alt="" aria-hidden="true" />
                     <div className="jeeby-cms-media-upload-item-body">
-                      <span className="jeeby-cms-field-label">{truncateName(pending.title)}</span>
+                      <span className="jeeby-cms-field-label">{truncateName(pending.title, 24, t('untitled'))}</span>
                       {pending.state === 'uploading' && (
-                        <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={pending.progress} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for ' + truncateName(pending.title)}>
+                        <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={pending.progress} aria-valuemin={0} aria-valuemax={100} aria-label={tf(t('uploadProgressFor'), { name: truncateName(pending.title, 24, t('untitled')) })}>
                           <div className="jeeby-cms-upload-progress-fill" style={{ width: `${pending.progress}%` }} />
                         </div>
                       )}
                       <div className="jeeby-cms-upload-status" aria-live="polite">
-                        {pending.state === 'uploading' ? `Uploading — ${Math.round(pending.progress)}%` : null}
-                        {pending.state === 'pending-meta' ? 'Upload complete. Ready to save metadata.' : null}
+                        {pending.state === 'uploading' ? tf(t('uploadingProgress'), { pct: Math.round(pending.progress) }) : null}
+                        {pending.state === 'pending-meta' ? t('uploadComplete') : null}
                         {pending.state === 'failed' ? pending.error : null}
                       </div>
                       <div className="jeeby-cms-media-detail-stats">
-                        <div><strong>Dimensions</strong><span>{pending.dimensions ? `${pending.dimensions.width} x ${pending.dimensions.height}` : 'Loading...'}</span></div>
+                        <div><strong>{t('dimensionsLabel')}</strong><span>{pending.dimensions ? `${pending.dimensions.width} x ${pending.dimensions.height}` : t('loadingDimensions')}</span></div>
                       </div>
-                      <div className="jeeby-cms-library-meta-form" role="group" aria-label={'Metadata for ' + truncateName(pending.title)}>
-                        <label className="jeeby-cms-field-label" htmlFor={'pending-title-' + pending.id}>Title</label>
+                      <div className="jeeby-cms-library-meta-form" role="group" aria-label={tf(t('metadataFor'), { name: truncateName(pending.title, 24, t('untitled')) })}>
+                        <label className="jeeby-cms-field-label" htmlFor={'pending-title-' + pending.id}>{t('titleLabel')}</label>
                         <input
                           id={'pending-title-' + pending.id}
                           type="text"
                           value={pending.title}
                           onChange={(e) => handlePendingTitleChange(pending.id, e.target.value)}
                         />
-                        <label className="jeeby-cms-field-label jeeby-cms-image-alt-label" htmlFor={'pending-alt-' + pending.id}>Alt text</label>
+                        <label className="jeeby-cms-field-label jeeby-cms-image-alt-label" htmlFor={'pending-alt-' + pending.id}>{t('altTextLabel')}</label>
                         <input
                           id={'pending-alt-' + pending.id}
                           type="text"
                           value={pending.alt}
                           aria-describedby={'pending-alt-hint-' + pending.id}
-                          placeholder="Describe the image for screen readers"
+                          placeholder={t('altPlaceholder')}
                           onChange={(e) => updatePending(pending.id, { alt: e.target.value, altManuallyEdited: true })}
                         />
                         <p id={'pending-alt-hint-' + pending.id} className="jeeby-cms-field-hint">
-                          Leave blank only if the image adds no meaning (e.g., a background pattern).
+                          {t('altHint')}
                         </p>
                         <div className="jeeby-cms-image-done-row">
                           {pending.state === 'failed' ? (
-                            <button type="button" className="jeeby-cms-btn-ghost" onClick={() => retryPendingUpload(pending)}>Retry upload</button>
+                            <button type="button" className="jeeby-cms-btn-ghost" onClick={() => retryPendingUpload(pending)}>{t('retryUpload')}</button>
                           ) : (
                             <button
                               type="button"
@@ -587,11 +589,11 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                               disabled={pending.state !== 'pending-meta' || !pending.storageUrl}
                               onClick={() => handleSavePending(pending)}
                             >
-                              Save to Library
+                              {t('saveToLibrary')}
                             </button>
                           )}
                           <button type="button" className="jeeby-cms-btn-ghost" onClick={() => removePending(pending.id)}>
-                            Discard
+                            {t('discard')}
                           </button>
                         </div>
                         {pending.saveError && (
@@ -613,7 +615,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                 className="jeeby-cms-media-library-grid"
                 role={mode === 'select-multi' ? 'listbox' : 'region'}
                 aria-multiselectable={mode === 'select-multi' ? 'true' : undefined}
-                aria-label="Media images"
+                aria-label={t('mediaImages')}
               >
                 {items.map((item) => {
                   const checked = selected.has(item.id)
@@ -650,7 +652,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                           />
                         )}
                         {mode === 'browse' && (
-                          <div className="jeeby-cms-media-card-edit-overlay">Edit details</div>
+                          <div className="jeeby-cms-media-card-edit-overlay">{t('editDetails')}</div>
                         )}
                       </div>
                       <p className="jeeby-cms-media-card-title">{item.title || ''}</p>
@@ -660,8 +662,8 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
 
                 {items.length === 0 && (
                   <div className="jeeby-cms-media-library-empty">
-                    <p><strong>No media yet</strong></p>
-                    <p>Upload your first image to get started.</p>
+                    <p><strong>{t('noMediaYet')}</strong></p>
+                    <p>{t('uploadFirstImage')}</p>
                   </div>
                 )}
 
@@ -674,7 +676,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
           <aside
             id="media-detail-panel"
             className={`jeeby-cms-media-detail-panel${editingItem && mode === 'browse' ? ' jeeby-cms-media-detail-panel--open' : ''}`}
-            aria-label="Media details"
+            aria-label={t('mediaDetails')}
           >
             {editingItem && mode === 'browse' && (
               <div className="jeeby-cms-media-detail-inner">
@@ -682,7 +684,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                   type="button"
                   className="jeeby-cms-media-thumb-btn"
                   onClick={() => setLightboxOpen(true)}
-                  aria-label="View full image"
+                  aria-label={t('viewFullImage')}
                 >
                   <img
                     className="jeeby-cms-media-detail-thumb"
@@ -692,41 +694,41 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
                 </button>
                 <div className="jeeby-cms-media-detail-body">
                   <div className="jeeby-cms-media-detail-stats">
-                    <div><strong>Uploaded</strong><span>{formatUploadedAt(editingItem.uploadedAt)}</span></div>
-                    <div><strong>File size</strong><span>{formatBytes(editingItem.size)}</span></div>
-                    <div><strong>Dimensions</strong><span>{editingDimensions ? `${editingDimensions.width} x ${editingDimensions.height}` : 'Loading...'}</span></div>
+                    <div><strong>{t('uploadedLabel')}</strong><span>{formatUploadedAt(editingItem.uploadedAt, t('unknownUploadDate'))}</span></div>
+                    <div><strong>{t('fileSizeLabel')}</strong><span>{formatBytes(editingItem.size, t('unknownSize'))}</span></div>
+                    <div><strong>{t('dimensionsLabel')}</strong><span>{editingDimensions ? `${editingDimensions.width} x ${editingDimensions.height}` : t('loadingDimensions')}</span></div>
                   </div>
 
-                  <div className="jeeby-cms-library-meta-form" role="group" aria-label="Edit media metadata">
-                    <label className="jeeby-cms-field-label" htmlFor={'edit-title-' + editingItem.id}>Title</label>
+                  <div className="jeeby-cms-library-meta-form" role="group" aria-label={t('editMediaMetadata')}>
+                    <label className="jeeby-cms-field-label" htmlFor={'edit-title-' + editingItem.id}>{t('titleLabel')}</label>
                     <input
                       id={'edit-title-' + editingItem.id}
                       type="text"
                       value={editDraft.title}
                       onChange={(e) => setEditDraft((d) => ({ ...d, title: e.target.value }))}
                     />
-                    <label className="jeeby-cms-field-label jeeby-cms-image-alt-label" htmlFor={'edit-alt-' + editingItem.id}>Alt text</label>
+                    <label className="jeeby-cms-field-label jeeby-cms-image-alt-label" htmlFor={'edit-alt-' + editingItem.id}>{t('altTextLabel')}</label>
                     <input
                       id={'edit-alt-' + editingItem.id}
                       type="text"
                       value={editDraft.alt}
                       aria-describedby={'edit-alt-hint-' + editingItem.id}
-                      placeholder="Describe the image for screen readers"
+                      placeholder={t('altPlaceholder')}
                       onChange={(e) => setEditDraft((d) => ({ ...d, alt: e.target.value }))}
                     />
                     <p id={'edit-alt-hint-' + editingItem.id} className="jeeby-cms-field-hint">
-                      Leave blank only if the image adds no meaning (e.g., a background pattern).
+                      {t('altHint')}
                     </p>
-                    <label className="jeeby-cms-field-label" htmlFor={'edit-url-' + editingItem.id}>File URL</label>
+                    <label className="jeeby-cms-field-label" htmlFor={'edit-url-' + editingItem.id}>{t('fileUrl')}</label>
                     <div className="jeeby-cms-media-detail-url-row">
                       <input id={'edit-url-' + editingItem.id} type="text" value={editingItem.storageUrl} readOnly />
                       <button type="button" className="jeeby-cms-btn-ghost" onClick={() => handleCopy(editingItem.storageUrl)}>
-                        {copiedValue === editingItem.storageUrl ? 'Copied' : 'Copy'}
+                        {copiedValue === editingItem.storageUrl ? t('copied') : t('copy')}
                       </button>
                     </div>
                     <div className="jeeby-cms-image-done-row">
-                      <button type="button" className="jeeby-cms-btn-primary" onClick={handleSaveEdit}>Save</button>
-                      <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setEditingId(null)}>Close</button>
+                      <button type="button" className="jeeby-cms-btn-primary" onClick={handleSaveEdit}>{t('save')}</button>
+                      <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setEditingId(null)}>{t('close')}</button>
                     </div>
                     {editSaveError && (
                       <p className="jeeby-cms-inline-error" role="alert">{editSaveError}</p>
@@ -739,10 +741,10 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
         </div>
 
         {mode === 'select-multi' && selected.size > 0 && (
-          <div className="jeeby-cms-media-library-footer" role="region" aria-label="Selection summary">
-            <span>{selected.size} selected</span>
+          <div className="jeeby-cms-media-library-footer" role="region" aria-label={t('selectionSummary')}>
+            <span>{tf(t('selectedCount'), { count: selected.size })}</span>
             <button type="button" className="jeeby-cms-btn-primary" onClick={handleConfirmSelection}>
-              Add {selected.size} {selected.size === 1 ? 'image' : 'images'}
+              {tf(t(selected.size === 1 ? 'addImage' : 'addImages'), { count: selected.size })}
             </button>
           </div>
         )}
@@ -754,7 +756,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
           className="jeeby-cms-media-lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label="Full image preview"
+          aria-label={t('fullImagePreview')}
           onClick={() => setLightboxOpen(false)}
         >
           <button
@@ -762,7 +764,7 @@ export function MediaLibraryModal({ open, mode = 'browse', onSelect, triggerRef,
             type="button"
             className="jeeby-cms-media-lightbox-close"
             onClick={() => setLightboxOpen(false)}
-            aria-label="Close preview"
+            aria-label={t('closePreview')}
           >
             ✕
           </button>

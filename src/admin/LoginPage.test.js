@@ -40,7 +40,7 @@ test('LoginPage source uses useAuth signIn', () => {
 
 test('LoginPage source has generic error message', () => {
   const src = readFileSync(new URL('./LoginPage.js', import.meta.url), 'utf8')
-  assert.ok(src.includes('Invalid email or password'), 'Must show generic error message per CONTEXT.md')
+  assert.ok(src.includes("t('invalidCredentials')"), 'Must show generic error via t("invalidCredentials")')
 })
 
 test('LoginPage is exported from LoginPage.js', async () => {

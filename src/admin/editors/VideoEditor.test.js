@@ -16,20 +16,20 @@ test('VideoEditor has iframe preview', () => {
 })
 
 test('VideoEditor has video URL input', () => {
-  assert.ok(src.includes('Video URL'), 'VideoEditor must have a "Video URL" input label')
+  assert.ok(src.includes('videoUrlLabel') || src.includes('Video URL'), 'VideoEditor must use videoUrlLabel i18n key')
 })
 
 test('VideoEditor has video URL hint text', () => {
   assert.ok(
-    src.includes('YouTube, Vimeo, or Loom'),
-    'VideoEditor must have hint text "YouTube, Vimeo, or Loom"'
+    src.includes('videoUrlHint') || src.includes('YouTube, Vimeo, or Loom'),
+    'VideoEditor must use videoUrlHint i18n key'
   )
 })
 
 test('VideoEditor has invalid URL error text', () => {
   assert.ok(
-    src.includes('Unrecognised video URL'),
-    'VideoEditor must show "Unrecognised video URL" error message'
+    src.includes('videoUnrecognised') || src.includes('Unrecognised video URL'),
+    'VideoEditor must use videoUnrecognised i18n key'
   )
 })
 

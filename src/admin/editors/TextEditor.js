@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { useCMSFirebase } from '../../index.js'
+import { useT } from '../useT.js'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import { Extension } from '@tiptap/core'
@@ -109,6 +110,7 @@ function isEmptyHtml(html) {
 
 export function TextEditor({ data, onChange, blockId }) {
   const { locale, isLocalized } = useCMSFirebase()
+  const t = useT()
   const [linkInputOpen, setLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const linkInputRef = useRef(null)
@@ -180,13 +182,13 @@ export function TextEditor({ data, onChange, blockId }) {
           This ensures keyboard users encounter the text field before toolbar buttons. */}
       <div
         id={'block-input-' + blockId}
-        aria-label="Text content"
+        aria-label={t('textContentLabel')}
         className="jeeby-cms-text-editor-content"
         tabIndex={-1}
         onFocus={() => editor?.commands.focus()}
       >
         {isEmptyHtml(data?.html) && (
-          <div className="jeeby-cms-text-placeholder" aria-hidden="true">Start writing...</div>
+          <div className="jeeby-cms-text-placeholder" aria-hidden="true">{t('textPlaceholder')}</div>
         )}
         <EditorContent editor={editor} />
       </div>
@@ -201,36 +203,36 @@ export function TextEditor({ data, onChange, blockId }) {
           <div className="jeeby-cms-text-editor-toolbar-inner">
             <div
               role="toolbar"
-              aria-label="Text formatting"
+              aria-label={t('textFormattingLabel')}
               className="jeeby-cms-toolbar"
             >
               <ToolbarButton
-                label="Bold"
+                label={t('toolbarBold')}
                 icon={<IconBold />}
                 isActive={editor.isActive('bold')}
                 onClick={() => editor.chain().focus().toggleBold().run()}
               />
               <ToolbarButton
-                label="Italic"
+                label={t('toolbarItalic')}
                 icon={<IconItalic />}
                 isActive={editor.isActive('italic')}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
               />
               <ToolbarButton
-                label={editor.isActive('link') ? 'Remove link' : 'Add link'}
+                label={editor.isActive('link') ? t('toolbarRemoveLink') : t('toolbarAddLink')}
                 icon={<IconLink />}
                 isActive={editor.isActive('link') || linkInputOpen}
                 onClick={handleLinkClick}
               />
               <ToolbarSeparator />
               <ToolbarButton
-                label="Bullet list"
+                label={t('toolbarBulletList')}
                 icon={<IconBulletList />}
                 isActive={editor.isActive('bulletList')}
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
               />
               <ToolbarButton
-                label="Ordered list"
+                label={t('toolbarOrderedList')}
                 icon={<IconOrderedList />}
                 isActive={editor.isActive('orderedList')}
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -246,7 +248,7 @@ export function TextEditor({ data, onChange, blockId }) {
                   value={linkUrl}
                   onChange={e => setLinkUrl(e.target.value)}
                   placeholder="https://"
-                  aria-label="Link URL"
+                  aria-label={t('linkUrlLabel')}
                   onKeyDown={e => {
                     if (e.key === 'Enter') { e.preventDefault(); commitLink() }
                     if (e.key === 'Escape') { e.preventDefault(); cancelLink() }
@@ -257,14 +259,14 @@ export function TextEditor({ data, onChange, blockId }) {
                   className="jeeby-cms-btn-primary jeeby-cms-link-apply-btn"
                   onClick={commitLink}
                 >
-                  Apply
+                  {t('apply')}
                 </button>
                 <button
                   type="button"
                   className="jeeby-cms-btn-ghost"
                   onClick={cancelLink}
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             )}

@@ -12,16 +12,16 @@ test('TitleEditor has role="textbox"', () => {
   assert.ok(src.includes('role="textbox"'), 'TitleEditor contenteditable must have role="textbox"')
 })
 
-test('TitleEditor has aria-label="Title text"', () => {
-  assert.ok(src.includes('aria-label="Title text"'), 'TitleEditor must have aria-label="Title text"')
+test('TitleEditor has aria-label for title text', () => {
+  assert.ok(src.includes('titleTextLabel') || src.includes('Title text'), 'TitleEditor must use titleTextLabel i18n key for aria-label')
 })
 
 test('TitleEditor has heading level select', () => {
-  assert.ok(src.includes('<select'), 'TitleEditor must have a <select> for heading level')
+  assert.ok(src.includes('role="listbox"'), 'TitleEditor must have a heading level picker (role="listbox")')
 })
 
-test('Select has aria-label="Heading level"', () => {
-  assert.ok(src.includes('aria-label="Heading level"'), 'Select must have aria-label="Heading level"')
+test('Select has aria-label for heading level', () => {
+  assert.ok(src.includes('headingLevelLabel') || src.includes('Heading level'), 'Heading level picker must use headingLevelLabel i18n key')
 })
 
 test('TitleEditor has h2-h6 options', () => {

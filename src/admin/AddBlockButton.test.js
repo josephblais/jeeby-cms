@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 const src = readFileSync(new URL('./AddBlockButton.js', import.meta.url), 'utf8')
 
 test('AddBlockButton has aria-label="Add block"', () => {
-  assert.ok(src.includes('aria-label="Add block"'), 'Button must have aria-label="Add block"')
+  assert.ok(src.includes("t('addBlock')"), 'Button must set aria-label via t("addBlock")')
 })
 
 test('AddBlockButton has aria-expanded', () => {

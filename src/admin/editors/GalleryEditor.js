@@ -5,6 +5,7 @@ import { Reorder, useDragControls } from 'framer-motion'
 import { uploadFile, validateImageFile, MIME_TO_EXT } from '../../firebase/storage.js'
 import { addMediaItem } from '../../firebase/firestore.js'
 import { useCMSFirebase } from '../../index.js'
+import { useT, tf } from '../useT.js'
 import { MediaLibraryModal } from '../MediaLibraryModal.js'
 
 // GalleryEditor — ordered list of { src, alt } gallery items with add/remove/reorder controls.
@@ -30,6 +31,7 @@ function makeBatchUploadId() {
 // onUploadStart/onUploadEnd must be stabilized with useCallback in the parent.
 const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onChange, data, storage, db, filePickerOpen, onUploadStart, onUploadEnd }) {
   const { locale, isLocalized } = useCMSFirebase()
+  const t = useT()
   const controls = useDragControls()
   // null | 0–100 (uploading) | { message: string, retryable: boolean } (error/validation fail)
   const [uploadProgress, setUploadProgress] = useState(null)
@@ -102,7 +104,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
     } catch (err) {
       if (err.code === 'storage/canceled') return
       console.error('[jeeby-cms] Gallery item upload failed:', err)
-      setUploadProgress({ message: 'Upload failed — check your connection and try again.', retryable: true })
+      setUploadProgress({ message: t('uploadFailed'), retryable: true })
     } finally {
       setPreviewSrc(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -185,7 +187,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
         {/* Drag handle — same pattern as BlockCanvas */}
         <button
           className="jeeby-cms-drag-handle"
-          aria-label={'Drag to reorder gallery image ' + (index + 1)}
+          aria-label={tf(t('galleryDragHandle'), { n: index + 1 })}
           aria-hidden="true"
           onPointerDown={(e) => { e.preventDefault(); controls.start(e) }}
         >⠿</button>
@@ -205,7 +207,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
               id={index === 0 ? 'block-input-' + blockId : undefined}
               type="url"
               value={item.src ?? ''}
-              aria-label={'Image URL for item ' + (index + 1)}
+              aria-label={tf(t('galleryImageUrlLabel'), { n: index + 1 })}
               placeholder="https://example.com/image.jpg"
               onChange={(e) => onChange({
                 ...data,
@@ -213,15 +215,15 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
               })}
               onBlur={(e) => { const v = e.target.value.trim(); if (v !== e.target.value) onChange({ ...data, items: updateItem(items, index, 'src', v) }) }}
             />
-            <span className="jeeby-cms-image-url-or" aria-hidden="true">or</span>
+            <span className="jeeby-cms-image-url-or" aria-hidden="true">{t('or')}</span>
             <button
               type="button"
               className="jeeby-cms-btn-ghost jeeby-cms-gallery-upload-btn"
-              aria-label={isUploading ? 'Uploading item ' + (index + 1) + '…' : 'Upload image for item ' + (index + 1)}
+              aria-label={isUploading ? tf(t('galleryUploadingAriaLabel'), { n: index + 1 }) : tf(t('galleryUploadAriaLabel'), { n: index + 1 })}
               disabled={isUploading}
               onClick={() => { if (filePickerOpen) filePickerOpen.current = true; fileInputRef.current?.click() }}
             >
-              {isUploading ? 'Uploading…' : 'Upload'}
+              {isUploading ? t('uploading') : t('upload')}
             </button>
           </div>
           <input
@@ -239,7 +241,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
             onCancel={() => { if (filePickerOpen) filePickerOpen.current = false }}
           />
           {isUploading && (
-            <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(uploadProgress)} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for item ' + (index + 1)}>
+            <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(uploadProgress)} aria-valuemin={0} aria-valuemax={100} aria-label={tf(t('galleryUploadProgressLabel'), { n: index + 1 })}>
               <div className="jeeby-cms-upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
             </div>
           )}
@@ -252,19 +254,19 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
             </div>
           )}
           <div className="jeeby-cms-upload-status" aria-live="polite">
-            {isUploading ? `Uploading — ${Math.round(uploadProgress)}%` : null}
+            {isUploading ? tf(t('uploadingProgress'), { pct: Math.round(uploadProgress) }) : null}
           </div>
           {pendingLibraryItem && (
-            <div className="jeeby-cms-library-meta-form" role="region" aria-label={'Save uploaded gallery image ' + (index + 1) + ' to media library'}>
-              <p className="jeeby-cms-field-label">Add upload to Media Library</p>
-              <label className="jeeby-cms-field-label" htmlFor={'gallery-library-title-' + blockId + '-' + index}>Title</label>
+            <div className="jeeby-cms-library-meta-form" role="region" aria-label={tf(t('gallerySaveMetaRegion'), { n: index + 1 })}>
+              <p className="jeeby-cms-field-label">{t('galleryAddToMediaLibrary')}</p>
+              <label className="jeeby-cms-field-label" htmlFor={'gallery-library-title-' + blockId + '-' + index}>{t('titleLabel')}</label>
               <input
                 id={'gallery-library-title-' + blockId + '-' + index}
                 type="text"
                 value={pendingLibraryItem.title}
                 onChange={(e) => handlePendingTitleChange(e.target.value)}
               />
-              <label className="jeeby-cms-field-label" htmlFor={'gallery-library-alt-' + blockId + '-' + index}>Alt text</label>
+              <label className="jeeby-cms-field-label" htmlFor={'gallery-library-alt-' + blockId + '-' + index}>{t('altTextLabel')}</label>
               <input
                 id={'gallery-library-alt-' + blockId + '-' + index}
                 type="text"
@@ -272,7 +274,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
                 onChange={(e) => setPendingLibraryItem((prev) => prev ? { ...prev, alt: e.target.value, altManuallyEdited: true } : prev)}
               />
               {!pendingLibraryItem.alt.trim() && (
-                <p className="jeeby-cms-field-hint" role="alert">Images without alt text may fail accessibility checks.</p>
+                <p className="jeeby-cms-field-hint" role="alert">{t('galleryAltWarning')}</p>
               )}
               <div className="jeeby-cms-image-done-row">
                 <button
@@ -281,10 +283,10 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
                   disabled={isUploading || !pendingLibraryItem.storageUrl}
                   onClick={savePendingLibraryItem}
                 >
-                  {isUploading ? 'Finishing upload…' : 'Save to Library'}
+                  {isUploading ? t('finishingUpload') : t('saveToLibrary')}
                 </button>
                 <button type="button" className="jeeby-cms-btn-ghost" onClick={() => setPendingLibraryItem(null)}>
-                  Skip
+                  {t('skip')}
                 </button>
               </div>
             </div>
@@ -292,15 +294,15 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
           <input
             type="text"
             value={isLocalized ? (item.alt?.[locale] ?? '') : (item.alt ?? '')}
-            aria-label={'Alt text for item ' + (index + 1)}
-            placeholder="Describe the image"
+            aria-label={tf(t('galleryAltLabel'), { n: index + 1 })}
+            placeholder={t('galleryAltPlaceholder')}
             onChange={(e) => handleGalleryAltChange(e.target.value)}
           />
         </div>
 
         <button
           type="button"
-          aria-label={'Remove gallery image ' + (index + 1)}
+          aria-label={tf(t('galleryRemoveLabel'), { n: index + 1 })}
           onClick={() => onChange({
             ...data,
             items: items.filter((_, i) => i !== index),
@@ -319,6 +321,7 @@ const GalleryItem = memo(function GalleryItem({ item, index, items, blockId, onC
 
 export function GalleryEditor({ data, onChange, blockId }) {
   const { storage, db, locale, isLocalized } = useCMSFirebase()
+  const t = useT()
   const items = data?.items ?? []
   // Skip view mode entirely when there are no items — nothing to preview, so the
   // click-to-enter step is pure friction. Start in edit mode immediately.
@@ -447,7 +450,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
       console.error('[jeeby-cms] Batch upload failed:', err)
       updateBatchUpload(upload.id, {
         state: 'failed',
-        error: 'Upload failed — check your connection and try again.',
+        error: t('uploadFailed'),
       })
     } finally {
       handleUploadEnd()
@@ -494,14 +497,14 @@ export function GalleryEditor({ data, onChange, blockId }) {
     const invalidCount = fileArray.length - valid.length
 
     if (valid.length === 0) {
-      setBatchError('No valid images — only JPEG, PNG, GIF, and WebP under 10 MB are supported.')
+      setBatchError(t('batchNoValidImages'))
       if (batchInputRef.current) batchInputRef.current.value = ''
       filePickerOpen.current = false
       return
     }
 
     if (invalidCount > 0) {
-      setBatchError(`${invalidCount} file${invalidCount !== 1 ? 's' : ''} skipped (invalid type or size).`)
+      setBatchError(invalidCount === 1 ? t('batchSkippedSingular') : tf(t('batchSkippedPlural'), { count: invalidCount }))
     }
 
     const pending = valid.map((file) => {
@@ -566,7 +569,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
           role="button"
           tabIndex={0}
           id={'block-input-' + blockId}
-          aria-label={'Gallery — ' + items.length + ' image' + (items.length !== 1 ? 's' : '') + '. Click to edit'}
+          aria-label={items.length === 1 ? t('galleryViewLabelSingle') : tf(t('galleryViewLabel'), { count: items.length })}
           onClick={() => { suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) }}
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); suppressNextBlur.current = true; setIsEditing(true); requestAnimationFrame(() => addButtonRef.current?.focus()) } }}
         >
@@ -578,7 +581,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
             </div>
           ) : (
             <p className="jeeby-cms-gallery-empty-hint">
-              {items.length > 0 ? 'Gallery — click to add image URLs' : 'Empty gallery — click to add images'}
+              {items.length > 0 ? t('galleryEmptyUrls') : t('galleryEmptyImages')}
             </p>
           )}
         </div>
@@ -601,7 +604,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
         values={items}
         onReorder={(newItems) => onChange({ ...data, items: newItems })}
         as="ol"
-        aria-label="Gallery images"
+        aria-label={t('galleryImagesLabel')}
         style={{ listStyle: 'none', padding: 0, margin: 0 }}
       >
         {items.map((item, index) => (
@@ -632,24 +635,24 @@ export function GalleryEditor({ data, onChange, blockId }) {
             ...data,
             items: [...items, { src: '', alt: '', id: crypto.randomUUID() }],
           })}
-        >+ Add image</button>
+        >{t('galleryAddImage')}</button>
         <button
           type="button"
           className="jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn"
           onClick={() => { filePickerOpen.current = true; batchInputRef.current?.click() }}
-        >Upload multiple</button>
+        >{t('galleryUploadMultiple')}</button>
         <button
           ref={libraryTriggerRef}
           type="button"
           className="jeeby-cms-btn-ghost jeeby-cms-gallery-batch-btn"
           onClick={() => { filePickerOpen.current = true; setLibraryOpen(true) }}
-        >Add from library</button>
+        >{t('galleryAddFromLibrary')}</button>
       </div>
       {batchError && (
         <p role="alert" className="jeeby-cms-inline-error">{batchError}</p>
       )}
       {batchUploads.length > 0 && (
-        <div className="jeeby-cms-gallery-batch-queue" role="region" aria-label="Batch uploads">
+        <div className="jeeby-cms-gallery-batch-queue" role="region" aria-label={t('batchUploadsLabel')}>
           {batchUploads.map((upload, idx) => (
             <div key={upload.id} className="jeeby-cms-gallery-batch-item">
               <img
@@ -659,27 +662,27 @@ export function GalleryEditor({ data, onChange, blockId }) {
                 aria-hidden="true"
               />
               <div className="jeeby-cms-gallery-batch-item-body">
-                <p className="jeeby-cms-field-label">Upload {idx + 1}</p>
+                <p className="jeeby-cms-field-label">{tf(t('batchUploadItem'), { n: idx + 1 })}</p>
                 {upload.state === 'uploading' && (
-                  <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(upload.progress)} aria-valuemin={0} aria-valuemax={100} aria-label={'Upload progress for selected image ' + (idx + 1)}>
+                  <div className="jeeby-cms-upload-progress" role="progressbar" aria-valuenow={Math.round(upload.progress)} aria-valuemin={0} aria-valuemax={100} aria-label={tf(t('batchUploadProgressLabel'), { n: idx + 1 })}>
                     <div className="jeeby-cms-upload-progress-fill" style={{ width: `${upload.progress}%` }} />
                   </div>
                 )}
                 <div className="jeeby-cms-upload-status" aria-live="polite">
-                  {upload.state === 'uploading' ? `Uploading — ${Math.round(upload.progress)}%` : null}
-                  {upload.state === 'pending-meta' ? 'Upload complete. Ready to save metadata.' : null}
+                  {upload.state === 'uploading' ? tf(t('uploadingProgress'), { pct: Math.round(upload.progress) }) : null}
+                  {upload.state === 'pending-meta' ? t('uploadComplete') : null}
                   {upload.state === 'failed' ? upload.error : null}
                 </div>
 
-                <div className="jeeby-cms-library-meta-form" role="group" aria-label={'Metadata for selected image ' + (idx + 1)}>
-                  <label className="jeeby-cms-field-label" htmlFor={'gallery-batch-title-' + upload.id}>Title</label>
+                <div className="jeeby-cms-library-meta-form" role="group" aria-label={tf(t('batchMetadataLabel'), { n: idx + 1 })}>
+                  <label className="jeeby-cms-field-label" htmlFor={'gallery-batch-title-' + upload.id}>{t('titleLabel')}</label>
                   <input
                     id={'gallery-batch-title-' + upload.id}
                     type="text"
                     value={upload.title}
                     onChange={(e) => handleBatchTitleChange(upload.id, e.target.value)}
                   />
-                  <label className="jeeby-cms-field-label" htmlFor={'gallery-batch-alt-' + upload.id}>Alt text</label>
+                  <label className="jeeby-cms-field-label" htmlFor={'gallery-batch-alt-' + upload.id}>{t('altTextLabel')}</label>
                   <input
                     id={'gallery-batch-alt-' + upload.id}
                     type="text"
@@ -687,11 +690,11 @@ export function GalleryEditor({ data, onChange, blockId }) {
                     onChange={(e) => handleBatchAltChange(upload.id, e.target.value)}
                   />
                   {!upload.alt.trim() && (
-                    <p className="jeeby-cms-field-hint" role="alert">Images without alt text may fail accessibility checks.</p>
+                    <p className="jeeby-cms-field-hint" role="alert">{t('galleryAltWarning')}</p>
                   )}
                   <div className="jeeby-cms-image-done-row">
                     {upload.state === 'failed' ? (
-                      <button type="button" className="jeeby-cms-btn-ghost" onClick={() => retryBatchUpload(upload.id)}>Retry upload</button>
+                      <button type="button" className="jeeby-cms-btn-ghost" onClick={() => retryBatchUpload(upload.id)}>{t('retryUpload')}</button>
                     ) : (
                       <button
                         type="button"
@@ -699,11 +702,11 @@ export function GalleryEditor({ data, onChange, blockId }) {
                         disabled={upload.state !== 'pending-meta' || !upload.storageUrl}
                         onClick={() => saveBatchUploadToLibrary(upload.id)}
                       >
-                        Save to Library
+                        {t('saveToLibrary')}
                       </button>
                     )}
                     <button type="button" className="jeeby-cms-btn-ghost" onClick={() => removeBatchUpload(upload.id)}>
-                      Skip
+                      {t('skip')}
                     </button>
                   </div>
                 </div>
@@ -719,7 +722,7 @@ export function GalleryEditor({ data, onChange, blockId }) {
           disabled={activeUploads > 0}
           onClick={() => setIsEditing(false)}
         >
-          Done
+          {t('done')}
         </button>
       </div>
       <input

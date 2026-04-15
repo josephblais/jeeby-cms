@@ -9,10 +9,11 @@ import {
 import { CreatePageModal } from './CreatePageModal.js'
 import { DeletePageModal } from './DeletePageModal.js'
 import { MediaLibraryModal } from './MediaLibraryModal.js'
+import { useT, tf } from './useT.js'
 
 // Internal helper — not exported
 function formatDate(ts) {
-  if (!ts) return 'Not yet'
+  if (!ts) return null
   const date = ts.toDate ? ts.toDate() : new Date(ts)
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
@@ -24,19 +25,19 @@ function pageStatus(page) {
 }
 
 const STATUS_PROPS = {
-  published: { label: 'Published', cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--published' },
-  draft:     { label: 'Draft',     cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--draft' },
-  changes:   { label: 'Changes',   cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--changes' },
+  published: { labelKey: 'statusPublished', cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--published' },
+  draft:     { labelKey: 'statusDraft',     cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--draft' },
+  changes:   { labelKey: 'statusChanges',   cls: 'jeeby-cms-doc-status jeeby-cms-doc-status--changes' },
 }
 
 // ── Sort / filter ─────────────────────────────────────────────────────
 
 const SORT_OPTIONS = [
-  { key: 'recent',    isFilter: false, colorKey: 'time',      label: 'Recently edited',    hint: 'most recently changed first',    icon: <IconRecent /> },
-  { key: 'alpha',     isFilter: false, colorKey: 'alpha',     label: 'Alphabetical',        hint: 'A–Z by page name',               icon: <IconAlpha /> },
-  { key: 'draft',     isFilter: true,  colorKey: 'draft',     label: 'Drafts only',         hint: 'never been published',           icon: <IconDraft /> },
-  { key: 'changes',   isFilter: true,  colorKey: 'changes',   label: 'Unpublished changes', hint: 'published but with edits',       icon: <IconChanges /> },
-  { key: 'published', isFilter: true,  colorKey: 'published', label: 'Published only',      hint: 'live, no pending changes',       icon: <IconPublished /> },
+  { key: 'recent',    isFilter: false, colorKey: 'time',      labelKey: 'sortRecent',    hintKey: 'sortRecentHint',      icon: <IconRecent /> },
+  { key: 'alpha',     isFilter: false, colorKey: 'alpha',     labelKey: 'sortAlpha',     hintKey: 'sortAlphaHint',       icon: <IconAlpha /> },
+  { key: 'draft',     isFilter: true,  colorKey: 'draft',     labelKey: 'filterDrafts',  hintKey: 'filterDraftsHint',    icon: <IconDraft /> },
+  { key: 'changes',   isFilter: true,  colorKey: 'changes',   labelKey: 'filterChanges', hintKey: 'filterChangesHint',   icon: <IconChanges /> },
+  { key: 'published', isFilter: true,  colorKey: 'published', labelKey: 'filterPublished', hintKey: 'filterPublishedHint', icon: <IconPublished /> },
 ]
 
 // Firestore Timestamps can arrive as {toMillis}, {seconds/nanoseconds}, Date, or ISO string.
@@ -178,6 +179,7 @@ function IconChevronRight() {
 // Uses role="menu" + role="menuitemradio" (not listbox) since this is a persistent
 // application mode, not a data value selection. WCAG 4.1.2, WAI-ARIA 1.2.
 function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
+  const t = useT()
   const [activeIndex, setActiveIndex] = useState(() => {
     const idx = SORT_OPTIONS.findIndex(o => o.key === sortMode)
     return idx >= 0 ? idx : 0
@@ -251,8 +253,8 @@ function SortPicker({ sortMode, onSelect, onClose, triggerRef }) {
         >
           <span className="jeeby-cms-block-icon" aria-hidden="true">{opt.icon}</span>
           <span className="jeeby-cms-block-type-info">
-            <span className="jeeby-cms-block-type-label">{opt.label}</span>
-            <span className="jeeby-cms-block-type-hint">{opt.hint}</span>
+            <span className="jeeby-cms-block-type-label">{t(opt.labelKey)}</span>
+            <span className="jeeby-cms-block-type-hint">{t(opt.hintKey)}</span>
           </span>
           {opt.key === sortMode && (
             <svg className="jeeby-cms-sort-check" width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
@@ -269,6 +271,7 @@ const PAGE_SIZE = 20
 const ALL_PAGES_TTL = 60_000 // ms — invalidated on any mutation
 
 export function PageManager() {
+  const t = useT()
   const { db, templates } = useCMSFirebase()
 
   // Main page list state
@@ -442,7 +445,7 @@ export function PageManager() {
         setHasNextPage(false)
       }
     } catch (err) {
-      if (gen === fetchGenRef.current) setError('Failed to load pages.')
+      if (gen === fetchGenRef.current) setError(t('failedToLoadPages'))
     } finally {
       if (gen === fetchGenRef.current) setLoading(false)
     }
@@ -485,7 +488,7 @@ export function PageManager() {
     if (debouncedQuery.trim()) {
       setAnnouncement(
         processedPages.length === 0
-          ? 'No pages match.'
+          ? t('noPagesMatch')
           : `${processedPages.length} page${processedPages.length !== 1 ? 's' : ''} found.`
       )
     }
@@ -583,7 +586,7 @@ export function PageManager() {
         allPagesCacheRef.current = null
         prefetchRef.current = null
         await loadPages()
-        setAnnouncement('Page renamed successfully.')
+        setAnnouncement(t('pageRenamedSuccess'))
         // Clear announcement after a tick so it re-announces if triggered again
         setTimeout(() => setAnnouncement(''), 1000)
       } else if (currentField === 'slug') {
@@ -610,7 +613,7 @@ export function PageManager() {
         allPagesCacheRef.current = null
         prefetchRef.current = null
         await loadPages()
-        setAnnouncement('Page renamed successfully.')
+        setAnnouncement(t('pageRenamedSuccess'))
         setTimeout(() => setAnnouncement(''), 1000)
       }
       // Return focus to the edit trigger button for this field
@@ -625,8 +628,8 @@ export function PageManager() {
       })
     } catch (err) {
       const msg = currentField === 'slug'
-        ? 'Rename failed. The old page may still exist -- check Firestore and try again.'
-        : 'Save failed. Please try again.'
+        ? t('renameFailed')
+        : t('saveFailedRetry')
       setEditError(msg)
     } finally {
       isSavingRef.current = false
@@ -653,7 +656,7 @@ export function PageManager() {
     if (opt.isFilter) {
       // Announce the filter name only — the count comes from processedPages which
       // won't be correct until the all-pages fetch completes.
-      setAnnouncement(`${opt.label} filter applied.`)
+      setAnnouncement(`${t(opt.labelKey)} filter applied.`)
     } else {
       setAnnouncement(key === 'alpha' ? 'Sorted alphabetically.' : 'Sorted by most recently edited.')
     }
@@ -674,7 +677,7 @@ export function PageManager() {
         const kids = await getCollectionPages(db, page.slug)
         if (kids.length > 0) {
           setDeleteBlockedError({ slug: page.slug, count: kids.length })
-          setAnnouncement(`Cannot delete ${page.slug}: ${kids.length} entries remain.`)
+          setAnnouncement(tf(t('cannotDeleteAnnouncement'), { slug: page.slug, count: kids.length }))
           setTimeout(() => setAnnouncement(''), 1500)
           return
         }
@@ -706,11 +709,11 @@ export function PageManager() {
           <table className="jeeby-cms-pages-table" aria-hidden="true">
             <thead>
               <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Slug</th>
-                <th scope="col">Status</th>
-                <th scope="col">Last Published</th>
-                <th scope="col">Actions</th>
+                <th scope="col">{t('colName')}</th>
+                <th scope="col">{t('colSlug')}</th>
+                <th scope="col">{t('colStatus')}</th>
+                <th scope="col">{t('colLastPublished')}</th>
+                <th scope="col">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -768,24 +771,24 @@ export function PageManager() {
           {announcement}
         </div>
         <div className="jeeby-cms-pages-empty">
-          <h2>No pages yet.</h2>
-          <p>Each page is a section of your website — like 'About', 'Contact', or 'Blog'. Fill it with text, images, and galleries, then publish when it's ready.</p>
+          <h2>{t('noPagesYet')}</h2>
+          <p>{t('noPagesEmptyBody')}</p>
           <div className="jeeby-cms-page-list-controls">
             <button
               ref={newPageBtnRef}
               type="button"
               className="jeeby-cms-btn-primary"
               onClick={() => setShowCreateModal(true)}
-            >Create your first page</button>
+            >{t('createFirstPage')}</button>
             <button
               ref={mediaLibraryTriggerRef}
               type="button"
               className="jeeby-cms-btn-ghost"
               onClick={() => setMediaLibraryOpen(true)}
-            >Upload Media</button>
+            >{t('uploadMedia')}</button>
           </div>
         </div>
-        <CreatePageModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => { loadPages(); setAnnouncement('Page created successfully.') }} triggerRef={newPageBtnRef} />
+        <CreatePageModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => { loadPages(); setAnnouncement(t('pageCreated')) }} triggerRef={newPageBtnRef} />
         <MediaLibraryModal
           open={mediaLibraryOpen}
           mode="browse"
@@ -823,12 +826,12 @@ export function PageManager() {
                   className="jeeby-cms-sort-trigger"
                   aria-haspopup="menu"
                   aria-expanded={sortPickerOpen}
-                  aria-label={currentOpt.isFilter ? `Filter active: ${currentOpt.label}` : `Sort: ${currentOpt.label}`}
+                  aria-label={currentOpt.isFilter ? `Filter active: ${t(currentOpt.labelKey)}` : `Sort: ${t(currentOpt.labelKey)}`}
                   data-filter-active={currentOpt.isFilter ? 'true' : undefined}
                   onClick={() => setSortPickerOpen(v => !v)}
                 >
                   <IconSortLines />
-                  {currentOpt.label}
+                  {t(currentOpt.labelKey)}
                   <IconChevronDown />
                 </button>
                 {sortPickerOpen && (
@@ -847,13 +850,13 @@ export function PageManager() {
             type="button"
             className="jeeby-cms-btn-primary"
             onClick={() => setShowCreateModal(true)}
-          >New Page</button>
+          >{t('newPage')}</button>
           <button
             ref={mediaLibraryTriggerRef}
             type="button"
             className="jeeby-cms-btn-ghost"
             onClick={() => setMediaLibraryOpen(true)}
-          >Upload Media</button>
+          >{t('uploadMedia')}</button>
         </div>
       </div>
 
@@ -872,17 +875,17 @@ export function PageManager() {
               <input
                 type="search"
                 className="jeeby-cms-search-input"
-                placeholder="Search pages…"
+                placeholder={t('searchPagesPlaceholder')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                aria-label="Search pages"
+                aria-label={t('searchPagesLabel')}
                 maxLength={200}
               />
               {searchQuery && (
                 <button
                   type="button"
                   className="jeeby-cms-search-clear"
-                  aria-label="Clear search"
+                  aria-label={t('clearSearch')}
                   onClick={() => setSearchQuery('')}
                 >
                   <IconClear />
@@ -896,15 +899,15 @@ export function PageManager() {
       {deleteBlockedError && (
         <div className="jeeby-cms-inline-error" role="alert" style={{ marginBottom: '0.75rem' }}>
           {deleteBlockedError.count === 1
-            ? 'This collection has 1 entry. Delete or reassign them first.'
-            : `This collection has ${deleteBlockedError.count} entries. Delete or reassign them first.`}
+            ? t('deleteBlockedSingular')
+            : tf(t('deleteBlockedPlural'), { count: deleteBlockedError.count })}
           {' '}
           <button
             type="button"
             className="jeeby-cms-btn-ghost"
             onClick={() => setDeleteBlockedError(null)}
-            aria-label="Dismiss error"
-          >Dismiss</button>
+            aria-label={t('dismiss')}
+          >{t('dismiss')}</button>
         </div>
       )}
 
@@ -920,11 +923,11 @@ export function PageManager() {
       <table className="jeeby-cms-pages-table">
         <thead>
           <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Slug</th>
-            <th scope="col">Status</th>
-            <th scope="col">Last Published</th>
-            <th scope="col">Actions</th>
+            <th scope="col">{t('colName')}</th>
+            <th scope="col">{t('colSlug')}</th>
+            <th scope="col">{t('colStatus')}</th>
+            <th scope="col">{t('colLastPublished')}</th>
+            <th scope="col">{t('colActions')}</th>
           </tr>
         </thead>
         {(() => {
@@ -939,10 +942,10 @@ export function PageManager() {
             const queryChars = [...debouncedQuery]
             const shortQuery = queryChars.length > 40 ? queryChars.slice(0, 40).join('') + '…' : debouncedQuery
             const emptyMsg = hasSearch && hasFilter
-              ? 'No pages match this search and filter.'
+              ? t('noPagesMatch')
               : hasSearch
-                ? `No pages match "${shortQuery}".`
-                : 'No pages match this filter.'
+                ? `${t('noPagesMatch')} "${shortQuery}"`
+                : t('noPagesMatch')
             return (
               <tbody>
                 <tr>
@@ -950,11 +953,11 @@ export function PageManager() {
                     <span>{emptyMsg}</span>
                     {hasSearch && (
                       <button type="button" className="jeeby-cms-btn-ghost"
-                        onClick={() => { setSearchQuery(''); setAnnouncement('Search cleared.') }}>Clear search</button>
+                        onClick={() => { setSearchQuery(''); setAnnouncement(t('noPagesMatch')) }}>{t('clearSearch')}</button>
                     )}
                     {hasFilter && (
                       <button type="button" className="jeeby-cms-btn-ghost"
-                        onClick={() => { setSortMode('recent'); setAnnouncement('Filter cleared. Showing all pages.') }}>Clear filter</button>
+                        onClick={() => { setSortMode('recent'); setAnnouncement(t('noPagesMatch')) }}>{t('clearFilter')}</button>
                     )}
                   </td>
                 </tr>
@@ -967,14 +970,15 @@ export function PageManager() {
               {displayedCollections.length > 0 && (
                 <tbody>
                   <tr className="jeeby-cms-table-section-header">
-                    <td colSpan={5}>Collections</td>
+                    <td colSpan={5}>{t('collections')}</td>
                   </tr>
                 </tbody>
               )}
               {displayedCollections.map(coll => {
                 const isExpanded = expandedCollections.has(coll.slug)
                 const kids = entriesByParent.get(coll.slug) || []
-                const { label: collLabel, cls: collCls } = STATUS_PROPS[pageStatus(coll)]
+                const { labelKey: collLabelKey, cls: collCls } = STATUS_PROPS[pageStatus(coll)]
+                const collLabel = t(collLabelKey)
                 return (
                   <tbody
                     key={`coll-${coll.slug}`}
@@ -989,7 +993,7 @@ export function PageManager() {
                             type="text"
                             className="jeeby-cms-inline-edit-input"
                             value={editValue}
-                            aria-label={`Rename: ${coll.name || coll.slug}`}
+                            aria-label={tf(t('renameInputLabel'), { name: coll.name || coll.slug })}
                             aria-describedby={`cms-rename-error-${coll.slug}`}
                             onChange={e => handleEditChange(e.target.value)}
                             onKeyDown={handleEditKeyDown}
@@ -1015,9 +1019,9 @@ export function PageManager() {
                               ref={el => { editTriggerRefs.current[`${coll.slug}-name`] = el }}
                               type="button"
                               className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                              aria-label={`Rename ${coll.name || coll.slug}`}
+                              aria-label={tf(t('renameAriaLabel'), { name: coll.name || coll.slug })}
                               onClick={() => startEdit(coll.slug, 'name', coll.name || '')}
-                            >Rename</button>
+                            >{t('rename')}</button>
                           </span>
                         )}
                       </td>
@@ -1027,7 +1031,7 @@ export function PageManager() {
                             type="text"
                             className="jeeby-cms-inline-edit-input"
                             value={editValue}
-                            aria-label={`Rename slug: ${coll.name || coll.slug}`}
+                            aria-label={tf(t('renameSlugInputLabel'), { name: coll.name || coll.slug })}
                             aria-describedby={`cms-rename-error-${coll.slug}`}
                             onChange={e => handleEditChange(e.target.value)}
                             onKeyDown={handleEditKeyDown}
@@ -1041,27 +1045,27 @@ export function PageManager() {
                               ref={el => { editTriggerRefs.current[`${coll.slug}-slug`] = el }}
                               type="button"
                               className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                              aria-label={`Rename slug for ${coll.name || coll.slug}`}
+                              aria-label={tf(t('renameSlugAriaLabel'), { name: coll.name || coll.slug })}
                               onClick={() => startEdit(coll.slug, 'slug', coll.slug)}
-                            >Rename</button>
+                            >{t('rename')}</button>
                           </span>
                         )}
                       </td>
                       <td><span className={collCls}>{collLabel}</span></td>
-                      <td>{formatDate(coll.lastPublishedAt)}</td>
+                      <td>{formatDate(coll.lastPublishedAt) ?? t('notYet')}</td>
                       <td>
                         <div className="jeeby-cms-table-actions">
                           <a
                             href={'/admin/pages/' + encodeURIComponent(coll.slug)}
-                            aria-label={'Edit blocks for ' + coll.slug}
+                            aria-label={tf(t('editBlocksFor'), { slug: coll.slug })}
                             className="jeeby-cms-btn-primary"
-                          >Edit</a>
+                          >{t('edit')}</a>
                           <button
                             type="button"
                             className="jeeby-cms-btn-ghost"
-                            aria-label={`Delete ${coll.slug}`}
+                            aria-label={tf(t('deleteAriaLabel'), { slug: coll.slug })}
                             onClick={(e) => { deleteBtnRef.current = e.currentTarget; handleDeleteClick(coll) }}
-                          >Delete</button>
+                          >{t('delete')}</button>
                         </div>
                       </td>
                     </tr>
@@ -1075,14 +1079,15 @@ export function PageManager() {
                     )}
                     {/* Entry rows */}
                     {isExpanded && kids.map(entry => {
-                      const { label, cls } = STATUS_PROPS[pageStatus(entry)]
+                      const { labelKey, cls } = STATUS_PROPS[pageStatus(entry)]
+                      const label = t(labelKey)
                       return (
                         <Fragment key={entry.slug}>
                           <tr className="jeeby-cms-entry-row">
                             <td>
                               {editingSlug === entry.slug && editField === 'name' ? (
                                 <input type="text" className="jeeby-cms-inline-edit-input jeeby-cms-entry-indent" value={editValue}
-                                  aria-label={`Rename: ${entry.name || entry.slug}`}
+                                  aria-label={tf(t('renameInputLabel'), { name: entry.name || entry.slug })}
                                   aria-describedby={`cms-rename-error-${entry.slug}`}
                                   onChange={e => handleEditChange(e.target.value)}
                                   onKeyDown={handleEditKeyDown}
@@ -1094,16 +1099,16 @@ export function PageManager() {
                                   <button
                                     ref={el => { editTriggerRefs.current[`${entry.slug}-name`] = el }}
                                     type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                                    aria-label={`Rename ${entry.name || entry.slug}`}
+                                    aria-label={tf(t('renameAriaLabel'), { name: entry.name || entry.slug })}
                                     onClick={() => startEdit(entry.slug, 'name', entry.name || '')}
-                                  >Rename</button>
+                                  >{t('rename')}</button>
                                 </span>
                               )}
                             </td>
                             <td>
                               {editingSlug === entry.slug && editField === 'slug' ? (
                                 <input type="text" className="jeeby-cms-inline-edit-input" value={editValue}
-                                  aria-label={`Rename slug: ${entry.name || entry.slug}`}
+                                  aria-label={tf(t('renameSlugInputLabel'), { name: entry.name || entry.slug })}
                                   aria-describedby={`cms-rename-error-${entry.slug}`}
                                   onChange={e => handleEditChange(e.target.value)}
                                   onKeyDown={handleEditKeyDown}
@@ -1115,23 +1120,23 @@ export function PageManager() {
                                   <button
                                     ref={el => { editTriggerRefs.current[`${entry.slug}-slug`] = el }}
                                     type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                                    aria-label={`Rename slug for ${entry.name || entry.slug}`}
+                                    aria-label={tf(t('renameSlugAriaLabel'), { name: entry.name || entry.slug })}
                                     onClick={() => startEdit(entry.slug, 'slug', entry.slug)}
-                                  >Rename</button>
+                                  >{t('rename')}</button>
                                 </span>
                               )}
                             </td>
                             <td><span className={cls}>{label}</span></td>
-                            <td>{formatDate(entry.lastPublishedAt)}</td>
+                            <td>{formatDate(entry.lastPublishedAt) ?? t('notYet')}</td>
                             <td>
                               <div className="jeeby-cms-table-actions">
                                 <a href={'/admin/pages/' + encodeURIComponent(entry.slug)}
-                                  aria-label={'Edit blocks for ' + entry.slug}
-                                  className="jeeby-cms-btn-primary">Edit</a>
+                                  aria-label={tf(t('editBlocksFor'), { slug: entry.slug })}
+                                  className="jeeby-cms-btn-primary">{t('edit')}</a>
                                 <button type="button" className="jeeby-cms-btn-ghost"
-                                  aria-label={`Delete ${entry.slug}`}
+                                  aria-label={tf(t('deleteAriaLabel'), { slug: entry.slug })}
                                   onClick={(e) => { deleteBtnRef.current = e.currentTarget; handleDeleteClick(entry) }}
-                                >Delete</button>
+                                >{t('delete')}</button>
                               </div>
                             </td>
                           </tr>
@@ -1165,7 +1170,7 @@ export function PageManager() {
                         <td>
                           {editingSlug === page.slug && editField === 'name' ? (
                             <input type="text" className="jeeby-cms-inline-edit-input" value={editValue}
-                              aria-label={`Rename: ${page.name || page.slug}`}
+                              aria-label={tf(t('renameInputLabel'), { name: page.name || page.slug })}
                               aria-describedby={`cms-rename-error-${page.slug}`}
                               onChange={e => handleEditChange(e.target.value)}
                               onKeyDown={handleEditKeyDown}
@@ -1177,16 +1182,16 @@ export function PageManager() {
                               <button
                                 ref={el => { editTriggerRefs.current[`${page.slug}-name`] = el }}
                                 type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                                aria-label={`Rename ${page.name || page.slug}`}
+                                aria-label={tf(t('renameAriaLabel'), { name: page.name || page.slug })}
                                 onClick={() => startEdit(page.slug, 'name', page.name || '')}
-                              >Rename</button>
+                              >{t('rename')}</button>
                             </span>
                           )}
                         </td>
                         <td>
                           {editingSlug === page.slug && editField === 'slug' ? (
                             <input type="text" className="jeeby-cms-inline-edit-input" value={editValue}
-                              aria-label={`Rename slug: ${page.name || page.slug}`}
+                              aria-label={tf(t('renameSlugInputLabel'), { name: page.name || page.slug })}
                               aria-describedby={`cms-rename-error-${page.slug}`}
                               onChange={e => handleEditChange(e.target.value)}
                               onKeyDown={handleEditKeyDown}
@@ -1198,23 +1203,23 @@ export function PageManager() {
                               <button
                                 ref={el => { editTriggerRefs.current[`${page.slug}-slug`] = el }}
                                 type="button" className="jeeby-cms-btn-ghost jeeby-cms-edit-affordance"
-                                aria-label={`Rename slug for ${page.name || page.slug}`}
+                                aria-label={tf(t('renameSlugAriaLabel'), { name: page.name || page.slug })}
                                 onClick={() => startEdit(page.slug, 'slug', page.slug)}
-                              >Rename</button>
+                              >{t('rename')}</button>
                             </span>
                           )}
                         </td>
-                        <td>{(() => { const { label, cls } = STATUS_PROPS[pageStatus(page)]; return <span className={cls}>{label}</span> })()}</td>
-                        <td>{formatDate(page.lastPublishedAt)}</td>
+                        <td>{(() => { const { labelKey, cls } = STATUS_PROPS[pageStatus(page)]; return <span className={cls}>{t(labelKey)}</span> })()}</td>
+                        <td>{formatDate(page.lastPublishedAt) ?? t('notYet')}</td>
                         <td>
                           <div className="jeeby-cms-table-actions">
                             <a href={'/admin/pages/' + encodeURIComponent(page.slug)}
-                              aria-label={'Edit blocks for ' + page.slug}
-                              className="jeeby-cms-btn-primary">Edit</a>
+                              aria-label={tf(t('editBlocksFor'), { slug: page.slug })}
+                              className="jeeby-cms-btn-primary">{t('edit')}</a>
                             <button type="button" className="jeeby-cms-btn-ghost"
-                              aria-label={`Delete ${page.slug}`}
+                              aria-label={tf(t('deleteAriaLabel'), { slug: page.slug })}
                               onClick={(e) => { deleteBtnRef.current = e.currentTarget; handleDeleteClick(page) }}
-                            >Delete</button>
+                            >{t('delete')}</button>
                           </div>
                         </td>
                       </motion.tr>
@@ -1237,24 +1242,24 @@ export function PageManager() {
       </AnimatePresence>
 
       {(canGoPrev || canGoNext) && (
-        <div className="jeeby-cms-pagination" role="navigation" aria-label="Page navigation">
+        <div className="jeeby-cms-pagination" role="navigation" aria-label={t('paginationLabel')}>
           <button
             type="button"
             className="jeeby-cms-pagination-btn"
             onClick={goToPrevPage}
             disabled={!canGoPrev || loading}
-            aria-label="Previous page"
-          ><IconChevronLeft /> Prev</button>
+            aria-label={t('previousPage')}
+          ><IconChevronLeft /> {t('prevBtn')}</button>
           <span className="jeeby-cms-pagination-label" aria-live="polite">
-            {totalPages ? `Page ${pageNum} of ${totalPages}` : `Page ${pageNum}`}
+            {totalPages ? tf(t('pageOf'), { n: pageNum, total: totalPages }) : tf(t('pageNumber'), { n: pageNum })}
           </span>
           <button
             type="button"
             className="jeeby-cms-pagination-btn"
             onClick={goToNextPage}
             disabled={!canGoNext || loading}
-            aria-label="Next page"
-          >Next <IconChevronRight /></button>
+            aria-label={t('nextPage')}
+          >{t('nextBtn')} <IconChevronRight /></button>
         </div>
       )}
 
@@ -1265,7 +1270,7 @@ export function PageManager() {
           allPagesCacheRef.current = null
           prefetchRef.current = null
           loadPages()
-          setAnnouncement('Page created successfully.')
+          setAnnouncement(t('pageCreated'))
         }}
         triggerRef={newPageBtnRef}
       />
@@ -1282,7 +1287,7 @@ export function PageManager() {
         onDeleted={() => {
           const slug = deleteTarget?.slug
           if (slug) setPages(prev => prev.filter(p => p.slug !== slug))
-          setAnnouncement('Page deleted.')
+          setAnnouncement(t('pageDeleted'))
           allPagesCacheRef.current = null
           prefetchRef.current = null
           setTimeout(() => loadPages(), 350)

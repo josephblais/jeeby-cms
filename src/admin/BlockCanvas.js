@@ -11,10 +11,7 @@ import { PullQuoteEditor } from './editors/PullQuoteEditor.js'
 import { AddBlockButton } from './AddBlockButton.js'
 import { BlockGutter } from './BlockGutter.js'
 import { BlockTypePicker } from './BlockTypePicker.js'
-
-// Display name helper
-const DISPLAY_NAMES = { title: 'Title', richtext: 'Text', image: 'Image', video: 'Video', gallery: 'Gallery', list: 'List', pullquote: 'Pull Quote' }
-function displayName(type) { return DISPLAY_NAMES[type] || type }
+import { useT, tf, BLOCK_DISPLAY_KEYS } from './useT.js'
 
 // EDITOR_MAP maps block types to editor components.
 const EDITOR_MAP = {
@@ -32,7 +29,9 @@ const EDITOR_MAP = {
 // Requires stable onChange/onDelete/onAddBlock references (useCallback in PageEditor).
 const BlockCard = memo(function BlockCard({ block, index, onChange, onDelete, onAddBlock }) {
   const controls = useDragControls()
+  const t = useT()
   const Editor = EDITOR_MAP[block.type] || EDITOR_MAP.richtext
+  const blockDisplayName = t(BLOCK_DISPLAY_KEYS[block.type] || 'blockRichtext')
 
   return (
     <Reorder.Item
@@ -49,7 +48,7 @@ const BlockCard = memo(function BlockCard({ block, index, onChange, onDelete, on
         {/* Block content — editor lives here */}
         <article
           className="jeeby-cms-block-content"
-          aria-label={displayName(block.type) + ' block'}
+          aria-label={tf(t('blockArticleLabel'), { blockType: blockDisplayName })}
         >
           <Editor data={block.data} onChange={(newData) => onChange(block.id, newData)} blockId={block.id} />
         </article>
@@ -61,6 +60,7 @@ const BlockCard = memo(function BlockCard({ block, index, onChange, onDelete, on
 
 // Block preview sketches for the empty state — static SVG, never changes.
 const EmptyStatePreviews = memo(function EmptyStatePreviews() {
+  const t = useT()
   return (
     <div className="jeeby-cms-canvas-empty-previews" aria-hidden="true">
       {/* Heading: thick heading bar + lighter body text lines */}
@@ -73,7 +73,7 @@ const EmptyStatePreviews = memo(function EmptyStatePreviews() {
             <rect x="0" y="33" width="52" height="4"  rx="1.5" opacity="0.17" />
           </svg>
         </div>
-        <span className="jeeby-cms-canvas-empty-preview-label">Heading</span>
+        <span className="jeeby-cms-canvas-empty-preview-label">{t('blockTypeHeading')}</span>
       </div>
       {/* Text: paragraph lines of varying widths */}
       <div className="jeeby-cms-canvas-empty-preview">
@@ -85,7 +85,7 @@ const EmptyStatePreviews = memo(function EmptyStatePreviews() {
             <rect x="0" y="32" width="80" height="4" rx="1.5" opacity="0.35" />
           </svg>
         </div>
-        <span className="jeeby-cms-canvas-empty-preview-label">Text</span>
+        <span className="jeeby-cms-canvas-empty-preview-label">{t('blockTypeText')}</span>
       </div>
       {/* Image: framed rectangle with sun + mountain silhouette */}
       <div className="jeeby-cms-canvas-empty-preview">
@@ -96,7 +96,7 @@ const EmptyStatePreviews = memo(function EmptyStatePreviews() {
             <polygon points="0,44 20,24 34,34 52,20 66,30 80,23 80,44" opacity="0.18" />
           </svg>
         </div>
-        <span className="jeeby-cms-canvas-empty-preview-label">Image</span>
+        <span className="jeeby-cms-canvas-empty-preview-label">{t('blockTypeImage')}</span>
       </div>
     </div>
   )
@@ -105,16 +105,15 @@ const EmptyStatePreviews = memo(function EmptyStatePreviews() {
 export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock }) {
   const [emptyPickerOpen, setEmptyPickerOpen] = useState(false)
   const emptyBtnRef = useRef(null)
+  const t = useT()
 
   if (blocks.length === 0) {
     return (
       <div className="jeeby-cms-block-canvas">
         <div className="jeeby-cms-canvas-empty">
           <EmptyStatePreviews />
-          <p className="jeeby-cms-canvas-empty-headline">This page has no content yet</p>
-          <p className="jeeby-cms-canvas-empty-body">
-            Add blocks to build your page — headings, paragraphs, images, and more.
-          </p>
+          <p className="jeeby-cms-canvas-empty-headline">{t('emptyBlocksHeadline')}</p>
+          <p className="jeeby-cms-canvas-empty-body">{t('emptyBlocksBody')}</p>
           <div className="jeeby-cms-canvas-empty-picker-anchor">
             <button
               ref={emptyBtnRef}
@@ -124,7 +123,7 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
               aria-expanded={emptyPickerOpen}
               onClick={() => setEmptyPickerOpen(v => !v)}
             >
-              Add your first block
+              {t('addFirstBlock')}
             </button>
             {emptyPickerOpen && (
               <BlockTypePicker
@@ -152,7 +151,7 @@ export function BlockCanvas({ blocks, onReorder, onChange, onDelete, onAddBlock 
         axis="y"
         values={blocks}
         onReorder={onReorder}
-        aria-label="Page blocks"
+        aria-label={t('pageBlocksLabel')}
       >
         {blocks.map((block, index) => (
           <BlockCard

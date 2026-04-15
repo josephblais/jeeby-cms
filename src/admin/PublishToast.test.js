@@ -38,7 +38,7 @@ test('PublishToast has jeeby-cms-publish-toast class for z-index', { skip: !src 
 })
 
 test('PublishToast displays success message', { skip: !src }, () => {
-  assert.ok(src.includes('Page published successfully.'), 'Toast must display "Page published successfully."')
+  assert.ok(src.includes("t('pagePublished')"), 'Toast must display success via t("pagePublished")')
 })
 
 test('PublishToast has jeeby-cms-publish-toast class', { skip: !src }, () => {

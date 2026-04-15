@@ -42,7 +42,7 @@ function withCMSAuth() {
     }
   };
 }
-async function getCMSContent(slug) {
+async function getCMSContent(slug, { locale = "en" } = {}) {
   const db = getAdminFirestore();
   const snap = await db.doc("pages/" + slug).get();
   if (!snap.exists) return null;

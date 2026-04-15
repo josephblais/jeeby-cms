@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useCMSFirebase } from '../../index.js'
+import { useT, tf } from '../useT.js'
 
 // Admin preview sizes — rough approximations only.
 // The Title block renders unstyled <h2>/<h3> etc. on the front end; actual size
@@ -9,8 +10,6 @@ import { useCMSFirebase } from '../../index.js'
 const HEADING_SIZES = { h2: '28px', h3: '24px', h4: '20px', h5: '16px', h6: '14px' }
 
 const LEVELS = ['h2', 'h3', 'h4', 'h5', 'h6']
-
-const LEVEL_LABELS = { h2: 'Heading 2', h3: 'Heading 3', h4: 'Heading 4', h5: 'Heading 5', h6: 'Heading 6' }
 
 function HeadingLevelIcon({ level }) {
   const num = level.slice(1)
@@ -23,6 +22,14 @@ function HeadingLevelIcon({ level }) {
 }
 
 function HeadingLevelPicker({ value, onChange }) {
+  const t = useT()
+  const LEVEL_LABELS = {
+    h2: t('headingLevel2'),
+    h3: t('headingLevel3'),
+    h4: t('headingLevel4'),
+    h5: t('headingLevel5'),
+    h6: t('headingLevel6'),
+  }
   const [open, setOpen] = useState(false)
   const [dropdownStyle, setDropdownStyle] = useState({})
   const [hoverIndex, setHoverIndex] = useState(LEVELS.indexOf(value))
@@ -105,7 +112,7 @@ function HeadingLevelPicker({ value, onChange }) {
         className="jeeby-cms-heading-picker-trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Heading level: ${LEVEL_LABELS[value]}`}
+        aria-label={tf(t('headingLevelLabel'), { level: LEVEL_LABELS[value] })}
         onClick={() => open ? setOpen(false) : openPicker()}
         onKeyDown={handleTriggerKeyDown}
       >
@@ -118,7 +125,7 @@ function HeadingLevelPicker({ value, onChange }) {
           <ul
             ref={listRef}
             role="listbox"
-            aria-label="Choose heading level"
+            aria-label={t('chooseHeadingLevel')}
             onKeyDown={handleListKeyDown}
             className="jeeby-cms-block-type-picker jeeby-cms-heading-picker-dropdown"
           >
@@ -148,6 +155,7 @@ function HeadingLevelPicker({ value, onChange }) {
 //   2.1.1 (keyboard — Enter blocked to enforce single-line)
 export function TitleEditor({ data, onChange, blockId }) {
   const { locale, isLocalized } = useCMSFirebase()
+  const t = useT()
   const divRef = useRef(null)
   // Track whether the last text change came from user typing (internal) vs external prop update.
   // Without this guard, re-setting textContent during typing clobbers the cursor position.
@@ -194,7 +202,7 @@ export function TitleEditor({ data, onChange, blockId }) {
         id={'block-input-' + blockId}
         role="textbox"
         contentEditable
-        aria-label="Title text"
+        aria-label={t('titleTextLabel')}
         aria-multiline="false"
         suppressContentEditableWarning
         onInput={handleInput}
@@ -203,7 +211,7 @@ export function TitleEditor({ data, onChange, blockId }) {
           fontSize: HEADING_SIZES[data?.level ?? 'h2'],
           minHeight: '44px',
         }}
-        data-placeholder="Type a heading..."
+        data-placeholder={t('titlePlaceholder')}
       />
 
       {/* Heading level picker — aux control, revealed on block hover/focus */}

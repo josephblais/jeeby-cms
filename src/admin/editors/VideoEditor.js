@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { toEmbedUrl } from '../../blocks/Video.js'
 import { useCMSFirebase } from '../../index.js'
+import { useT } from '../useT.js'
 
 // VideoEditor — URL input with iframe preview for recognized embed URLs.
 // Props: { data: { url }, onChange, blockId }
@@ -20,6 +21,7 @@ import { useCMSFirebase } from '../../index.js'
 //   role="alert" on error so screen readers announce it immediately (WCAG 4.1.3)
 export function VideoEditor({ data, onChange, blockId }) {
   const { locale, isLocalized } = useCMSFirebase()
+  const t = useT()
   const rawUrl = data?.url ?? ''
   const embedUrl = rawUrl ? toEmbedUrl(rawUrl) : null
   const isRecognized = rawUrl && embedUrl !== rawUrl
@@ -71,7 +73,7 @@ export function VideoEditor({ data, onChange, blockId }) {
         role="button"
         tabIndex={0}
         id={'block-input-' + blockId}
-        aria-label="Video — click to add video URL"
+        aria-label={t('videoEmptyAriaLabel')}
         className="jeeby-cms-video-empty"
         onClick={enterEditMode}
         onKeyDown={e => {
@@ -81,7 +83,7 @@ export function VideoEditor({ data, onChange, blockId }) {
         <div className="jeeby-cms-video-empty-area" aria-hidden="true">
           <IconVideo />
         </div>
-        <p className="jeeby-cms-video-empty-hint">Video — click to add video URL</p>
+        <p className="jeeby-cms-video-empty-hint">{t('videoEmptyHint')}</p>
       </div>
     )
   }
@@ -95,23 +97,23 @@ export function VideoEditor({ data, onChange, blockId }) {
         </div>
         <div className="jeeby-cms-video-empty-inputs">
           <label htmlFor={'block-input-' + blockId} className="jeeby-cms-field-label">
-            Video URL
+            {t('videoUrlLabel')}
           </label>
           <input
             ref={urlInputRef}
             id={'block-input-' + blockId}
             type="url"
             value={rawUrl}
-            aria-label="Video URL (YouTube, Vimeo, or Loom)"
+            aria-label={t('videoUrlAriaLabel')}
             placeholder="https://www.youtube.com/watch?v=..."
             onChange={(e) => onChange({ ...data, url: e.target.value })}
             className="jeeby-cms-video-url-input"
           />
-          <p className="jeeby-cms-field-hint">YouTube, Vimeo, or Loom URLs are supported</p>
+          <p className="jeeby-cms-field-hint">{t('videoUrlHint')}</p>
           {/* role="alert" announces error immediately to screen reader users (WCAG 4.1.3) */}
           {showError && (
             <p role="alert" className="jeeby-cms-inline-error">
-              Unrecognised video URL
+              {t('videoUnrecognised')}
             </p>
           )}
         </div>
@@ -124,7 +126,7 @@ export function VideoEditor({ data, onChange, blockId }) {
     <div>
       <div style={{ aspectRatio: '16/9', width: '100%' }}>
         <iframe
-          title="Video preview"
+          title={t('videoPreviewTitle')}
           src={embedUrl}
           allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture"
           style={{ width: '100%', height: '100%', border: 0, borderRadius: '4px' }}
@@ -137,17 +139,17 @@ export function VideoEditor({ data, onChange, blockId }) {
           id={'block-input-' + blockId}
           type="url"
           value={rawUrl}
-          aria-label="Video URL (YouTube, Vimeo, or Loom)"
+          aria-label={t('videoUrlAriaLabel')}
           placeholder="https://www.youtube.com/watch?v=..."
           onChange={(e) => onChange({ ...data, url: e.target.value })}
           style={{ width: '100%', minHeight: '44px' }}
         />
-        <p className="jeeby-cms-field-hint">YouTube, Vimeo, or Loom URLs are supported</p>
+        <p className="jeeby-cms-field-hint">{t('videoUrlHint')}</p>
         <input
           type="text"
           value={title}
-          aria-label="Video title (optional caption)"
-          placeholder="Add an optional title or caption…"
+          aria-label={t('videoTitleAriaLabel')}
+          placeholder={t('videoTitlePlaceholder')}
           onChange={(e) => updateTitle(e.target.value)}
           style={{ width: '100%', minHeight: '44px' }}
         />

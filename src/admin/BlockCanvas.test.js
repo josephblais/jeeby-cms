@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const src = readFileSync(new URL('./BlockCanvas.js', import.meta.url), 'utf8')
+const gutterSrc = readFileSync(new URL('./BlockGutter.js', import.meta.url), 'utf8')
 
 test('BlockCanvas uses Reorder.Group', () => {
   assert.ok(src.includes('Reorder.Group'), 'BlockCanvas must use Reorder.Group from framer-motion')
@@ -37,14 +38,14 @@ test('Drag handle has aria-hidden="true"', () => {
 })
 
 test('Delete button has aria-label with Delete', () => {
-  assert.ok(/aria-label=.*Delete/.test(src), 'Delete button must have aria-label containing Delete')
+  assert.ok(gutterSrc.includes("t('deleteBlockAriaLabel')"), 'Delete button must set aria-label via t("deleteBlockAriaLabel")')
 })
 
 test('Delete button has 44px touch target (CSS class or inline)', () => {
-  // Touch target provided by .jeeby-cms-btn-ghost CSS (min-height: 44px) or inline style
+  // Touch target provided by CSS class or inline style
   assert.ok(
-    src.includes('jeeby-cms-btn-ghost') || src.includes("minHeight: '44px'") || src.includes('minHeight: 44'),
-    'Delete button must have 44px touch target via CSS class or inline style'
+    gutterSrc.includes('jeeby-cms-block-delete-btn') || gutterSrc.includes('jeeby-cms-btn-ghost') || gutterSrc.includes("minHeight: '44px'"),
+    'Delete button must have a touch target CSS class or inline style'
   )
 })
 

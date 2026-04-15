@@ -9,26 +9,25 @@ test('DeletePageModal has "use client" directive', () => {
 })
 
 test('DeletePageModal uses role="dialog" with aria-modal', () => {
-  assert.ok(src.includes('role="dialog"'), 'Must have role="dialog"')
-  assert.ok(src.includes('aria-modal="true"'), 'Must have aria-modal="true"')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides role="dialog" and aria-modal="true"')
 })
 
 test('DeletePageModal has aria-labelledby pointing to heading', () => {
-  assert.ok(src.includes('aria-labelledby="delete-modal-heading"'), 'Must reference heading id')
+  assert.ok(src.includes('labelId="delete-modal-heading"'), 'Must pass labelId to ModalShell')
   assert.ok(src.includes('id="delete-modal-heading"'), 'Heading must have matching id')
 })
 
 test('DeletePageModal heading text is "Delete page?"', () => {
-  assert.ok(src.includes('Delete page?'), 'Heading must say "Delete page?"')
+  assert.ok(src.includes("t('deletePageTitle')"), 'Heading must use t("deletePageTitle")')
 })
 
 test('DeletePageModal shows confirmation text with slug', () => {
-  assert.ok(src.includes('This cannot be undone'), 'Must warn about irreversibility')
+  assert.ok(src.includes("t('deletePageBody')"), 'Must warn about irreversibility via t("deletePageBody")')
 })
 
 test('DeletePageModal has correct button text', () => {
-  assert.ok(src.includes('Keep Page'), 'Cancel button must say "Keep Page"')
-  assert.ok(src.includes('Delete Page'), 'Confirm button must say "Delete Page"')
+  assert.ok(src.includes("t('keepPage')"), 'Cancel button must use t("keepPage")')
+  assert.ok(src.includes("t('deletePageAction')"), 'Confirm button must use t("deletePageAction")')
 })
 
 test('DeletePageModal confirm button uses destructive style', () => {
@@ -36,12 +35,11 @@ test('DeletePageModal confirm button uses destructive style', () => {
 })
 
 test('DeletePageModal has Escape key handler', () => {
-  assert.ok(src.includes('Escape'), 'Must handle Escape key')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which handles Escape key')
 })
 
 test('DeletePageModal has focus trap (Tab cycling)', () => {
-  assert.ok(src.includes('Tab'), 'Must handle Tab key')
-  assert.ok(src.includes('shiftKey'), 'Must handle Shift+Tab')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides Tab focus trap')
 })
 
 test('DeletePageModal has disabled/busy state on confirm button', () => {

@@ -133,7 +133,7 @@ export async function renameCollection(db, oldSlug, newSlug) {
 export function validateSlug(pattern, slug) {
   if (!pattern) return true
   const regexStr = pattern
-    .replace(/\[\.\.\.[\w]+\]/g, '.*')
+    .replace(/\[\.\.\.[\w]+\]/g, '.+')
     .replace(/\[[\w]+\]/g, '[^/]+')
     .replace(/\//g, '\\/')
   return new RegExp('^' + regexStr + '$').test(slug)

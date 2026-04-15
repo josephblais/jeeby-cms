@@ -9,17 +9,16 @@ test('CreatePageModal has "use client" directive', () => {
 })
 
 test('CreatePageModal uses role="dialog" with aria-modal', () => {
-  assert.ok(src.includes('role="dialog"'), 'Must have role="dialog"')
-  assert.ok(src.includes('aria-modal="true"'), 'Must have aria-modal="true"')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides role="dialog" and aria-modal="true"')
 })
 
 test('CreatePageModal has aria-labelledby pointing to heading', () => {
-  assert.ok(src.includes('aria-labelledby="create-modal-heading"'), 'Must reference heading id')
+  assert.ok(src.includes('labelId="create-modal-heading"'), 'Must pass labelId to ModalShell')
   assert.ok(src.includes('id="create-modal-heading"'), 'Heading must have matching id')
 })
 
 test('CreatePageModal heading text is "Create New Page"', () => {
-  assert.ok(src.includes('Create New Page'), 'Heading must say "Create New Page"')
+  assert.ok(src.includes("t('createNewPage')"), 'Heading must use t("createNewPage")')
 })
 
 test('CreatePageModal has labeled form fields', () => {
@@ -40,13 +39,13 @@ test('CreatePageModal slug error uses role="alert"', () => {
 })
 
 test('CreatePageModal has hint text for slug', () => {
-  assert.ok(src.includes('e.g. /about or /blog/my-post'), 'Must show slug hint text')
+  assert.ok(src.includes("t('slugHint')"), 'Must show slug hint via t("slugHint")')
 })
 
 test('CreatePageModal template dropdown has label and placeholder', () => {
   assert.ok(src.includes('htmlFor="cms-page-template"'), 'Template label must have htmlFor')
   assert.ok(src.includes('id="cms-page-template"'), 'Template select must have matching id')
-  assert.ok(src.includes('Select a template'), 'Must have placeholder option')
+  assert.ok(src.includes("t('selectTemplate')"), 'Must have placeholder via t("selectTemplate")')
 })
 
 test('CreatePageModal hides template dropdown when no templates', () => {
@@ -54,27 +53,25 @@ test('CreatePageModal hides template dropdown when no templates', () => {
 })
 
 test('CreatePageModal has Escape key handler', () => {
-  assert.ok(src.includes('Escape'), 'Must handle Escape key')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which handles Escape key')
 })
 
 test('CreatePageModal has focus trap (Tab cycling)', () => {
-  assert.ok(src.includes('Tab'), 'Must handle Tab key')
-  assert.ok(src.includes('shiftKey'), 'Must handle Shift+Tab')
-  assert.ok(/querySelectorAll|querySelector/.test(src), 'Must query focusable elements')
+  assert.ok(src.includes('ModalShell'), 'Must use ModalShell which provides Tab focus trap')
 })
 
 test('CreatePageModal buttons have correct text', () => {
-  assert.ok(src.includes('Discard'), 'Cancel button must say "Discard"')
-  assert.ok(src.includes('Create Page'), 'Submit button must say "Create Page"')
+  assert.ok(src.includes("t('discard')"), 'Cancel button must use t("discard")')
+  assert.ok(src.includes("t('createPage')"), 'Submit button must use t("createPage")')
 })
 
 test('CreatePageModal validates slug uniqueness', () => {
-  assert.ok(src.includes('already in use'), 'Must check for duplicate slugs')
+  assert.ok(src.includes("t('slugInUse')"), 'Must show duplicate slug error via t("slugInUse")')
 })
 
 test('CreatePageModal validates slug against template pattern', () => {
   assert.ok(src.includes('validateSlug'), 'Must call validateSlug')
-  assert.ok(src.includes('does not match'), 'Must show pattern mismatch error')
+  assert.ok(src.includes("t('slugPatternError')"), 'Must show pattern mismatch via t("slugPatternError")')
 })
 
 test('CreatePageModal has disabled/busy state on submit button', () => {
@@ -99,7 +96,7 @@ test('CreatePageModal tracks pageType state', () => {
 test('CreatePageModal has parent collection picker when type is page', () => {
   assert.ok(src.includes('htmlFor="cms-parent-collection"'), 'Parent collection label must have htmlFor')
   assert.ok(src.includes('id="cms-parent-collection"'), 'Parent collection select must have matching id')
-  assert.ok(src.includes('None (top-level page)') || src.includes('None — top-level page'), 'Must have a "none" option for top-level pages')
+  assert.ok(src.includes("t('noneTopLevel')"), 'Must have a "none" option via t("noneTopLevel")')
 })
 
 test('CreatePageModal parent picker filters to collections only', () => {
